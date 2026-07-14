@@ -13,3 +13,7 @@ spring:
 
 server:
   port: 8080
+
+groq:
+  api-key: ${GROQ_API_KEY}
+  api-url: https://api.groq.com/openai/v1/chat/completions

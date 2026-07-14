@@ -1,5 +1,6 @@
 package com.solvix.backend.controller;
 
+import com.solvix.backend.client.GroqApiClient;
 import com.solvix.backend.service.CodeforcesIngestionService;
 import com.solvix.backend.service.scoring.CodeforcesScoringService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,11 +12,14 @@ public class TestController {
 
     private final CodeforcesIngestionService ingestionService;
     private final CodeforcesScoringService scoringService;
+    private final GroqApiClient groqApiClient;
 
     public TestController(CodeforcesIngestionService ingestionService,
-                          CodeforcesScoringService scoringService) {
+                          CodeforcesScoringService scoringService,
+                          GroqApiClient groqApiClient) {
         this.ingestionService = ingestionService;
         this.scoringService = scoringService;
+        this.groqApiClient = groqApiClient;
     }
 
     @GetMapping("/test/sync")
@@ -27,5 +31,10 @@ public class TestController {
     @GetMapping("/test/weak-topics")
     public Object testWeakTopics() {
         return scoringService.computeWeakTopics(1L);
+    }
+
+    @GetMapping("/test/groq")
+    public String testGroq() {
+        return groqApiClient.generateContent("Say hello in one short sentence.");
     }
 }
