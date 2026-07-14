@@ -4,6 +4,7 @@ import com.solvix.backend.client.GroqApiClient;
 import com.solvix.backend.service.CodeforcesIngestionService;
 import com.solvix.backend.service.PlanService;
 import com.solvix.backend.service.ReminderService;
+import com.solvix.backend.service.WeeklyReportService;
 import com.solvix.backend.service.scoring.CodeforcesScoringService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,17 +18,20 @@ public class TestController {
     private final GroqApiClient groqApiClient;
     private final PlanService planService;
     private final ReminderService reminderService;
+    private final WeeklyReportService weeklyReportService;
 
     public TestController(CodeforcesIngestionService ingestionService,
                           CodeforcesScoringService scoringService,
                           GroqApiClient groqApiClient,
                           PlanService planService,
-                          ReminderService reminderService) {
+                          ReminderService reminderService,
+                          WeeklyReportService weeklyReportService) {
         this.ingestionService = ingestionService;
         this.scoringService = scoringService;
         this.groqApiClient = groqApiClient;
         this.planService = planService;
         this.reminderService = reminderService;
+        this.weeklyReportService = weeklyReportService;
     }
 
     @GetMapping("/test/sync")
@@ -60,5 +64,10 @@ public class TestController {
     @GetMapping("/test/reminders")
     public Object testGetReminders() {
         return reminderService.getReminders(1L);
+    }
+
+    @GetMapping("/test/weekly-report")
+    public Object testWeeklyReport() {
+        return weeklyReportService.generateReport(1L);
     }
 }
