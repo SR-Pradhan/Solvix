@@ -47,7 +47,7 @@ public class CodeforcesScoringService {
             LocalDateTime lastOk = mostRecentOkByTag.get(tag);
             long recencyDays = lastOk == null ? 999 : ChronoUnit.DAYS.between(lastOk, now);
 
-            double normalizedRecency = Math.min(recencyDays / 30.0, 1.0); // cap at 30 days for normalization
+            double normalizedRecency = Math.min(recencyDays / 90.0, 1.0); // cap at 90 days for normalization
             double weakScore = (1 - accuracyPct / 100.0) * 0.6 + normalizedRecency * 0.4;
 
             results.add(new TagScore(tag, accuracyPct, recencyDays, weakScore));
