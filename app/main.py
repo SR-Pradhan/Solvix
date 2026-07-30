@@ -2,9 +2,11 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api import auth
 from app.db.database import get_db
 
 app = FastAPI(title="Solvix")
+app.include_router(auth.router)
 
 
 @app.get("/health")
