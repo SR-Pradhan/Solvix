@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: solvix
+      POSTGRES_PASSWORD: solvix
+      POSTGRES_DB: solvix
+    ports:
+      - "5432:5432"
+    volumes:
+      - solvix_pgdata:/var/lib/postgresql/data
+
+volumes:
+  solvix_pgdata:
