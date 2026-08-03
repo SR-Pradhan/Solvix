@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.codeforces_client import CodeforcesError
 from app.core.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
+from app.schemas.dashboard import (
+    RatingDistributionOut,
+    StatsOut,
+    TagBreakdownOut,
+    TimelineOut,
+)
+from app.services import stats_service
 from app.services.ingestion_service import ingest_codeforces_submissions
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -29,3 +36,37 @@ async def ingest_codeforces(
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
     return {"inserted": inserted}
+
+
+@router.get("/stats", response_model=StatsOut)
+async def read_stats(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await stats_service.get_stats(db, current_user.id)
+
+
+@router.get("/tags", response_model=TagBreakdownOut)
+async def read_tags(
+    limit: int | None = Query(default=None, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await stats_service.get_tag_breakdown(db, current_user.id, limit=limit)
+
+
+@router.get("/rating-distribution", response_model=RatingDistributionOut)
+async def read_rating_distribution(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await stats_service.get_rating_distribution(db, current_user.id)
+
+
+@router.get("/timeline", response_model=TimelineOut)
+async def read_timeline(
+    days: int = Query(default=365, ge=1, le=1825),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await stats_service.get_timeline(db, current_user.id, days=days)

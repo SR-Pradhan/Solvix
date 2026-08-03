@@ -1,4 +1,13 @@
-from sqlalchemy import ARRAY, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    ARRAY,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -19,6 +28,8 @@ class Submission(Base):
     __tablename__ = "submissions"
     __table_args__ = (
         UniqueConstraint("user_id", "platform", "external_problem_id", "solved_at"),
+        # Every dashboard query filters on this pair before aggregating.
+        Index("ix_submissions_user_id_verdict", "user_id", "verdict"),
     )
 
     id = Column(Integer, primary_key=True)
