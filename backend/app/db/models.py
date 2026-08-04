@@ -25,6 +25,8 @@ class User(Base):
     codeforces_handle = Column(String(50))
     # "owner/repo" of a LeetHub-synced GitHub repository.
     leetcode_repo = Column(String(140))
+    # Public LeetCode username, for profile totals the repo cannot supply.
+    leetcode_username = Column(String(100))
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -111,3 +113,20 @@ class Reminder(Base):
     title = Column(String(255), nullable=False)
     reason = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class LeetCodeProfile(Base):
+    """Latest public-profile snapshot for a user.
+
+    LeetHub only sees problems solved after it was installed; the profile knows
+    the real totals. One row per user, overwritten on each sync.
+    """
+
+    __tablename__ = "leetcode_profiles"
+    __table_args__ = (UniqueConstraint("user_id"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    username = Column(String(100), nullable=False)
+    payload = Column(JSONB, nullable=False)
+    synced_at = Column(DateTime, server_default=func.now())

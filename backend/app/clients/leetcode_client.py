@@ -45,6 +45,10 @@ class LeetCodeError(Exception):
     """The catalogue could not be read."""
 
 
+class LeetCodeUserNotFound(LeetCodeError):
+    """The username does not exist — the caller's mistake, not an outage."""
+
+
 def tag_slug(tag: str) -> str:
     """Turn a display tag into LeetCode's slug form.
 
@@ -108,3 +112,127 @@ async def fetch_problems_for_tag(tag: str, limit: int = PAGE_SIZE) -> list[dict]
 
     _cache[slug] = (time.monotonic(), questions)
     return questions
+
+
+PROFILE_QUERY = """
+query($u: String!) {
+  matchedUser(username: $u) {
+    submitStatsGlobal { acSubmissionNum { difficulty count } }
+    tagProblemCounts {
+      advanced { tagName problemsSolved }
+      intermediate { tagName problemsSolved }
+      fundamental { tagName problemsSolved }
+    }
+  }
+}
+"""
+
+RECENT_AC_QUERY = """
+query($u: String!, $n: Int) {
+  recentAcSubmissionList(username: $u, limit: $n) {
+    title
+    titleSlug
+    timestamp
+  }
+}
+"""
+
+QUESTION_QUERY = """
+query($slug: String!) {
+  question(titleSlug: $slug) {
+    title
+    difficulty
+    topicTags { name }
+  }
+}
+"""
+
+
+async def _graphql(client: httpx.AsyncClient, query: str, variables: dict) -> dict:
+    try:
+        response = await client.post(
+            GRAPHQL_URL,
+            json={"query": query, "variables": variables},
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (compatible; Solvix/1.0)",
+            },
+        )
+    except httpx.RequestError as e:
+        raise LeetCodeError(f"Could not reach LeetCode: {e}") from e
+
+    if response.status_code >= 400:
+        raise LeetCodeError(f"LeetCode returned HTTP {response.status_code}")
+
+    try:
+        body = response.json()
+    except ValueError as e:
+        raise LeetCodeError("LeetCode returned a non-JSON response") from e
+
+    data = body.get("data")
+    if data is None:
+        raise LeetCodeError("LeetCode returned no data for that query")
+    return data
+
+
+def parse_profile(data: dict) -> dict:
+    """Flatten the profile response into totals, difficulty split and tags."""
+    user = data.get("matchedUser")
+    if not user:
+        raise LeetCodeUserNotFound(
+            "No LeetCode user with that username. Check the spelling."
+        )
+
+    counts = {
+        row["difficulty"]: row["count"]
+        for row in user["submitStatsGlobal"]["acSubmissionNum"]
+    }
+
+    buckets = user.get("tagProblemCounts") or {}
+    tags = [
+        {"tag": row["tagName"], "solved": row["problemsSolved"]}
+        for bucket in ("fundamental", "intermediate", "advanced")
+        for row in buckets.get(bucket) or []
+        if row["problemsSolved"] > 0
+    ]
+    tags.sort(key=lambda t: (-t["solved"], t["tag"]))
+
+    return {
+        "total_solved": counts.get("All", 0),
+        "easy": counts.get("Easy", 0),
+        "medium": counts.get("Medium", 0),
+        "hard": counts.get("Hard", 0),
+        "tags": tags,
+    }
+
+
+async def fetch_profile(username: str) -> dict:
+    async with httpx.AsyncClient(timeout=25) as client:
+        data = await _graphql(client, PROFILE_QUERY, {"u": username})
+    return parse_profile(data)
+
+
+async def fetch_recent_ac(username: str, limit: int = 20) -> list[dict]:
+    """The most recent accepted submissions, with real LeetCode timestamps.
+
+    Public, but capped at 20 by LeetCode — enough to catch solves that have not
+    reached the LeetHub repo yet, not enough to rebuild a full history.
+    """
+    async with httpx.AsyncClient(timeout=25) as client:
+        data = await _graphql(client, RECENT_AC_QUERY, {"u": username, "n": limit})
+    return data.get("recentAcSubmissionList") or []
+
+
+async def fetch_question(slug: str) -> dict | None:
+    """Title, difficulty and tags for one problem."""
+    async with httpx.AsyncClient(timeout=25) as client:
+        data = await _graphql(client, QUESTION_QUERY, {"slug": slug})
+
+    question = data.get("question")
+    if not question:
+        return None
+    return {
+        "title": question.get("title") or slug,
+        "difficulty": question.get("difficulty"),
+        "tags": [t["name"] for t in question.get("topicTags") or []],
+    }

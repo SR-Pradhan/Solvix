@@ -73,6 +73,28 @@ class WeeklyReportOut(BaseModel):
     strongest: list[TopicHighlight] = []
 
 
+class ProfileTagCount(BaseModel):
+    tag: str
+    solved: int
+
+
+class ProfileCoverage(BaseModel):
+    tracked: int
+    missing: int
+    percent: int
+
+
+class LeetCodeProfileOut(BaseModel):
+    username: str
+    total_solved: int
+    easy: int
+    medium: int
+    hard: int
+    tags: list[ProfileTagCount] = []
+    coverage: ProfileCoverage
+    imported: int = 0
+
+
 class ReminderItem(BaseModel):
     kind: str
     platform: str

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type {
   DailyPlan as DailyPlanData,
+  LeetCodeProfile as LeetCodeProfileData,
   RatingDistribution,
   Recommendations as RecommendationsData,
   Stats,
@@ -17,6 +18,7 @@ import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
+import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
@@ -44,6 +46,7 @@ export function DashboardPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
+  const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
 
   const connected: Platform[] = [];
@@ -81,6 +84,11 @@ export function DashboardPage() {
         .dailyPlan(token)
         .then(setPlan)
         .catch(() => setPlan(null));
+
+      api
+        .leetcodeProfile(token)
+        .then(setLcProfile)
+        .catch(() => setLcProfile(null));
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
@@ -198,6 +206,9 @@ export function DashboardPage() {
             <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
           )}
           <Reminders data={data.reminders} />
+          {lcProfile && (
+            <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
+          )}
           <WeeklyReport data={data.weekly} />
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (

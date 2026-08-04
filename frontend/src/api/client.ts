@@ -1,5 +1,6 @@
 import type {
   DailyPlan,
+  LeetCodeProfile,
   RatingDistribution,
   Recommendations,
   Reminders,
@@ -150,6 +151,20 @@ export const api = {
       `/dashboard/topics/${encodeURIComponent(tag)}/unsolved${qs({ platform, limit })}`,
       token,
     ),
+
+  setLeetcodeUsername: (token: string, username: string) =>
+    request<User>("/users/me/leetcode-username", token, {
+      method: "PUT",
+      body: JSON.stringify({ leetcode_username: username }),
+    }),
+
+  leetcodeProfile: (token: string) =>
+    request<LeetCodeProfile | null>("/dashboard/leetcode-profile", token),
+
+  syncLeetcodeProfile: (token: string) =>
+    request<LeetCodeProfile>("/dashboard/sync/leetcode-profile", token, {
+      method: "POST",
+    }),
 
   reminders: (token: string, platform?: Platform | null) =>
     request<Reminders>(`/dashboard/reminders${qs({ platform })}`, token),

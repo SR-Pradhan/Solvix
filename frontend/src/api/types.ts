@@ -6,6 +6,7 @@ export interface User {
   display_name: string | null;
   codeforces_handle: string | null;
   leetcode_repo: string | null;
+  leetcode_username: string | null;
 }
 
 export interface Token {
@@ -179,6 +180,22 @@ export interface UnsolvedInTopic {
   tag: string;
   platform: string;
   problems: UnsolvedProblem[];
+}
+
+export interface ProfileTagCount {
+  tag: string;
+  solved: number;
+}
+
+export interface LeetCodeProfile {
+  username: string;
+  total_solved: number;
+  easy: number;
+  medium: number;
+  hard: number;
+  tags: ProfileTagCount[];
+  coverage: { tracked: number; missing: number; percent: number };
+  imported: number;
 }
 
 export type Platform = "codeforces" | "leetcode";

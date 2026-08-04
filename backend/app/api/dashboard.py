@@ -15,6 +15,7 @@ from app.db.models import User
 from app.schemas.dashboard import (
     DailyPlanOut,
     RatingDistributionOut,
+    LeetCodeProfileOut,
     RecommendationsOut,
     RemindersOut,
     SolvedInTopicOut,
@@ -26,8 +27,9 @@ from app.schemas.dashboard import (
     WeeklyReportOut,
 )
 from app.clients.groq_client import GroqError, GroqNotConfigured
-from app.clients.leetcode_client import LeetCodeError
+from app.clients.leetcode_client import LeetCodeError, LeetCodeUserNotFound
 from app.services import (
+    leetcode_profile_service,
     plan_service,
     problem_service,
     reminder_service,
@@ -170,6 +172,34 @@ async def read_daily_plan(
         )
     except GroqError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.post("/sync/leetcode-profile", response_model=LeetCodeProfileOut)
+async def sync_leetcode_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.leetcode_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set your leetcode_username first via PUT /users/me/leetcode-username",
+        )
+    try:
+        return await leetcode_profile_service.sync_profile(
+            db, current_user.id, current_user.leetcode_username
+        )
+    except LeetCodeUserNotFound as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except LeetCodeError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/leetcode-profile", response_model=LeetCodeProfileOut | None)
+async def read_leetcode_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await leetcode_profile_service.get_profile(db, current_user.id)
 
 
 @router.get("/topics/{tag}/solved", response_model=SolvedInTopicOut)
