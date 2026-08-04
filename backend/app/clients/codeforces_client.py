@@ -48,6 +48,27 @@ async def fetch_user_submissions(
     return data["result"]
 
 
+async def fetch_problemset() -> list[dict]:
+    """The full Codeforces problemset with tags and ratings."""
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(f"{CF_API_BASE}/problemset.problems")
+    except httpx.RequestError as e:
+        raise CodeforcesError(f"Could not reach Codeforces: {e}") from e
+
+    try:
+        data = response.json()
+    except ValueError as e:
+        raise CodeforcesError(
+            f"Codeforces returned a non-JSON response (HTTP {response.status_code})"
+        ) from e
+
+    if data.get("status") != "OK":
+        raise CodeforcesError(data.get("comment", "Codeforces API request failed"))
+
+    return data["result"]["problems"]
+
+
 async def fetch_submissions_since(handle: str, since_epoch: int) -> list[dict]:
     """Fetch only submissions newer than `since_epoch`.
 

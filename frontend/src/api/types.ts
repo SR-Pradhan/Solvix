@@ -52,3 +52,26 @@ export interface Timeline {
   days: number;
   points: TimelinePoint[];
 }
+
+export interface WeakTag {
+  tag: string;
+  solved_count: number;
+  deficit: number;
+}
+
+export interface RecommendedProblem {
+  problem_id: string;
+  contest_id: number;
+  name: string;
+  rating: number;
+  tags: string[];
+  matched_tags: string[];
+  url: string;
+}
+
+export interface Recommendations {
+  target_rating: number;
+  weak_tags: WeakTag[];
+  problems: RecommendedProblem[];
+  note: string | null;
+}

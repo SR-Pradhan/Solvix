@@ -1,5 +1,6 @@
 import type {
   RatingDistribution,
+  Recommendations,
   Stats,
   TagBreakdown,
   Timeline,
@@ -101,4 +102,7 @@ export const api = {
 
   timeline: (token: string, days = 365) =>
     request<Timeline>(`/dashboard/timeline?days=${days}`, token),
+
+  recommendations: (token: string, limit = 10) =>
+    request<Recommendations>(`/dashboard/recommendations?limit=${limit}`, token),
 };

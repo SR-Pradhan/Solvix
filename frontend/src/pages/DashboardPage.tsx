@@ -3,12 +3,14 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type {
   RatingDistribution,
+  Recommendations as RecommendationsData,
   Stats,
   TagBreakdown,
   Timeline,
 } from "../api/types";
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
+import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
 import { HandleSetup } from "./HandleSetup";
 
@@ -17,6 +19,7 @@ interface Dashboard {
   tags: TagBreakdown;
   ratings: RatingDistribution;
   timeline: Timeline;
+  recommendations: RecommendationsData | null;
 }
 
 export function DashboardPage() {
@@ -36,7 +39,16 @@ export function DashboardPage() {
         api.ratings(token),
         api.timeline(token, 365),
       ]);
-      setData({ stats, tags, ratings, timeline });
+      setData({ stats, tags, ratings, timeline, recommendations: null });
+
+      // Recommendations pull the whole Codeforces problemset on a cold cache,
+      // so they arrive after the charts rather than holding them up.
+      try {
+        const recommendations = await api.recommendations(token, 10);
+        setData((prev) => (prev ? { ...prev, recommendations } : prev));
+      } catch {
+        /* the rest of the dashboard is still worth showing */
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     }
@@ -106,6 +118,9 @@ export function DashboardPage() {
       ) : (
         <>
           <StatCards stats={data.stats} />
+          {data.recommendations && (
+            <Recommendations data={data.recommendations} />
+          )}
           <div className="grid-2">
             <TagChart data={data.tags} />
             <RatingChart data={data.ratings} />

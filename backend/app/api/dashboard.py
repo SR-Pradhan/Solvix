@@ -7,11 +7,12 @@ from app.db.database import get_db
 from app.db.models import User
 from app.schemas.dashboard import (
     RatingDistributionOut,
+    RecommendationsOut,
     StatsOut,
     TagBreakdownOut,
     TimelineOut,
 )
-from app.services import stats_service
+from app.services import recommendation_service, stats_service
 from app.services.ingestion_service import ingest_codeforces_submissions
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -67,6 +68,20 @@ async def read_rating_distribution(
     db: AsyncSession = Depends(get_db),
 ):
     return await stats_service.get_rating_distribution(db, current_user.id)
+
+
+@router.get("/recommendations", response_model=RecommendationsOut)
+async def read_recommendations(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await recommendation_service.get_recommendations(
+            db, current_user.id, limit=limit
+        )
+    except CodeforcesError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
 
 @router.get("/timeline", response_model=TimelineOut)

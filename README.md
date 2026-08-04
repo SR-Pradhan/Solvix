@@ -15,6 +15,8 @@ difficulty spread, and activity over time.
   count as one solve, not eleven
 - **Breaks down** solves by tag and difficulty rating
 - **Tracks** daily activity, current streak, and longest streak
+- **Recommends** unsolved problems from the tags you practise least, at a
+  difficulty just above your current level
 
 ## Stack
 
@@ -74,6 +76,7 @@ automatically.
 | GET    | `/dashboard/tags`                 | Solves per tag                   |
 | GET    | `/dashboard/rating-distribution`  | Solves per difficulty            |
 | GET    | `/dashboard/timeline`             | Solves per day                   |
+| GET    | `/dashboard/recommendations`      | Problems picked from weak tags   |
 
 All `/users` and `/dashboard` routes need `Authorization: Bearer <token>`.
 
@@ -92,6 +95,7 @@ cd backend && ../.venv/bin/python -m pytest
 
 ## Roadmap
 
-- [ ] Problem recommendations from weak tags
-- [ ] LeetCode and AtCoder ingestion
+- [x] Problem recommendations from weak tags
+- [ ] LeetCode ingestion via LeetHub-synced GitHub repo
+- [ ] AtCoder ingestion
 - [ ] Deployment

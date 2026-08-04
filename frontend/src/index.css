@@ -188,3 +188,63 @@ button.link {
   font-size: 13px;
   margin: 0;
 }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  background: #1b2434;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: #a9b6cc;
+}
+
+.rec-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rec-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+
+.rec-list a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.rec-list a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.rec-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rating-pill {
+  background: #1b2434;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #a9b6cc;
+}

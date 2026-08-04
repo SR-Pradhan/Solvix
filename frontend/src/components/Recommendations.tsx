@@ -1,0 +1,53 @@
+import type { Recommendations as Data } from "../api/types";
+
+export function Recommendations({ data }: { data: Data }) {
+  if (data.note) {
+    return (
+      <section className="card">
+        <header className="card-head">
+          <h2>Recommended next</h2>
+        </header>
+        <p className="muted">{data.note}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="card">
+      <header className="card-head">
+        <h2>Recommended next</h2>
+        <span className="muted small">
+          rated ~{data.target_rating}, from your weakest tags
+        </span>
+      </header>
+
+      <div className="chips">
+        {data.weak_tags.map((t) => (
+          <span key={t.tag} className="chip" title={`${t.solved_count} solved`}>
+            {t.tag}
+          </span>
+        ))}
+      </div>
+
+      {data.problems.length === 0 ? (
+        <p className="muted">
+          Nothing left unsolved in this range — you have cleared it.
+        </p>
+      ) : (
+        <ul className="rec-list">
+          {data.problems.map((p) => (
+            <li key={p.problem_id}>
+              <a href={p.url} target="_blank" rel="noreferrer">
+                {p.name}
+              </a>
+              <span className="rec-meta">
+                <span className="rating-pill">{p.rating}</span>
+                <span className="muted small">{p.matched_tags.join(", ")}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

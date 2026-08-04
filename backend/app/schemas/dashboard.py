@@ -34,6 +34,29 @@ class RatingDistributionOut(BaseModel):
     unrated_count: int
 
 
+class WeakTag(BaseModel):
+    tag: str
+    solved_count: int
+    deficit: float
+
+
+class RecommendedProblem(BaseModel):
+    problem_id: str
+    contest_id: int
+    name: str
+    rating: int
+    tags: list[str]
+    matched_tags: list[str]
+    url: str
+
+
+class RecommendationsOut(BaseModel):
+    target_rating: int
+    weak_tags: list[WeakTag]
+    problems: list[RecommendedProblem]
+    note: str | None = None
+
+
 class TimelinePoint(BaseModel):
     day: date
     solved_count: int
