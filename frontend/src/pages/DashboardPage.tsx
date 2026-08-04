@@ -49,7 +49,7 @@ export function DashboardPage() {
         api.tags(token, 12, platform),
         api.ratings(token, platform),
         api.timeline(token, 365, platform),
-        api.weakTopics(token, 8, platform),
+        api.weakTopics(token, 30, platform),
       ]);
       setData({
         stats,
@@ -167,8 +167,8 @@ export function DashboardPage() {
           <div className="grid-2">
             <WeakTopics data={data.weakTopics} />
             <TagChart data={data.tags} />
-            <RatingChart data={data.ratings} />
           </div>
+          <RatingChart data={data.ratings} />
           <ActivityChart data={data.timeline} />
         </>
       )}

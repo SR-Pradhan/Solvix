@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { WeakTopics as Data } from "../api/types";
 
 // Plain words instead of a 0-1 score: nobody reads "weakness 0.78".
@@ -29,7 +31,15 @@ function reason(
   return `not practised since ${freshness(days)}`;
 }
 
+// Enough rows to fill the card next to the tag chart, so the toggle sits at
+// the bottom rather than leaving a gap under it.
+const ROWS_SHOWN = 8;
+
 export function WeakTopics({ data }: { data: Data }) {
+  // Declared before any early return: hooks must run in the same order on
+  // every render, and this list is empty until the first import finishes.
+  const [expanded, setExpanded] = useState(false);
+
   if (!data.topics.length) {
     return (
       <section className="card">
@@ -45,6 +55,8 @@ export function WeakTopics({ data }: { data: Data }) {
   }
 
   const accuracyIsReal = data.scored_on_accuracy > 0;
+  const visible = expanded ? data.topics : data.topics.slice(0, ROWS_SHOWN);
+  const hidden = data.topics.length - visible.length;
 
   return (
     <section className="card">
@@ -54,7 +66,7 @@ export function WeakTopics({ data }: { data: Data }) {
       </header>
 
       <ul className="topic-list">
-        {data.topics.map((t) => (
+        {visible.map((t) => (
           <li key={t.tag}>
             <span className="topic-name">{t.tag}</span>
             <span
@@ -72,6 +84,16 @@ export function WeakTopics({ data }: { data: Data }) {
           </li>
         ))}
       </ul>
+
+      {(hidden > 0 || expanded) && (
+        <button
+          type="button"
+          className="link show-more"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? "Show fewer" : `Show ${hidden} more`}
+        </button>
+      )}
 
       {!accuracyIsReal && (
         <p className="muted small skipped">

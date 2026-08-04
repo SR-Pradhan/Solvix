@@ -149,9 +149,13 @@ function ChartCard({
         <h2>{title}</h2>
         {note && <span className="muted small">{note}</span>}
       </header>
-      <ResponsiveContainer width="100%" height={height}>
-        {children}
-      </ResponsiveContainer>
+      {/* Grows with the card so a taller neighbour does not leave dead space
+          under the plot. minHeight keeps it readable when it is the tallest. */}
+      <div className="chart-fill" style={{ minHeight: height }}>
+        <ResponsiveContainer width="100%" height="100%">
+          {children}
+        </ResponsiveContainer>
+      </div>
     </section>
   );
 }
