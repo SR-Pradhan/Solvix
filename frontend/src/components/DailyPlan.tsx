@@ -62,10 +62,26 @@ export function DailyPlan({
 
       <button
         type="button"
-        className="link show-more"
+        className="pill-btn plan-rebuild"
         onClick={onRegenerate}
         disabled={busy}
       >
+        <svg
+          viewBox="0 0 16 16"
+          width="13"
+          height="13"
+          aria-hidden="true"
+          className={busy ? "spin" : undefined}
+        >
+          <path
+            d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
         {busy ? "Rebuilding…" : "Build a different plan"}
       </button>
     </section>

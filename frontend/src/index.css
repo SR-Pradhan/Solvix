@@ -585,3 +585,38 @@ button.link.inline {
   transform: rotate(90deg);
   color: var(--accent);
 }
+
+/* Pill action, matching the filter chips rather than looking like body text. */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pill-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+  background: #1b2434;
+}
+
+.plan-rebuild {
+  align-self: flex-start;
+  margin-top: 16px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
