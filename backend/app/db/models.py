@@ -6,10 +6,12 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import deferred
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -27,6 +29,46 @@ class User(Base):
     leetcode_repo = Column(String(140))
     # Public LeetCode username, for profile totals the repo cannot supply.
     leetcode_username = Column(String(100))
+    # The avatar is kept in the database rather than on disk: free hosting
+    # gives every deploy a fresh filesystem, so an uploaded file would vanish
+    # on the next release. Resized to 256px on upload, it costs ~40KB a row.
+    #
+    # Deferred because every request that loads a user would otherwise drag the
+    # image bytes along with it; only the avatar endpoint selects the column.
+    avatar = deferred(Column(LargeBinary))
+    # Doubles as the "has a photo" flag, so `has_avatar` needs no extra query.
+    avatar_mime = Column(String(30))
+    created_at = Column(DateTime, server_default=func.now())
+
+    @property
+    def has_avatar(self) -> bool:
+        return self.avatar_mime is not None
+
+
+class EmailChangeRequest(Base):
+    """A pending move to a new address, proved by a code sent to that address.
+
+    Kept as a row rather than held in memory so a restart does not strand a
+    user mid-change, and so the attempt counter survives too: without it, the
+    six-digit code could be guessed by retrying.
+    """
+
+    __tablename__ = "email_change_requests"
+    __table_args__ = (
+        # Every verify looks up the newest live request for one user.
+        Index("ix_email_change_requests_user_id", "user_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    new_email = Column(String(255), nullable=False)
+    # Hashed with the same bcrypt context as passwords: a database leak should
+    # not hand over a live code, and five attempts makes the cost irrelevant.
+    code_hash = Column(String(255), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    attempts = Column(Integer, nullable=False, server_default="0")
+    # Set once the change goes through, so a code cannot be replayed.
+    consumed_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
 
 

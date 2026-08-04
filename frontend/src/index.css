@@ -195,47 +195,6 @@ input {
   font-variant-numeric: tabular-nums;
 }
 
-/* The dashboard is two tiers, not one stack.
-
-   Left: things to act on today (plan, reminders, weak topics, suggestions).
-   Right: things to look back at (week, profile, distributions).
-
-   Before 980px the columns get too narrow to read a topic row without
-   wrapping, so it collapses to a single column. */
-.dash {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-.dash-main,
-.dash-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-@media (min-width: 980px) {
-  .dash {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  }
-}
-
-/* The secondary column is reference material: quieter headings and a little
-   less padding, so it reads as support rather than as a second main column. */
-.dash-side > .card {
-  padding: 16px;
-}
-
-.dash-side .card-head h2 {
-  font-size: 13px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -757,6 +716,94 @@ button.link.inline {
   to {
     transform: rotate(360deg);
   }
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+  border: 1px solid var(--border);
+}
+
+/* Mid-tone by design: the same hsl reads correctly under white text in both
+   themes, so the initials circle needs no light-mode variant. */
+.avatar-initials {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-color: transparent;
+}
+
+/* The avatar is the way into the profile, so it has to look pressable
+   without becoming another button in the row. */
+.avatar-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  line-height: 0;
+  margin-left: 4px;
+}
+
+.avatar-btn:hover .avatar {
+  border-color: var(--accent);
+}
+
+.profile-photo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.profile-photo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.profile-photo-actions p {
+  margin: 2px 0 0;
+}
+
+/* Capped rather than full width: a name field stretched across 1100px looks
+   like a mistake, and long inputs read as "paste a lot of text here". */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+}
+
+.profile-form input:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.form-actions {
+  margin-top: 2px;
+}
+
+.email-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Spaced and monospaced so six digits read as six digits, and a transposed
+   pair is visible before you submit it. */
+.code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 20px;
+  letter-spacing: 0.35em;
+  text-align: center;
+  max-width: 190px;
+  padding: 10px 12px;
 }
 
 /* Log out is not a third sync button; a gap and dimmer text separate it. */

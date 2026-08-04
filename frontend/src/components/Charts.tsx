@@ -33,6 +33,14 @@ export function TagChart({ data }: { data: TagBreakdown }) {
   const t = useThemeTokens();
   if (!data.tags.length) return <Empty note="No tags yet." />;
 
+  // Sized to the longest label rather than fixed: "dp" and "constructive
+  // algorithms" need very different gutters, and a fixed 150px either clips
+  // the long ones or wastes a third of a narrow column on the short ones.
+  const labelWidth = Math.min(
+    150,
+    Math.max(70, ...data.tags.map((tag) => tag.tag.length * 6.6 + 12)),
+  );
+
   return (
     <ChartCard
       title="Strongest tags"
@@ -42,7 +50,7 @@ export function TagChart({ data }: { data: TagBreakdown }) {
       <BarChart data={data.tags} layout="vertical" margin={{ left: 8, right: 16 }}>
         <CartesianGrid stroke={t.border} horizontal={false} />
         <XAxis type="number" {...axis(t)} />
-        <YAxis type="category" dataKey="tag" width={150} {...axis(t)} />
+        <YAxis type="category" dataKey="tag" width={labelWidth} {...axis(t)} />
         <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
         <Bar dataKey="solved_count" name="solved" fill={t.accent} radius={[0, 4, 4, 0]} />
       </BarChart>

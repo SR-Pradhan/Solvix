@@ -7,6 +7,21 @@ export interface User {
   codeforces_handle: string | null;
   leetcode_repo: string | null;
   leetcode_username: string | null;
+  has_avatar: boolean;
+}
+
+export interface PendingEmailChange {
+  new_email: string;
+  expires_at: string;
+  attempts_left: number;
+  resend_in_seconds: number;
+}
+
+/** A partial edit: an omitted key is left alone, an explicit null clears it. */
+export interface ProfileChanges {
+  display_name?: string | null;
+  codeforces_handle?: string;
+  leetcode_username?: string | null;
 }
 
 export interface Token {

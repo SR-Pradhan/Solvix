@@ -48,6 +48,17 @@ JWT_SECRET_KEY=change-me
 # Optional. Needed for LeetCode imports: raises GitHub's API limit from
 # 60 to 5000 requests per hour. Create one at github.com/settings/tokens.
 GITHUB_TOKEN=
+
+# Optional. Enables the AI daily plan. Free key from console.groq.com/keys.
+GROQ_API_KEY=
+
+# Optional. Without these, verification emails are written to the server log
+# instead of being sent, which is enough to use the app in development.
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM=Solvix <no-reply@solvix.local>
 ```
 
 **Backend** — http://localhost:8000 (docs at `/docs`):

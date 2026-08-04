@@ -15,6 +15,7 @@ import type {
   WeeklyReport as WeeklyReportData,
 } from "../api/types";
 import { useAuth } from "../auth";
+import { Avatar } from "../components/Avatar";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
@@ -27,6 +28,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
 import { HandleSetup } from "./HandleSetup";
+import { ProfilePage } from "./ProfilePage";
 
 interface Dashboard {
   stats: Stats;
@@ -49,6 +51,9 @@ export function DashboardPage() {
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
   const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
+  // No router in the app yet, so the profile is a view swap rather than a
+  // route. Worth revisiting if a third screen appears.
+  const [showProfile, setShowProfile] = useState(false);
 
   const connected: Platform[] = [];
   if (user?.codeforces_handle) connected.push("codeforces");
@@ -149,6 +154,10 @@ export function DashboardPage() {
     return <HandleSetup onDone={refreshUser} />;
   }
 
+  if (showProfile) {
+    return <ProfilePage onBack={() => setShowProfile(false)} />;
+  }
+
   return (
     <div className="page">
       <header className="topbar">
@@ -183,6 +192,15 @@ export function DashboardPage() {
             Log out
           </button>
           <ThemeToggle />
+          <button
+            type="button"
+            className="avatar-btn"
+            title="Your profile"
+            aria-label="Your profile"
+            onClick={() => setShowProfile(true)}
+          >
+            <Avatar user={user} size={36} />
+          </button>
         </div>
       </header>
 
@@ -212,6 +230,7 @@ export function DashboardPage() {
             profile={lcProfile}
             platform={platform}
           />
+
           {plan && (
             <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
           )}

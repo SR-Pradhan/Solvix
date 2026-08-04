@@ -18,6 +18,20 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     groq_model: str = "llama-3.3-70b-versatile"
 
+    # Mail. With no host configured, messages are printed to the server log
+    # instead of sent, so email verification works in development without an
+    # SMTP account. Set these to send for real.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_starttls: bool = True
+    mail_from: str = "Solvix <no-reply@solvix.local>"
+
+    @property
+    def mail_configured(self) -> bool:
+        return bool(self.smtp_host)
+
     # Anchored to backend/ so the app and alembic load the same .env no matter
     # which directory they are invoked from.
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")

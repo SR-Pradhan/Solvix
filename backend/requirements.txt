@@ -11,3 +11,5 @@ httpx
 pytest
 pytest-asyncio
 email-validator
+pillow
+python-multipart

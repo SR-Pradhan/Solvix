@@ -8,7 +8,9 @@ import type {
   Stats,
   TagBreakdown,
   Timeline,
+  PendingEmailChange,
   Platform,
+  ProfileChanges,
   Token,
   UnsolvedInTopic,
   User,
@@ -27,13 +29,18 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
+async function send(
   path: string,
   token: string | null,
-  init: RequestInit = {},
-): Promise<T> {
+  init: RequestInit,
+): Promise<Response> {
+  // A multipart upload has to keep the browser's own Content-Type, which
+  // carries the boundary marker. Declaring JSON over it makes the body
+  // unparseable at the far end.
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(init.body instanceof FormData
+      ? {}
+      : { "Content-Type": "application/json" }),
     ...((init.headers as Record<string, string>) ?? {}),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -48,7 +55,24 @@ async function request<T>(
   if (!res.ok) {
     throw new ApiError(res.status, await readDetail(res));
   }
-  return (await res.json()) as T;
+  return res;
+}
+
+async function request<T>(
+  path: string,
+  token: string | null,
+  init: RequestInit = {},
+): Promise<T> {
+  return (await (await send(path, token, init)).json()) as T;
+}
+
+/** For endpoints that answer 204, where parsing a body would throw. */
+async function requestEmpty(
+  path: string,
+  token: string | null,
+  init: RequestInit = {},
+): Promise<void> {
+  await send(path, token, init);
 }
 
 // FastAPI puts a string in `detail` for raised HTTPExceptions but a list of
@@ -97,6 +121,65 @@ export const api = {
     }),
 
   me: (token: string) => request<User>("/users/me", token),
+
+  updateProfile: (token: string, changes: ProfileChanges) =>
+    request<User>("/users/me", token, {
+      method: "PATCH",
+      body: JSON.stringify(changes),
+    }),
+
+  pendingEmailChange: (token: string) =>
+    request<PendingEmailChange | null>("/users/me/email/pending", token),
+
+  requestEmailChange: (token: string, newEmail: string, password: string) =>
+    request<PendingEmailChange>("/users/me/email/request", token, {
+      method: "POST",
+      body: JSON.stringify({ new_email: newEmail, password }),
+    }),
+
+  verifyEmailChange: (token: string, code: string) =>
+    request<User>("/users/me/email/verify", token, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+
+  cancelEmailChange: (token: string) =>
+    requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
+
+  changePassword: (token: string, current: string, next: string) =>
+    requestEmpty("/users/me/password", token, {
+      method: "POST",
+      body: JSON.stringify({
+        current_password: current,
+        new_password: next,
+      }),
+    }),
+
+  uploadAvatar: (token: string, file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    // No Content-Type header: the browser has to set it itself so it can add
+    // the multipart boundary, and naming it here would produce a bodiless
+    // request the server cannot parse.
+    return request<User>("/users/me/avatar", token, { method: "POST", body });
+  },
+
+  deleteAvatar: (token: string) =>
+    request<User>("/users/me/avatar", token, { method: "DELETE" }),
+
+  /**
+   * The avatar as an object URL.
+   *
+   * An `<img src>` cannot carry an Authorization header, so the bytes are
+   * fetched here and wrapped in a blob URL. The caller must revoke it.
+   */
+  avatarUrl: async (token: string): Promise<string | null> => {
+    const res = await fetch(`${BASE}/users/me/avatar`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    return URL.createObjectURL(await res.blob());
+  },
 
   setHandle: (token: string, handle: string) =>
     request<User>("/users/me/codeforces-handle", token, {
