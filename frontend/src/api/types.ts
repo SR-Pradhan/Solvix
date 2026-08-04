@@ -5,6 +5,7 @@ export interface User {
   email: string;
   display_name: string | null;
   codeforces_handle: string | null;
+  leetcode_repo: string | null;
 }
 
 export interface Token {
@@ -38,8 +39,14 @@ export interface RatingBucket {
   solved_count: number;
 }
 
+export interface DifficultyLabelCount {
+  label: string;
+  solved_count: number;
+}
+
 export interface RatingDistribution {
   buckets: RatingBucket[];
+  labels: DifficultyLabelCount[];
   unrated_count: number;
 }
 

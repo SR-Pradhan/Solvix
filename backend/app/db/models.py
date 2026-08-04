@@ -21,6 +21,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     display_name = Column(String(100))
     codeforces_handle = Column(String(50))
+    # "owner/repo" of a LeetHub-synced GitHub repository.
+    leetcode_repo = Column(String(140))
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -38,7 +40,11 @@ class Submission(Base):
     external_problem_id = Column(String(100), nullable=False)
     problem_name = Column(String(255))
     tags = Column(ARRAY(String), nullable=False, server_default="{}")
+    # Codeforces rates numerically (800-3500); LeetCode only says
+    # Easy/Medium/Hard, so each platform fills one column and leaves the other
+    # null rather than one being coerced into the other's scale.
     difficulty_rating = Column(Integer)
+    difficulty_label = Column(String(10))
     verdict = Column(String(40))
     solved_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

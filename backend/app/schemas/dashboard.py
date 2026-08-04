@@ -29,8 +29,14 @@ class RatingBucket(BaseModel):
     solved_count: int
 
 
+class DifficultyLabelCount(BaseModel):
+    label: str
+    solved_count: int
+
+
 class RatingDistributionOut(BaseModel):
     buckets: list[RatingBucket]
+    labels: list[DifficultyLabelCount] = []
     unrated_count: int
 
 

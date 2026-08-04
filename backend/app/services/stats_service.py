@@ -53,6 +53,7 @@ def _solved_problems(user_id: int):
             Submission.problem_name,
             Submission.tags,
             Submission.difficulty_rating,
+            Submission.difficulty_label,
             Submission.solved_at,
         )
         .where(Submission.user_id == user_id, Submission.verdict == ACCEPTED)
@@ -159,10 +160,28 @@ async def get_rating_distribution(db: AsyncSession, user_id: int) -> dict:
         )
     ).scalar_one()
 
+    # LeetCode has no numeric rating, only Easy/Medium/Hard, so those problems
+    # land in `labels` instead of the histogram.
+    label_rows = (
+        await db.execute(
+            select(solved.c.difficulty_label, func.count().label("solved_count"))
+            .select_from(solved)
+            .where(solved.c.difficulty_label.is_not(None))
+            .group_by(solved.c.difficulty_label)
+        )
+    ).all()
+
+    order = {"Easy": 0, "Medium": 1, "Hard": 2}
+    labels = sorted(
+        ({"label": r.difficulty_label, "solved_count": r.solved_count} for r in label_rows),
+        key=lambda r: order.get(r["label"], 99),
+    )
+
     return {
         "buckets": [
             {"rating": row.difficulty_rating, "solved_count": row.solved_count} for row in rows
         ],
+        "labels": labels,
         "unrated_count": unrated,
     }
 

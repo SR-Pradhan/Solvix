@@ -11,6 +11,7 @@ difficulty spread, and activity over time.
 ## What it does
 
 - **Imports** your full Codeforces submission history, then syncs incrementally
+- **Imports** LeetCode solves from a LeetHub-synced GitHub repo
 - **Deduplicates** attempts into problems — ten wrong answers on one problem
   count as one solve, not eleven
 - **Breaks down** solves by tag and difficulty rating
@@ -41,6 +42,10 @@ Create `backend/.env`:
 ```env
 DATABASE_URL=postgresql+asyncpg://solvix:solvix@localhost:5432/solvix
 JWT_SECRET_KEY=change-me
+
+# Optional. Needed for LeetCode imports: raises GitHub's API limit from
+# 60 to 5000 requests per hour. Create one at github.com/settings/tokens.
+GITHUB_TOKEN=
 ```
 
 **Backend** — http://localhost:8000 (docs at `/docs`):
@@ -71,7 +76,9 @@ automatically.
 | POST   | `/auth/login`                     | Get a JWT                        |
 | GET    | `/users/me`                       | Current user                     |
 | PUT    | `/users/me/codeforces-handle`     | Set the handle to sync           |
-| POST   | `/dashboard/ingest/codeforces`    | Import or sync submissions       |
+| PUT    | `/users/me/leetcode-repo`         | Set the LeetHub repo to sync     |
+| POST   | `/dashboard/ingest/codeforces`    | Import or sync Codeforces        |
+| POST   | `/dashboard/ingest/leetcode`      | Import or sync LeetCode          |
 | GET    | `/dashboard/stats`                | Totals, streaks, acceptance rate |
 | GET    | `/dashboard/tags`                 | Solves per tag                   |
 | GET    | `/dashboard/rating-distribution`  | Solves per difficulty            |
@@ -96,6 +103,6 @@ cd backend && ../.venv/bin/python -m pytest
 ## Roadmap
 
 - [x] Problem recommendations from weak tags
-- [ ] LeetCode ingestion via LeetHub-synced GitHub repo
+- [x] LeetCode ingestion via LeetHub-synced GitHub repo
 - [ ] AtCoder ingestion
 - [ ] Deployment

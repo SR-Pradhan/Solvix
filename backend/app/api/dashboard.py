@@ -2,6 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.codeforces_client import CodeforcesError, CodeforcesHandleError
+from app.clients.leethub_client import (
+    LeetHubError,
+    LeetHubRateLimited,
+    LeetHubRepoError,
+)
 from app.core.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
@@ -14,6 +19,7 @@ from app.schemas.dashboard import (
 )
 from app.services import recommendation_service, stats_service
 from app.services.ingestion_service import ingest_codeforces_submissions
+from app.services.leetcode_ingestion_service import ingest_leetcode_submissions
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -40,6 +46,33 @@ async def ingest_codeforces(
             f"'{current_user.codeforces_handle}': {e}",
         )
     except CodeforcesError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+    return {"inserted": inserted}
+
+
+@router.post("/ingest/leetcode")
+async def ingest_leetcode(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user.leetcode_repo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set your leetcode_repo first via PUT /users/me/leetcode-repo",
+        )
+
+    try:
+        inserted = await ingest_leetcode_submissions(
+            db, user_id=current_user.id, repo=current_user.leetcode_repo
+        )
+    except LeetHubRepoError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except LeetHubRateLimited as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e)
+        )
+    except LeetHubError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
     return {"inserted": inserted}

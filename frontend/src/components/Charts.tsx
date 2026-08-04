@@ -41,8 +41,54 @@ export function TagChart({ data }: { data: TagBreakdown }) {
   );
 }
 
+const LABEL_COLOURS: Record<string, string> = {
+  Easy: "#3fb27f",
+  Medium: "#e0a13a",
+  Hard: "#ef5b5b",
+};
+
+function LeetCodeLabels({ data }: { data: RatingDistribution }) {
+  if (!data.labels.length) return null;
+  const total = data.labels.reduce((sum, l) => sum + l.solved_count, 0);
+
+  return (
+    <div className="labels">
+      {data.labels.map((l) => (
+        <div key={l.label} className="label-row">
+          <span className="small" style={{ color: LABEL_COLOURS[l.label] }}>
+            {l.label}
+          </span>
+          <div className="label-bar">
+            <div
+              style={{
+                width: `${(l.solved_count / total) * 100}%`,
+                background: LABEL_COLOURS[l.label] ?? "#5b8def",
+              }}
+            />
+          </div>
+          <span className="small muted">{l.solved_count}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function RatingChart({ data }: { data: RatingDistribution }) {
-  if (!data.buckets.length) return <Empty note="No rated problems yet." />;
+  // A LeetCode-only user has no numeric ratings at all, so the labelled
+  // breakdown stands in for the histogram rather than showing an empty chart.
+  if (!data.buckets.length) {
+    return data.labels.length ? (
+      <section className="card">
+        <header className="card-head">
+          <h2>Difficulty</h2>
+          <span className="muted small">LeetCode</span>
+        </header>
+        <LeetCodeLabels data={data} />
+      </section>
+    ) : (
+      <Empty note="No rated problems yet." />
+    );
+  }
 
   // Codeforces colours ratings by tier; echoing that makes the histogram
   // readable at a glance to anyone who uses the site.

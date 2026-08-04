@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
-from app.schemas.user import SetCodeforcesHandle, UserOut
+from app.schemas.user import SetCodeforcesHandle, SetLeetcodeRepo, UserOut
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -21,6 +21,18 @@ async def set_codeforces_handle(
     db: AsyncSession = Depends(get_db),
 ):
     current_user.codeforces_handle = payload.codeforces_handle
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+
+@router.put("/me/leetcode-repo", response_model=UserOut)
+async def set_leetcode_repo(
+    payload: SetLeetcodeRepo,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    current_user.leetcode_repo = payload.leetcode_repo
     await db.commit()
     await db.refresh(current_user)
     return current_user

@@ -87,6 +87,17 @@ export const api = {
       body: JSON.stringify({ codeforces_handle: handle }),
     }),
 
+  setLeetcodeRepo: (token: string, repo: string) =>
+    request<User>("/users/me/leetcode-repo", token, {
+      method: "PUT",
+      body: JSON.stringify({ leetcode_repo: repo }),
+    }),
+
+  ingestLeetcode: (token: string) =>
+    request<{ inserted: number }>("/dashboard/ingest/leetcode", token, {
+      method: "POST",
+    }),
+
   ingest: (token: string) =>
     request<{ inserted: number }>("/dashboard/ingest/codeforces", token, {
       method: "POST",

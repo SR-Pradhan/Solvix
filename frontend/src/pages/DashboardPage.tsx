@@ -10,6 +10,7 @@ import type {
 } from "../api/types";
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
+import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
 import { HandleSetup } from "./HandleSetup";
@@ -58,13 +59,16 @@ export function DashboardPage() {
     if (user?.codeforces_handle) void load();
   }, [user?.codeforces_handle, load]);
 
-  async function sync() {
+  async function sync(platform: "codeforces" | "leetcode" = "codeforces") {
     if (!token) return;
     setSyncing(true);
     setError(null);
     setNotice(null);
     try {
-      const { inserted } = await api.ingest(token);
+      const { inserted } =
+        platform === "leetcode"
+          ? await api.ingestLeetcode(token)
+          : await api.ingest(token);
       setNotice(
         inserted === 0
           ? "Already up to date."
@@ -94,9 +98,18 @@ export function DashboardPage() {
           </span>
         </div>
         <div className="actions">
-          <button onClick={sync} disabled={syncing}>
+          <button onClick={() => sync("codeforces")} disabled={syncing}>
             {syncing ? "Syncing…" : "Sync Codeforces"}
           </button>
+          {user.leetcode_repo && (
+            <button
+              className="ghost"
+              onClick={() => sync("leetcode")}
+              disabled={syncing}
+            >
+              Sync LeetCode
+            </button>
+          )}
           <button className="ghost" onClick={logout}>
             Log out
           </button>
@@ -118,6 +131,7 @@ export function DashboardPage() {
       ) : (
         <>
           <StatCards stats={data.stats} />
+          {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (
             <Recommendations data={data.recommendations} />
           )}

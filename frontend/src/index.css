@@ -248,3 +248,44 @@ button.link {
   font-variant-numeric: tabular-nums;
   color: #a9b6cc;
 }
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.inline-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+}
+
+.label-bar {
+  background: #1b2434;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.label-bar > div {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.label-row .small:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

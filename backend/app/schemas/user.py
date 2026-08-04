@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserRegister(BaseModel):
@@ -17,6 +17,7 @@ class UserOut(BaseModel):
     email: EmailStr
     display_name: str | None = None
     codeforces_handle: str | None = None
+    leetcode_repo: str | None = None
 
     class Config:
         from_attributes = True
@@ -29,3 +30,8 @@ class Token(BaseModel):
 
 class SetCodeforcesHandle(BaseModel):
     codeforces_handle: str
+
+
+class SetLeetcodeRepo(BaseModel):
+    # "owner/repo" of a LeetHub-synced GitHub repository.
+    leetcode_repo: str = Field(pattern=r"^[\w.-]+/[\w.-]+$")
