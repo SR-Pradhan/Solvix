@@ -414,7 +414,7 @@ button.link {
 
 @media (min-width: 560px) {
   .topic-list li {
-    grid-template-columns: 1fr 84px 170px;
+    grid-template-columns: 1fr 84px 170px 26px;
   }
 
   .topic-why {
@@ -562,4 +562,26 @@ button.link.inline {
 .problem-list a:hover {
   color: var(--accent);
   text-decoration: underline;
+}
+
+.problems-toggle {
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.problems-toggle:hover {
+  color: var(--accent);
+  background: #1b2434;
+}
+
+.problems-toggle.open {
+  transform: rotate(90deg);
+  color: var(--accent);
 }

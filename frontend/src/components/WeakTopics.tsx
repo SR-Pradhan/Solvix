@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Platform, WeakTopics as Data } from "../api/types";
+import { ProblemsToggle } from "./ProblemsToggle";
 import { TopicProblems } from "./TopicProblems";
 
 // Plain words instead of a 0-1 score: nobody reads "weakness 0.78".
@@ -96,6 +97,11 @@ export function WeakTopics({
             <span className="muted small topic-why">
               {reason(t.status, t.accuracy, t.days_since_last_solve)}
             </span>
+            <ProblemsToggle
+              open={openTag === t.tag}
+              label={t.tag}
+              onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
+            />
             {openTag === t.tag && (
               <TopicProblems
                 tag={t.tag}

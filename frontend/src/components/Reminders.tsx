@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Reminders as Data } from "../api/types";
+import { ProblemsToggle } from "./ProblemsToggle";
 import { RevisionProblems } from "./RevisionProblems";
 
 const KIND_LABELS: Record<string, string> = {
@@ -51,6 +52,19 @@ export function Reminders({ data }: { data: Data }) {
             )}
             <span className="badge">{KIND_LABELS[r.kind] ?? r.kind}</span>
             <span className="muted small topic-why">{r.reason}</span>
+            {r.kind === "topic" ? (
+              <ProblemsToggle
+                open={openTag === r.subject}
+                label={r.title}
+                onClick={() =>
+                  setOpenTag(openTag === r.subject ? null : r.subject)
+                }
+              />
+            ) : (
+              // A "Revisit" reminder is already one problem, so there is
+              // nothing to open; the empty cell keeps the columns aligned.
+              <span />
+            )}
             {openTag === r.subject && <RevisionProblems tag={r.subject} />}
           </li>
         ))}
