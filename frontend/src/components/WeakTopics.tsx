@@ -77,14 +77,7 @@ export function WeakTopics({
       <ul className="topic-list">
         {visible.map((t) => (
           <li key={t.tag}>
-            <button
-              type="button"
-              className="topic-name topic-toggle"
-              onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
-              aria-expanded={openTag === t.tag}
-            >
-              {t.tag}
-            </button>
+            <span className="topic-name">{t.tag}</span>
             <span
               className="badge"
               style={{

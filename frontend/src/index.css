@@ -519,21 +519,6 @@ button.link.inline {
   margin: 6px 0 0;
 }
 
-.topic-toggle {
-  background: none;
-  border: 0;
-  padding: 0;
-  color: var(--text);
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-
-.topic-toggle:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
 .topic-problems {
   grid-column: 1 / -1;
   margin: 6px 0 2px;
