@@ -195,6 +195,47 @@ input {
   font-variant-numeric: tabular-nums;
 }
 
+/* The dashboard is two tiers, not one stack.
+
+   Left: things to act on today (plan, reminders, weak topics, suggestions).
+   Right: things to look back at (week, profile, distributions).
+
+   Before 980px the columns get too narrow to read a topic row without
+   wrapping, so it collapses to a single column. */
+.dash {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.dash-main,
+.dash-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 980px) {
+  .dash {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  }
+}
+
+/* The secondary column is reference material: quieter headings and a little
+   less padding, so it reads as support rather than as a second main column. */
+.dash-side > .card {
+  padding: 16px;
+}
+
+.dash-side .card-head h2 {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
