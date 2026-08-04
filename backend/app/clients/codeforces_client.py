@@ -13,10 +13,20 @@ class CodeforcesHandleError(CodeforcesError):
     """The handle itself is rejected — the caller's mistake, not an outage."""
 
 
-async def fetch_user_submissions(handle: str) -> list[dict]:
+PAGE_SIZE = 1000
+
+
+async def fetch_user_submissions(
+    handle: str, from_index: int = 1, count: int | None = None
+) -> list[dict]:
+    """Fetch submissions newest-first. `from_index` is 1-based, as Codeforces wants."""
+    params: dict[str, str | int] = {"handle": handle, "from": from_index}
+    if count is not None:
+        params["count"] = count
+
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.get(f"{CF_API_BASE}/user.status", params={"handle": handle})
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(f"{CF_API_BASE}/user.status", params=params)
     except httpx.RequestError as e:
         raise CodeforcesError(f"Could not reach Codeforces: {e}") from e
 
@@ -36,6 +46,30 @@ async def fetch_user_submissions(handle: str) -> list[dict]:
         raise CodeforcesError(comment)
 
     return data["result"]
+
+
+async def fetch_submissions_since(handle: str, since_epoch: int) -> list[dict]:
+    """Fetch only submissions newer than `since_epoch`.
+
+    Codeforces returns newest first, so we walk pages and stop at the first
+    submission we have already stored rather than pulling the whole history.
+    """
+    collected: list[dict] = []
+    from_index = 1
+
+    while True:
+        page = await fetch_user_submissions(handle, from_index=from_index, count=PAGE_SIZE)
+        if not page:
+            return collected
+
+        for raw in page:
+            if raw["creationTimeSeconds"] <= since_epoch:
+                return collected
+            collected.append(raw)
+
+        if len(page) < PAGE_SIZE:
+            return collected
+        from_index += PAGE_SIZE
 
 
 def to_submission_row(raw: dict) -> dict:
