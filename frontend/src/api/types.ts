@@ -138,4 +138,17 @@ export interface WeeklyReport {
   strongest: TopicHighlight[];
 }
 
+export interface ReminderItem {
+  kind: string;
+  subject: string;
+  title: string;
+  reason: string;
+}
+
+export interface Reminders {
+  run_date: string;
+  generated: number;
+  reminders: ReminderItem[];
+}
+
 export type Platform = "codeforces" | "leetcode";

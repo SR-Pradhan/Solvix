@@ -16,6 +16,7 @@ from app.schemas.dashboard import (
     DailyPlanOut,
     RatingDistributionOut,
     RecommendationsOut,
+    RemindersOut,
     StatsOut,
     TagBreakdownOut,
     TimelineOut,
@@ -25,6 +26,7 @@ from app.schemas.dashboard import (
 from app.clients.groq_client import GroqError, GroqNotConfigured
 from app.services import (
     plan_service,
+    reminder_service,
     report_service,
     recommendation_service,
     stats_service,
@@ -164,6 +166,22 @@ async def read_daily_plan(
         )
     except GroqError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/reminders", response_model=RemindersOut)
+async def read_reminders(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await reminder_service.list_reminders(db, current_user.id)
+
+
+@router.post("/reminders/run", response_model=RemindersOut)
+async def trigger_reminders(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await reminder_service.run_reminders(db, current_user.id)
 
 
 @router.get("/weekly-report", response_model=WeeklyReportOut)

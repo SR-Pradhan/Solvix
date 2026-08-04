@@ -84,3 +84,27 @@ class WeeklyReport(Base):
     week_start = Column(Date, nullable=False)
     payload = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class Reminder(Base):
+    """One generated revision reminder.
+
+    Rows are the hand-off point between generation and delivery: the dashboard
+    reads them today, and an email sender can read the same rows later without
+    the engine changing.
+    """
+
+    __tablename__ = "reminders"
+    __table_args__ = (
+        UniqueConstraint("user_id", "run_date", "kind", "subject"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    run_date = Column(Date, nullable=False)
+    kind = Column(String(20), nullable=False)
+    # Stable identity for dedupe: a tag name, or "platform:problem_id".
+    subject = Column(String(200), nullable=False)
+    title = Column(String(255), nullable=False)
+    reason = Column(String(255), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())

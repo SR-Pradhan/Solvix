@@ -2,6 +2,7 @@ import type {
   DailyPlan,
   RatingDistribution,
   Recommendations,
+  Reminders,
   Stats,
   TagBreakdown,
   Timeline,
@@ -130,6 +131,9 @@ export const api = {
 
   timeline: (token: string, days = 365, platform?: Platform | null) =>
     request<Timeline>(`/dashboard/timeline${qs({ days, platform })}`, token),
+
+  reminders: (token: string) =>
+    request<Reminders>("/dashboard/reminders", token),
 
   weeklyReport: (token: string) =>
     request<WeeklyReport>("/dashboard/weekly-report", token),

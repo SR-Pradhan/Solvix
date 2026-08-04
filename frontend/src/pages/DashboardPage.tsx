@@ -10,6 +10,7 @@ import type {
   Platform,
   Timeline,
   WeakTopics as WeakTopicsData,
+  Reminders as RemindersData,
   WeeklyReport as WeeklyReportData,
 } from "../api/types";
 import { useAuth } from "../auth";
@@ -18,6 +19,7 @@ import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
+import { Reminders } from "../components/Reminders";
 import { StatCards } from "../components/StatCards";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
@@ -30,6 +32,7 @@ interface Dashboard {
   timeline: Timeline;
   weakTopics: WeakTopicsData;
   weekly: WeeklyReportData;
+  reminders: RemindersData;
   recommendations: RecommendationsData | null;
 }
 
@@ -51,7 +54,7 @@ export function DashboardPage() {
     if (!token) return;
     setError(null);
     try {
-      const [stats, tags, ratings, timeline, weakTopics, weekly] =
+      const [stats, tags, ratings, timeline, weakTopics, weekly, reminders] =
         await Promise.all([
           api.stats(token, platform),
           api.tags(token, 12, platform),
@@ -59,6 +62,7 @@ export function DashboardPage() {
           api.timeline(token, 365, platform),
           api.weakTopics(token, 30, platform),
           api.weeklyReport(token),
+          api.reminders(token),
         ]);
       setData({
         stats,
@@ -67,6 +71,7 @@ export function DashboardPage() {
         timeline,
         weakTopics,
         weekly,
+        reminders,
         recommendations: null,
       });
 
@@ -192,6 +197,7 @@ export function DashboardPage() {
           {plan && (
             <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
           )}
+          <Reminders data={data.reminders} />
           <WeeklyReport data={data.weekly} />
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (

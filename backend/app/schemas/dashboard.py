@@ -73,6 +73,19 @@ class WeeklyReportOut(BaseModel):
     strongest: list[TopicHighlight] = []
 
 
+class ReminderItem(BaseModel):
+    kind: str
+    subject: str
+    title: str
+    reason: str
+
+
+class RemindersOut(BaseModel):
+    run_date: date
+    generated: int
+    reminders: list[ReminderItem] = []
+
+
 class TopicScore(BaseModel):
     tag: str
     attempts: int
