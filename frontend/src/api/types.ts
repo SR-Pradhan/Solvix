@@ -82,3 +82,21 @@ export interface Recommendations {
   problems: RecommendedProblem[];
   note: string | null;
 }
+
+export interface TopicScore {
+  tag: string;
+  attempts: number;
+  accepted: number;
+  solved: number;
+  accuracy: number;
+  last_solved_at: string | null;
+  days_since_last_solve: number | null;
+  weakness: number;
+}
+
+export interface WeakTopics {
+  topics: TopicScore[];
+  total_topics: number;
+  skipped_low_volume: number;
+  min_attempts: number;
+}

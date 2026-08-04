@@ -7,12 +7,14 @@ import type {
   Stats,
   TagBreakdown,
   Timeline,
+  WeakTopics as WeakTopicsData,
 } from "../api/types";
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
+import { WeakTopics } from "../components/WeakTopics";
 import { HandleSetup } from "./HandleSetup";
 
 interface Dashboard {
@@ -20,6 +22,7 @@ interface Dashboard {
   tags: TagBreakdown;
   ratings: RatingDistribution;
   timeline: Timeline;
+  weakTopics: WeakTopicsData;
   recommendations: RecommendationsData | null;
 }
 
@@ -34,13 +37,21 @@ export function DashboardPage() {
     if (!token) return;
     setError(null);
     try {
-      const [stats, tags, ratings, timeline] = await Promise.all([
+      const [stats, tags, ratings, timeline, weakTopics] = await Promise.all([
         api.stats(token),
         api.tags(token, 12),
         api.ratings(token),
         api.timeline(token, 365),
+        api.weakTopics(token, 8),
       ]);
-      setData({ stats, tags, ratings, timeline, recommendations: null });
+      setData({
+        stats,
+        tags,
+        ratings,
+        timeline,
+        weakTopics,
+        recommendations: null,
+      });
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
@@ -136,6 +147,7 @@ export function DashboardPage() {
             <Recommendations data={data.recommendations} />
           )}
           <div className="grid-2">
+            <WeakTopics data={data.weakTopics} />
             <TagChart data={data.tags} />
             <RatingChart data={data.ratings} />
           </div>

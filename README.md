@@ -16,6 +16,8 @@ difficulty spread, and activity over time.
   count as one solve, not eleven
 - **Breaks down** solves by tag and difficulty rating
 - **Tracks** daily activity, current streak, and longest streak
+- **Scores** each topic by accuracy and recency, so a tag you brute-forced
+  through or last touched months ago ranks as weak
 - **Recommends** unsolved problems from the tags you practise least, at a
   difficulty just above your current level
 
@@ -83,6 +85,7 @@ automatically.
 | GET    | `/dashboard/tags`                 | Solves per tag                   |
 | GET    | `/dashboard/rating-distribution`  | Solves per difficulty            |
 | GET    | `/dashboard/timeline`             | Solves per day                   |
+| GET    | `/dashboard/weak-topics`          | Tags scored by accuracy + recency|
 | GET    | `/dashboard/recommendations`      | Problems picked from weak tags   |
 
 All `/users` and `/dashboard` routes need `Authorization: Bearer <token>`.

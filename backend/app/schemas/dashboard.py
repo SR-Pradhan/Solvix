@@ -40,6 +40,24 @@ class RatingDistributionOut(BaseModel):
     unrated_count: int
 
 
+class TopicScore(BaseModel):
+    tag: str
+    attempts: int
+    accepted: int
+    solved: int
+    accuracy: float
+    last_solved_at: date | None = None
+    days_since_last_solve: int | None = None
+    weakness: float
+
+
+class WeakTopicsOut(BaseModel):
+    topics: list[TopicScore]
+    total_topics: int
+    skipped_low_volume: int
+    min_attempts: int
+
+
 class WeakTag(BaseModel):
     tag: str
     solved_count: int

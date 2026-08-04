@@ -16,8 +16,9 @@ from app.schemas.dashboard import (
     StatsOut,
     TagBreakdownOut,
     TimelineOut,
+    WeakTopicsOut,
 )
-from app.services import recommendation_service, stats_service
+from app.services import recommendation_service, stats_service, topic_service
 from app.services.ingestion_service import ingest_codeforces_submissions
 from app.services.leetcode_ingestion_service import ingest_leetcode_submissions
 
@@ -115,6 +116,15 @@ async def read_recommendations(
         )
     except CodeforcesError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/weak-topics", response_model=WeakTopicsOut)
+async def read_weak_topics(
+    limit: int | None = Query(default=None, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await topic_service.get_weak_topics(db, current_user.id, limit=limit)
 
 
 @router.get("/timeline", response_model=TimelineOut)

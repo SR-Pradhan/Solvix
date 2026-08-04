@@ -6,6 +6,7 @@ import type {
   Timeline,
   Token,
   User,
+  WeakTopics,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
@@ -113,6 +114,9 @@ export const api = {
 
   timeline: (token: string, days = 365) =>
     request<Timeline>(`/dashboard/timeline?days=${days}`, token),
+
+  weakTopics: (token: string, limit = 8) =>
+    request<WeakTopics>(`/dashboard/weak-topics?limit=${limit}`, token),
 
   recommendations: (token: string, limit = 10) =>
     request<Recommendations>(`/dashboard/recommendations?limit=${limit}`, token),

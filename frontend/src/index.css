@@ -289,3 +289,63 @@ button.link {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.topics {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.topics th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding-bottom: 8px;
+}
+
+.topics td {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.topics td:not(:first-child) {
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.acc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+}
+
+.acc-bar {
+  flex: 1;
+  height: 6px;
+  background: #1b2434;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.acc-bar > div {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.skipped {
+  margin: 12px 0 0;
+}
