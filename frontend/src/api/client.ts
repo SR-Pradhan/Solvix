@@ -1,4 +1,5 @@
 import type {
+  DailyPlan,
   RatingDistribution,
   Recommendations,
   Stats,
@@ -64,7 +65,9 @@ async function readDetail(res: Response): Promise<string> {
   return res.statusText || `Request failed (${res.status})`;
 }
 
-function qs(params: Record<string, string | number | null | undefined>): string {
+function qs(
+  params: Record<string, string | number | boolean | null | undefined>,
+): string {
   const parts = Object.entries(params)
     .filter(([, v]) => v !== null && v !== undefined)
     .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`);
@@ -126,6 +129,9 @@ export const api = {
 
   timeline: (token: string, days = 365, platform?: Platform | null) =>
     request<Timeline>(`/dashboard/timeline${qs({ days, platform })}`, token),
+
+  dailyPlan: (token: string, regenerate = false) =>
+    request<DailyPlan>(`/dashboard/daily-plan${qs({ regenerate })}`, token),
 
   weakTopics: (token: string, limit = 8, platform?: Platform | null) =>
     request<WeakTopics>(`/dashboard/weak-topics${qs({ limit, platform })}`, token),

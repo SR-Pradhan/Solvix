@@ -1,6 +1,7 @@
 from sqlalchemy import (
     ARRAY,
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -8,6 +9,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -47,4 +49,21 @@ class Submission(Base):
     difficulty_label = Column(String(10))
     verdict = Column(String(40))
     solved_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class DailyPlan(Base):
+    """One generated practice plan per user per day.
+
+    Stored rather than generated on demand so revisiting the dashboard costs no
+    model call, and so the plan does not change between page loads.
+    """
+
+    __tablename__ = "daily_plans"
+    __table_args__ = (UniqueConstraint("user_id", "plan_date"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    plan_date = Column(Date, nullable=False)
+    payload = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

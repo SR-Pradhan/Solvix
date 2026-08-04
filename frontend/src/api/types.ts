@@ -106,4 +106,19 @@ export interface WeakTopics {
   stale_topics: string[];
 }
 
+export interface PlanTask {
+  title: string;
+  detail: string;
+  minutes: number;
+}
+
+export interface DailyPlan {
+  date: string;
+  generated: boolean;
+  focus: string[];
+  tasks: PlanTask[];
+  note: string;
+  unavailable: string | null;
+}
+
 export type Platform = "codeforces" | "leetcode";

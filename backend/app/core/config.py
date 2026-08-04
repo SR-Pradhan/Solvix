@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # Optional: raises GitHub's rate limit from 60 to 5000 requests per hour,
     # which a first LeetCode import needs.
     github_token: str | None = None
+    # Optional: enables the AI daily plan. Free key from console.groq.com/keys.
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
 
     # Anchored to backend/ so the app and alembic load the same .env no matter
     # which directory they are invoked from.

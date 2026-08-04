@@ -11,6 +11,7 @@ from app.core.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.dashboard import (
+    DailyPlanOut,
     RatingDistributionOut,
     RecommendationsOut,
     StatsOut,
@@ -18,7 +19,13 @@ from app.schemas.dashboard import (
     TimelineOut,
     WeakTopicsOut,
 )
-from app.services import recommendation_service, stats_service, topic_service
+from app.clients.groq_client import GroqError, GroqNotConfigured
+from app.services import (
+    plan_service,
+    recommendation_service,
+    stats_service,
+    topic_service,
+)
 from app.services.ingestion_service import ingest_codeforces_submissions
 from app.services.leetcode_ingestion_service import ingest_leetcode_submissions
 
@@ -134,6 +141,24 @@ async def read_recommendations(
             db, current_user.id, limit=limit
         )
     except CodeforcesError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/daily-plan", response_model=DailyPlanOut)
+async def read_daily_plan(
+    regenerate: bool = Query(default=False, description="Discard today's stored plan"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await plan_service.get_daily_plan(
+            db, current_user.id, regenerate=regenerate
+        )
+    except GroqNotConfigured as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)
+        )
+    except GroqError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
 

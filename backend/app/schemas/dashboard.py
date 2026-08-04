@@ -40,6 +40,22 @@ class RatingDistributionOut(BaseModel):
     unrated_count: int
 
 
+class PlanTask(BaseModel):
+    title: str
+    detail: str = ""
+    minutes: int
+
+
+class DailyPlanOut(BaseModel):
+    date: date
+    generated: bool
+    focus: list[str] = []
+    tasks: list[PlanTask] = []
+    note: str = ""
+    # Set when there is not enough practice data to plan a session.
+    unavailable: str | None = None
+
+
 class TopicScore(BaseModel):
     tag: str
     attempts: int

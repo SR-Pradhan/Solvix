@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { api } from "../api/client";
 import type {
+  DailyPlan as DailyPlanData,
   RatingDistribution,
   Recommendations as RecommendationsData,
   Stats,
@@ -13,6 +14,7 @@ import type {
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
+import { DailyPlan } from "../components/DailyPlan";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
@@ -35,6 +37,8 @@ export function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
+  const [plan, setPlan] = useState<DailyPlanData | null>(null);
+  const [planBusy, setPlanBusy] = useState(false);
 
   const connected: Platform[] = [];
   if (user?.codeforces_handle) connected.push("codeforces");
@@ -59,6 +63,13 @@ export function DashboardPage() {
         weakTopics,
         recommendations: null,
       });
+
+      // The plan may call a language model, so it loads after the charts and
+      // is allowed to fail without taking the dashboard down with it.
+      api
+        .dailyPlan(token)
+        .then(setPlan)
+        .catch(() => setPlan(null));
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
@@ -97,6 +108,18 @@ export function DashboardPage() {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function regeneratePlan() {
+    if (!token) return;
+    setPlanBusy(true);
+    try {
+      setPlan(await api.dailyPlan(token, true));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not rebuild the plan");
+    } finally {
+      setPlanBusy(false);
     }
   }
 
@@ -160,6 +183,9 @@ export function DashboardPage() {
       ) : (
         <>
           <StatCards stats={data.stats} topics={data.weakTopics} />
+          {plan && (
+            <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
+          )}
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (
             <Recommendations data={data.recommendations} />

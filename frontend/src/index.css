@@ -449,3 +449,52 @@ button.link.inline {
   flex: 1;
   min-width: 0;
 }
+
+.plan-list {
+  list-style: none;
+  counter-reset: plan;
+  margin: 0;
+  padding: 0;
+}
+
+.plan-list li {
+  counter-increment: plan;
+  padding: 12px 0 12px 30px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.plan-list li::before {
+  content: counter(plan);
+  position: absolute;
+  left: 0;
+  top: 13px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1b2434;
+  color: var(--muted);
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.plan-title {
+  font-size: 14px;
+}
+
+.plan-detail {
+  margin: 4px 0 0;
+}
+
+.plan-note {
+  margin: 14px 0 0;
+  font-style: italic;
+}
