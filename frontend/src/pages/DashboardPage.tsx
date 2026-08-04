@@ -159,10 +159,7 @@ export function DashboardPage() {
         </section>
       ) : (
         <>
-          <StatCards
-            stats={data.stats}
-            topicsCovered={data.weakTopics.total_topics}
-          />
+          <StatCards stats={data.stats} topics={data.weakTopics} />
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (
             <Recommendations data={data.recommendations} />

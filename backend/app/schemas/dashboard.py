@@ -58,6 +58,9 @@ class WeakTopicsOut(BaseModel):
     skipped_low_volume: int
     min_attempts: int
     scored_on_accuracy: int
+    stale_count: int
+    stale_horizon_days: int
+    stale_examples: list[str] = []
 
 
 class WeakTag(BaseModel):

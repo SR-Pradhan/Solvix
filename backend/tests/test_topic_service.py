@@ -3,7 +3,9 @@ from datetime import date, timedelta
 from app.services.topic_service import (
     ACCURACY_WEIGHT,
     RECENCY_WEIGHT,
+    REVISION_DUE_DAYS,
     STALE_HORIZON_DAYS,
+    _is_stale,
     score_topic,
 )
 
@@ -71,3 +73,24 @@ def test_accuracy_outweighs_recency():
 
 def test_zero_attempts_does_not_divide_by_zero():
     assert weakness(0, 0, None) == round(ACCURACY_WEIGHT + RECENCY_WEIGHT, 4)
+
+
+def test_never_solved_counts_as_stale():
+    assert _is_stale(None) is True
+
+
+def test_exactly_at_the_revision_window_counts_as_stale():
+    assert _is_stale(REVISION_DUE_DAYS) is True
+
+
+def test_just_inside_the_revision_window_is_not_stale():
+    assert _is_stale(REVISION_DUE_DAYS - 1) is False
+
+
+def test_revision_window_is_shorter_than_the_scoring_horizon():
+    # They are deliberately different: one is a to-do list, the other is decay.
+    assert REVISION_DUE_DAYS < STALE_HORIZON_DAYS
+
+
+def test_solved_today_is_not_stale():
+    assert _is_stale(0) is False

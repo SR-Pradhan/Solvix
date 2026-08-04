@@ -31,8 +31,13 @@ PLATFORMS_WITH_FAILURES = ("codeforces",)
 # Below this, accuracy is noise rather than signal — one wrong answer on a
 # single attempt would read as a 0% tag.
 MIN_ATTEMPTS = 3
-# How long a tag takes to go fully stale.
+# How long a tag takes to fully decay in the weakness score. Kept generous so
+# the ranking keeps its resolution: if everything older than a week counted as
+# maximally stale, recency would stop separating topics at all.
 STALE_HORIZON_DAYS = 60
+# When a topic becomes due for revision. Short on purpose, so the "going stale"
+# list is a this-week to-do rather than a backlog.
+REVISION_DUE_DAYS = 7
 # Accuracy matters more than recency: being unable to solve a topic is a
 # bigger problem than not having touched it lately.
 ACCURACY_WEIGHT, RECENCY_WEIGHT = 0.6, 0.4
@@ -50,6 +55,11 @@ def status_for(weakness: float) -> str:
         if weakness >= threshold:
             return label
     return "Solid"
+
+
+def _is_stale(days_since: int | None) -> bool:
+    """Never solved, or not revised within the revision window."""
+    return days_since is None or days_since >= REVISION_DUE_DAYS
 
 
 def score_topic(
@@ -149,10 +159,19 @@ async def get_weak_topics(
     topics.sort(key=lambda t: (-t["weakness"], t["tag"]))
     scored_on_accuracy = sum(1 for t in topics if t["accuracy"] is not None)
 
+    # Counted over every topic, not just the ones returned, so the figure does
+    # not change when the caller asks for a shorter list.
+    stale = [t for t in topics if _is_stale(t["days_since_last_solve"])]
+
     return {
         "topics": topics[:limit] if limit else topics,
         "total_topics": len(topics),
         "skipped_low_volume": skipped,
         "min_attempts": MIN_ATTEMPTS,
         "scored_on_accuracy": scored_on_accuracy,
+        "stale_count": len(stale),
+        "stale_horizon_days": REVISION_DUE_DAYS,
+        # Enough for the card to name them all in the common case; the
+        # frontend summarises when the list is long.
+        "stale_examples": [t["tag"] for t in stale[:12]],
     }

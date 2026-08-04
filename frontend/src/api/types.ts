@@ -101,6 +101,9 @@ export interface WeakTopics {
   skipped_low_volume: number;
   min_attempts: number;
   scored_on_accuracy: number;
+  stale_count: number;
+  stale_horizon_days: number;
+  stale_examples: string[];
 }
 
 export type Platform = "codeforces" | "leetcode";
