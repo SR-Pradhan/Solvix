@@ -1,0 +1,118 @@
+import { useCallback, useEffect, useState } from "react";
+
+import { api } from "../api/client";
+import type {
+  RatingDistribution,
+  Stats,
+  TagBreakdown,
+  Timeline,
+} from "../api/types";
+import { useAuth } from "../auth";
+import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
+import { StatCards } from "../components/StatCards";
+import { HandleSetup } from "./HandleSetup";
+
+interface Dashboard {
+  stats: Stats;
+  tags: TagBreakdown;
+  ratings: RatingDistribution;
+  timeline: Timeline;
+}
+
+export function DashboardPage() {
+  const { token, user, logout, refreshUser } = useAuth();
+  const [data, setData] = useState<Dashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    setError(null);
+    try {
+      const [stats, tags, ratings, timeline] = await Promise.all([
+        api.stats(token),
+        api.tags(token, 12),
+        api.ratings(token),
+        api.timeline(token, 365),
+      ]);
+      setData({ stats, tags, ratings, timeline });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (user?.codeforces_handle) void load();
+  }, [user?.codeforces_handle, load]);
+
+  async function sync() {
+    if (!token) return;
+    setSyncing(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const { inserted } = await api.ingest(token);
+      setNotice(
+        inserted === 0
+          ? "Already up to date."
+          : `Imported ${inserted.toLocaleString()} new submissions.`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  if (!user) return null;
+
+  if (!user.codeforces_handle) {
+    return <HandleSetup onDone={refreshUser} />;
+  }
+
+  return (
+    <div className="page">
+      <header className="topbar">
+        <div>
+          <h1 className="brand">Solvix</h1>
+          <span className="muted small">
+            {user.display_name ?? user.email} · @{user.codeforces_handle}
+          </span>
+        </div>
+        <div className="actions">
+          <button onClick={sync} disabled={syncing}>
+            {syncing ? "Syncing…" : "Sync Codeforces"}
+          </button>
+          <button className="ghost" onClick={logout}>
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {notice && <p className="notice">{notice}</p>}
+      {error && <p className="error">{error}</p>}
+
+      {!data ? (
+        <p className="muted">Loading…</p>
+      ) : data.stats.total_submissions === 0 ? (
+        <section className="card">
+          <p>
+            Nothing imported yet. Hit <strong>Sync Codeforces</strong> to pull
+            your submissions.
+          </p>
+        </section>
+      ) : (
+        <>
+          <StatCards stats={data.stats} />
+          <div className="grid-2">
+            <TagChart data={data.tags} />
+            <RatingChart data={data.ratings} />
+          </div>
+          <ActivityChart data={data.timeline} />
+        </>
+      )}
+    </div>
+  );
+}

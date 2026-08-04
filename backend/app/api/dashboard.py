@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.codeforces_client import CodeforcesError
+from app.clients.codeforces_client import CodeforcesError, CodeforcesHandleError
 from app.core.deps import get_current_user
 from app.db.database import get_db
 from app.db.models import User
@@ -31,6 +31,12 @@ async def ingest_codeforces(
     try:
         inserted = await ingest_codeforces_submissions(
             db, user_id=current_user.id, handle=current_user.codeforces_handle
+        )
+    except CodeforcesHandleError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Codeforces rejected the handle "
+            f"'{current_user.codeforces_handle}': {e}",
         )
     except CodeforcesError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))

@@ -1,0 +1,54 @@
+// Mirrors backend/app/schemas/*.py — keep in sync with the Pydantic models.
+
+export interface User {
+  id: number;
+  email: string;
+  display_name: string | null;
+  codeforces_handle: string | null;
+}
+
+export interface Token {
+  access_token: string;
+  token_type: string;
+}
+
+export interface Stats {
+  problems_solved: number;
+  total_submissions: number;
+  accepted_submissions: number;
+  acceptance_rate: number;
+  avg_difficulty: number | null;
+  max_difficulty: number | null;
+  current_streak_days: number;
+  longest_streak_days: number;
+}
+
+export interface TagCount {
+  tag: string;
+  solved_count: number;
+}
+
+export interface TagBreakdown {
+  total_tags: number;
+  tags: TagCount[];
+}
+
+export interface RatingBucket {
+  rating: number;
+  solved_count: number;
+}
+
+export interface RatingDistribution {
+  buckets: RatingBucket[];
+  unrated_count: number;
+}
+
+export interface TimelinePoint {
+  day: string;
+  solved_count: number;
+}
+
+export interface Timeline {
+  days: number;
+  points: TimelinePoint[];
+}
