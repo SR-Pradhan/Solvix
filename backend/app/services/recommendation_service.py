@@ -101,6 +101,22 @@ def _target_rating(ratings: list[int]) -> int:
     return int(round(stretch / 100) * 100)
 
 
+def build_shortfall_note(codeforces_solved: int) -> str:
+    """Explain that suggestions need Codeforces specifically, not any platform."""
+    if codeforces_solved == 0:
+        have = "have not solved any yet"
+    elif codeforces_solved == 1:
+        have = "have solved 1 so far"
+    else:
+        have = f"have solved {codeforces_solved} so far"
+
+    return (
+        f"Suggestions come from the Codeforces problem set, so they need at "
+        f"least {MIN_SOLVED_FOR_SIGNAL} solved Codeforces problems to judge "
+        f"your level. You {have}. Sync Codeforces to unlock this."
+    )
+
+
 async def get_recommendations(db: AsyncSession, user_id: int, limit: int = 10) -> dict:
     solved = await _solved(db, user_id)
     solved_ids = {pid for pid, _, _ in solved}
@@ -108,14 +124,14 @@ async def get_recommendations(db: AsyncSession, user_id: int, limit: int = 10) -
     ratings = [r for _, _, r in solved if r is not None]
 
     if len(solved) < MIN_SOLVED_FOR_SIGNAL:
+        # Name the platform and the actual count: a user with 48 LeetCode
+        # solves reading "solve at least 10 problems" reasonably concludes the
+        # feature is broken.
         return {
             "target_rating": DEFAULT_TARGET_RATING,
             "weak_tags": [],
             "problems": [],
-            "note": (
-                f"Solve at least {MIN_SOLVED_FOR_SIGNAL} problems so Solvix can "
-                "tell which tags you are weak at."
-            ),
+            "note": build_shortfall_note(len(solved)),
         }
 
     problemset = await _problemset()

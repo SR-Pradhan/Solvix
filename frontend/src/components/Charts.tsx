@@ -149,9 +149,11 @@ function ChartCard({
         <h2>{title}</h2>
         {note && <span className="muted small">{note}</span>}
       </header>
-      {/* Grows with the card so a taller neighbour does not leave dead space
-          under the plot. minHeight keeps it readable when it is the tallest. */}
-      <div className="chart-fill" style={{ minHeight: height }}>
+      {/* An explicit height, not just min-height: the chart inside sizes itself
+          as a percentage of its parent, and a percentage of an auto height is
+          zero. Inside a stretched grid card, `flex: 1` overrides this and lets
+          the plot grow to fill the card instead. */}
+      <div className="chart-fill" style={{ height, minHeight: height }}>
         <ResponsiveContainer width="100%" height="100%">
           {children}
         </ResponsiveContainer>

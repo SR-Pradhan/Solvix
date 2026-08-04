@@ -2,6 +2,8 @@ from collections import Counter
 
 from app.services.recommendation_service import (
     MIN_PROBLEMS_PER_TAG,
+    MIN_SOLVED_FOR_SIGNAL,
+    build_shortfall_note,
     _target_rating,
     _weak_tags,
 )
@@ -65,3 +67,20 @@ def test_target_rating_follows_the_stretch_not_the_average():
 
 def test_target_rating_rounds_to_hundreds():
     assert _target_rating([1437, 1462, 1488]) % 100 == 0
+
+
+def test_shortfall_note_names_codeforces_not_problems_in_general():
+    note = build_shortfall_note(1)
+    assert "Codeforces" in note
+    assert str(MIN_SOLVED_FOR_SIGNAL) in note
+
+
+def test_shortfall_note_reports_the_actual_count():
+    assert "solved 1 so far" in build_shortfall_note(1)
+    assert "solved 7 so far" in build_shortfall_note(7)
+
+
+def test_shortfall_note_reads_naturally_at_zero():
+    note = build_shortfall_note(0)
+    assert "have not solved any yet" in note
+    assert "solved 0" not in note
