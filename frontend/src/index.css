@@ -605,3 +605,13 @@ button.link.inline {
     transform: rotate(360deg);
   }
 }
+
+/* Log out is not a third sync button; a gap and dimmer text separate it. */
+.actions .logout {
+  margin-left: 8px;
+  color: #6b7789;
+}
+
+.actions .logout:hover {
+  color: var(--text);
+}

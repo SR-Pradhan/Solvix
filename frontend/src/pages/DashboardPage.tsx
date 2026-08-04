@@ -163,7 +163,10 @@ export function DashboardPage() {
           </span>
         </div>
         <div className="actions">
-          <button onClick={() => sync("codeforces")} disabled={syncing}>
+          {/* Both syncs are the same action for different platforms, so they
+              carry the same weight. Log out is separated rather than styled
+              like a third sibling. */}
+          <button className="ghost" onClick={() => sync("codeforces")} disabled={syncing}>
             {syncing ? "Syncing…" : "Sync Codeforces"}
           </button>
           {user.leetcode_repo && (
@@ -175,7 +178,7 @@ export function DashboardPage() {
               Sync LeetCode
             </button>
           )}
-          <button className="ghost" onClick={logout}>
+          <button className="ghost logout" onClick={logout}>
             Log out
           </button>
         </div>
