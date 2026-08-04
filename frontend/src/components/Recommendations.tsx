@@ -31,7 +31,7 @@ export function Recommendations({ data }: { data: Data }) {
 
       {data.problems.length === 0 ? (
         <p className="muted">
-          Nothing left unsolved in this range — you have cleared it.
+          Nothing left unsolved in this range. You have cleared it.
         </p>
       ) : (
         <ul className="rec-list">

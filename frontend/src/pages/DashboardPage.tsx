@@ -6,12 +6,14 @@ import type {
   Recommendations as RecommendationsData,
   Stats,
   TagBreakdown,
+  Platform,
   Timeline,
   WeakTopics as WeakTopicsData,
 } from "../api/types";
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
+import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
 import { WeakTopics } from "../components/WeakTopics";
@@ -32,17 +34,22 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<Platform | null>(null);
+
+  const connected: Platform[] = [];
+  if (user?.codeforces_handle) connected.push("codeforces");
+  if (user?.leetcode_repo) connected.push("leetcode");
 
   const load = useCallback(async () => {
     if (!token) return;
     setError(null);
     try {
       const [stats, tags, ratings, timeline, weakTopics] = await Promise.all([
-        api.stats(token),
-        api.tags(token, 12),
-        api.ratings(token),
-        api.timeline(token, 365),
-        api.weakTopics(token, 8),
+        api.stats(token, platform),
+        api.tags(token, 12, platform),
+        api.ratings(token, platform),
+        api.timeline(token, 365, platform),
+        api.weakTopics(token, 8, platform),
       ]);
       setData({
         stats,
@@ -64,7 +71,7 @@ export function DashboardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     }
-  }, [token]);
+  }, [token, platform]);
 
   useEffect(() => {
     if (user?.codeforces_handle) void load();
@@ -105,7 +112,12 @@ export function DashboardPage() {
         <div>
           <h1 className="brand">Solvix</h1>
           <span className="muted small">
-            {user.display_name ?? user.email} · @{user.codeforces_handle}
+            {[
+              user.display_name ?? user.email,
+              user.codeforces_handle && `@${user.codeforces_handle}`,
+            ]
+              .filter(Boolean)
+              .join(", ")}
           </span>
         </div>
         <div className="actions">
@@ -127,6 +139,12 @@ export function DashboardPage() {
         </div>
       </header>
 
+      <PlatformFilter
+        available={connected}
+        value={platform}
+        onChange={setPlatform}
+      />
+
       {notice && <p className="notice">{notice}</p>}
       {error && <p className="error">{error}</p>}
 
@@ -141,7 +159,10 @@ export function DashboardPage() {
         </section>
       ) : (
         <>
-          <StatCards stats={data.stats} />
+          <StatCards
+            stats={data.stats}
+            topicsCovered={data.weakTopics.total_topics}
+          />
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (
             <Recommendations data={data.recommendations} />

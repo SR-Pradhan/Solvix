@@ -40,14 +40,18 @@ def compute_streaks(active_days: list[date], today: date) -> tuple[int, int]:
     return current, longest
 
 
-def _solved_problems(user_id: int):
+def _platform_filter(query, platform: str | None):
+    return query.where(Submission.platform == platform) if platform else query
+
+
+def _solved_problems(user_id: int, platform: str | None = None):
     """One row per distinct problem solved, taken from its first accepted submission.
 
     Codeforces reports every attempt, so a problem solved after ten wrong
     answers appears eleven times. Collapsing on external_problem_id keeps the
     stats about problems rather than about keystrokes.
     """
-    return (
+    query = (
         select(
             Submission.external_problem_id,
             Submission.problem_name,
@@ -59,12 +63,12 @@ def _solved_problems(user_id: int):
         .where(Submission.user_id == user_id, Submission.verdict == ACCEPTED)
         .distinct(Submission.external_problem_id)
         .order_by(Submission.external_problem_id, Submission.solved_at)
-        .subquery()
     )
+    return _platform_filter(query, platform).subquery()
 
 
-async def get_stats(db: AsyncSession, user_id: int) -> dict:
-    solved = _solved_problems(user_id)
+async def get_stats(db: AsyncSession, user_id: int, platform: str | None = None) -> dict:
+    solved = _solved_problems(user_id, platform)
 
     solved_row = (
         await db.execute(
@@ -83,7 +87,10 @@ async def get_stats(db: AsyncSession, user_id: int) -> dict:
                 func.count()
                 .filter(Submission.verdict == ACCEPTED)
                 .label("accepted_submissions"),
-            ).where(Submission.user_id == user_id)
+            ).where(
+                Submission.user_id == user_id,
+                *( (Submission.platform == platform,) if platform else () ),
+            )
         )
     ).one()
 
@@ -91,7 +98,11 @@ async def get_stats(db: AsyncSession, user_id: int) -> dict:
         (
             await db.execute(
                 select(func.date(Submission.solved_at))
-                .where(Submission.user_id == user_id, Submission.verdict == ACCEPTED)
+                .where(
+                    Submission.user_id == user_id,
+                    Submission.verdict == ACCEPTED,
+                    *( (Submission.platform == platform,) if platform else () ),
+                )
                 .distinct()
             )
         )
@@ -117,8 +128,10 @@ async def get_stats(db: AsyncSession, user_id: int) -> dict:
     }
 
 
-async def get_tag_breakdown(db: AsyncSession, user_id: int, limit: int | None = None) -> dict:
-    solved = _solved_problems(user_id)
+async def get_tag_breakdown(
+    db: AsyncSession, user_id: int, limit: int | None = None, platform: str | None = None
+) -> dict:
+    solved = _solved_problems(user_id, platform)
     unnested = select(func.unnest(solved.c.tags).label("tag")).select_from(solved).subquery()
 
     count_col = func.count().label("solved_count")
@@ -139,8 +152,10 @@ async def get_tag_breakdown(db: AsyncSession, user_id: int, limit: int | None = 
     }
 
 
-async def get_rating_distribution(db: AsyncSession, user_id: int) -> dict:
-    solved = _solved_problems(user_id)
+async def get_rating_distribution(
+    db: AsyncSession, user_id: int, platform: str | None = None
+) -> dict:
+    solved = _solved_problems(user_id, platform)
 
     rows = (
         await db.execute(
@@ -186,7 +201,9 @@ async def get_rating_distribution(db: AsyncSession, user_id: int) -> dict:
     }
 
 
-async def get_timeline(db: AsyncSession, user_id: int, days: int) -> dict:
+async def get_timeline(
+    db: AsyncSession, user_id: int, days: int, platform: str | None = None
+) -> dict:
     """Distinct problems solved per day over the trailing `days` window.
 
     A problem re-solved on a later day counts again for that day: this feeds an
@@ -202,6 +219,7 @@ async def get_timeline(db: AsyncSession, user_id: int, days: int) -> dict:
                 Submission.user_id == user_id,
                 Submission.verdict == ACCEPTED,
                 Submission.solved_at >= since,
+                *( (Submission.platform == platform,) if platform else () ),
             )
             .group_by(day_col)
             .order_by(day_col)

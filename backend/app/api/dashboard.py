@@ -24,6 +24,18 @@ from app.services.leetcode_ingestion_service import ingest_leetcode_submissions
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
+PLATFORMS = ("codeforces", "leetcode")
+PlatformQuery = Query(default=None, description="Restrict to one platform; omit for all")
+
+
+def _validated(platform: str | None) -> str | None:
+    if platform is not None and platform not in PLATFORMS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"platform must be one of {', '.join(PLATFORMS)}",
+        )
+    return platform
+
 
 @router.post("/ingest/codeforces")
 async def ingest_codeforces(
@@ -81,27 +93,34 @@ async def ingest_leetcode(
 
 @router.get("/stats", response_model=StatsOut)
 async def read_stats(
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await stats_service.get_stats(db, current_user.id)
+    return await stats_service.get_stats(db, current_user.id, platform=_validated(platform))
 
 
 @router.get("/tags", response_model=TagBreakdownOut)
 async def read_tags(
     limit: int | None = Query(default=None, ge=1, le=100),
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await stats_service.get_tag_breakdown(db, current_user.id, limit=limit)
+    return await stats_service.get_tag_breakdown(
+        db, current_user.id, limit=limit, platform=_validated(platform)
+    )
 
 
 @router.get("/rating-distribution", response_model=RatingDistributionOut)
 async def read_rating_distribution(
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await stats_service.get_rating_distribution(db, current_user.id)
+    return await stats_service.get_rating_distribution(
+        db, current_user.id, platform=_validated(platform)
+    )
 
 
 @router.get("/recommendations", response_model=RecommendationsOut)
@@ -121,16 +140,22 @@ async def read_recommendations(
 @router.get("/weak-topics", response_model=WeakTopicsOut)
 async def read_weak_topics(
     limit: int | None = Query(default=None, ge=1, le=100),
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await topic_service.get_weak_topics(db, current_user.id, limit=limit)
+    return await topic_service.get_weak_topics(
+        db, current_user.id, limit=limit, platform=_validated(platform)
+    )
 
 
 @router.get("/timeline", response_model=TimelineOut)
 async def read_timeline(
     days: int = Query(default=365, ge=1, le=1825),
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await stats_service.get_timeline(db, current_user.id, days=days)
+    return await stats_service.get_timeline(
+        db, current_user.id, days=days, platform=_validated(platform)
+    )

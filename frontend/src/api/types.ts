@@ -1,4 +1,4 @@
-// Mirrors backend/app/schemas/*.py — keep in sync with the Pydantic models.
+// Mirrors backend/app/schemas/*.py. Keep in sync with the Pydantic models.
 
 export interface User {
   id: number;
@@ -88,10 +88,11 @@ export interface TopicScore {
   attempts: number;
   accepted: number;
   solved: number;
-  accuracy: number;
+  accuracy: number | null;
   last_solved_at: string | null;
   days_since_last_solve: number | null;
   weakness: number;
+  status: string;
 }
 
 export interface WeakTopics {
@@ -99,4 +100,7 @@ export interface WeakTopics {
   total_topics: number;
   skipped_low_volume: number;
   min_attempts: number;
+  scored_on_accuracy: number;
 }
+
+export type Platform = "codeforces" | "leetcode";

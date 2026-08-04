@@ -4,6 +4,7 @@ import type {
   Stats,
   TagBreakdown,
   Timeline,
+  Platform,
   Token,
   User,
   WeakTopics,
@@ -63,6 +64,13 @@ async function readDetail(res: Response): Promise<string> {
   return res.statusText || `Request failed (${res.status})`;
 }
 
+function qs(params: Record<string, string | number | null | undefined>): string {
+  const parts = Object.entries(params)
+    .filter(([, v]) => v !== null && v !== undefined)
+    .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`);
+  return parts.length ? `?${parts.join("&")}` : "";
+}
+
 export const api = {
   register: (email: string, password: string, displayName?: string) =>
     request<User>("/auth/register", null, {
@@ -104,19 +112,23 @@ export const api = {
       method: "POST",
     }),
 
-  stats: (token: string) => request<Stats>("/dashboard/stats", token),
+  stats: (token: string, platform?: Platform | null) =>
+    request<Stats>(`/dashboard/stats${qs({ platform })}`, token),
 
-  tags: (token: string, limit = 12) =>
-    request<TagBreakdown>(`/dashboard/tags?limit=${limit}`, token),
+  tags: (token: string, limit = 12, platform?: Platform | null) =>
+    request<TagBreakdown>(`/dashboard/tags${qs({ limit, platform })}`, token),
 
-  ratings: (token: string) =>
-    request<RatingDistribution>("/dashboard/rating-distribution", token),
+  ratings: (token: string, platform?: Platform | null) =>
+    request<RatingDistribution>(
+      `/dashboard/rating-distribution${qs({ platform })}`,
+      token,
+    ),
 
-  timeline: (token: string, days = 365) =>
-    request<Timeline>(`/dashboard/timeline?days=${days}`, token),
+  timeline: (token: string, days = 365, platform?: Platform | null) =>
+    request<Timeline>(`/dashboard/timeline${qs({ days, platform })}`, token),
 
-  weakTopics: (token: string, limit = 8) =>
-    request<WeakTopics>(`/dashboard/weak-topics?limit=${limit}`, token),
+  weakTopics: (token: string, limit = 8, platform?: Platform | null) =>
+    request<WeakTopics>(`/dashboard/weak-topics${qs({ limit, platform })}`, token),
 
   recommendations: (token: string, limit = 10) =>
     request<Recommendations>(`/dashboard/recommendations?limit=${limit}`, token),

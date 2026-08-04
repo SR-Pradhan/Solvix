@@ -41,7 +41,7 @@ export function ConnectLeetCode({ onDone }: { onDone: () => Promise<void> }) {
       </header>
       <p className="muted small">
         Solvix reads your solved problems from a GitHub repo synced by the
-        LeetHub extension — LeetCode itself has no public API.
+        LeetHub extension. LeetCode itself has no public API.
       </p>
       <form className="inline-form" onSubmit={onSubmit}>
         <input

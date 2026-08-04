@@ -45,10 +45,11 @@ class TopicScore(BaseModel):
     attempts: int
     accepted: int
     solved: int
-    accuracy: float
+    accuracy: float | None = None
     last_solved_at: date | None = None
     days_since_last_solve: int | None = None
     weakness: float
+    status: str
 
 
 class WeakTopicsOut(BaseModel):
@@ -56,6 +57,7 @@ class WeakTopicsOut(BaseModel):
     total_topics: int
     skipped_low_volume: int
     min_attempts: int
+    scored_on_accuracy: int
 
 
 class WeakTag(BaseModel):

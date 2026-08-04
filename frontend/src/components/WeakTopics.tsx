@@ -1,19 +1,32 @@
 import type { WeakTopics as Data } from "../api/types";
 
+// Plain words instead of a 0-1 score: nobody reads "weakness 0.78".
+const STATUS_COLOUR: Record<string, string> = {
+  "Needs work": "#ef5b5b",
+  Rusty: "#e0a13a",
+  Solid: "#3fb27f",
+};
+
 function freshness(days: number | null): string {
-  if (days === null) return "never solved";
+  if (days === null) return "never";
   if (days === 0) return "today";
   if (days === 1) return "yesterday";
-  if (days < 30) return `${days}d ago`;
-  if (days < 365) return `${Math.round(days / 30)}mo ago`;
-  return `${Math.round(days / 365)}y ago`;
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.round(days / 30)} months ago`;
+  return `over a year ago`;
 }
 
-// Red where weak, green where strong, so the eye lands on what needs work.
-function weaknessColour(weakness: number): string {
-  if (weakness >= 0.6) return "#ef5b5b";
-  if (weakness >= 0.35) return "#e0a13a";
-  return "#3fb27f";
+function reason(
+  status: string,
+  accuracy: number | null,
+  days: number | null,
+): string {
+  if (accuracy !== null && accuracy < 0.5) {
+    return `only ${Math.round(accuracy * 100)}% of attempts pass`;
+  }
+  if (status === "Solid") return `going well`;
+  return `not practised since ${freshness(days)}`;
 }
 
 export function WeakTopics({ data }: { data: Data }) {
@@ -21,76 +34,50 @@ export function WeakTopics({ data }: { data: Data }) {
     return (
       <section className="card">
         <header className="card-head">
-          <h2>Weakest topics</h2>
+          <h2>What to work on</h2>
         </header>
         <p className="muted">
-          Not enough attempts yet — a topic needs at least {data.min_attempts}{" "}
-          to be scored.
+          Not enough practice yet. A topic needs at least {data.min_attempts}{" "}
+          attempts before Solvix can judge it.
         </p>
       </section>
     );
   }
 
+  const accuracyIsReal = data.scored_on_accuracy > 0;
+
   return (
     <section className="card">
       <header className="card-head">
-        <h2>Weakest topics</h2>
-        <span className="muted small">
-          by accuracy and recency · {data.total_topics} scored
-        </span>
+        <h2>What to work on</h2>
+        <span className="muted small">weakest first</span>
       </header>
 
-      <table className="topics">
-        <thead>
-          <tr>
-            <th>Topic</th>
-            <th>Accuracy</th>
-            <th>Solved</th>
-            <th>Last</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.topics.map((t) => (
-            <tr key={t.tag}>
-              <td>
-                <span
-                  className="dot"
-                  style={{ background: weaknessColour(t.weakness) }}
-                  title={`weakness ${t.weakness}`}
-                />
-                {t.tag}
-              </td>
-              <td>
-                <div className="acc">
-                  <div className="acc-bar">
-                    <div
-                      style={{
-                        width: `${t.accuracy * 100}%`,
-                        background: weaknessColour(t.weakness),
-                      }}
-                    />
-                  </div>
-                  <span className="small muted">
-                    {(t.accuracy * 100).toFixed(0)}%
-                  </span>
-                </div>
-              </td>
-              <td className="small muted">
-                {t.solved}/{t.attempts}
-              </td>
-              <td className="small muted">
-                {freshness(t.days_since_last_solve)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="topic-list">
+        {data.topics.map((t) => (
+          <li key={t.tag}>
+            <span className="topic-name">{t.tag}</span>
+            <span
+              className="badge"
+              style={{
+                color: STATUS_COLOUR[t.status],
+                borderColor: STATUS_COLOUR[t.status],
+              }}
+            >
+              {t.status}
+            </span>
+            <span className="muted small topic-why">
+              {reason(t.status, t.accuracy, t.days_since_last_solve)}
+            </span>
+          </li>
+        ))}
+      </ul>
 
-      {data.skipped_low_volume > 0 && (
+      {!accuracyIsReal && (
         <p className="muted small skipped">
-          {data.skipped_low_volume} topic
-          {data.skipped_low_volume === 1 ? "" : "s"} hidden — fewer than{" "}
-          {data.min_attempts} attempts, so accuracy would be noise.
+          Ranked by how long since you practised each topic. LeetCode only
+          records problems you solved, so there is no pass rate to judge.
+          Connect Codeforces for that.
         </p>
       )}
     </section>
