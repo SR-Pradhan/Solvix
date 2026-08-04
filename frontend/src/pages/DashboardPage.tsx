@@ -10,6 +10,7 @@ import type {
   Platform,
   Timeline,
   WeakTopics as WeakTopicsData,
+  WeeklyReport as WeeklyReportData,
 } from "../api/types";
 import { useAuth } from "../auth";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
@@ -19,6 +20,7 @@ import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { StatCards } from "../components/StatCards";
 import { WeakTopics } from "../components/WeakTopics";
+import { WeeklyReport } from "../components/WeeklyReport";
 import { HandleSetup } from "./HandleSetup";
 
 interface Dashboard {
@@ -27,6 +29,7 @@ interface Dashboard {
   ratings: RatingDistribution;
   timeline: Timeline;
   weakTopics: WeakTopicsData;
+  weekly: WeeklyReportData;
   recommendations: RecommendationsData | null;
 }
 
@@ -48,19 +51,22 @@ export function DashboardPage() {
     if (!token) return;
     setError(null);
     try {
-      const [stats, tags, ratings, timeline, weakTopics] = await Promise.all([
-        api.stats(token, platform),
-        api.tags(token, 12, platform),
-        api.ratings(token, platform),
-        api.timeline(token, 365, platform),
-        api.weakTopics(token, 30, platform),
-      ]);
+      const [stats, tags, ratings, timeline, weakTopics, weekly] =
+        await Promise.all([
+          api.stats(token, platform),
+          api.tags(token, 12, platform),
+          api.ratings(token, platform),
+          api.timeline(token, 365, platform),
+          api.weakTopics(token, 30, platform),
+          api.weeklyReport(token),
+        ]);
       setData({
         stats,
         tags,
         ratings,
         timeline,
         weakTopics,
+        weekly,
         recommendations: null,
       });
 
@@ -186,6 +192,7 @@ export function DashboardPage() {
           {plan && (
             <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
           )}
+          <WeeklyReport data={data.weekly} />
           {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
           {data.recommendations && (
             <Recommendations data={data.recommendations} />

@@ -121,4 +121,21 @@ export interface DailyPlan {
   unavailable: string | null;
 }
 
+export interface TopicHighlight {
+  tag: string;
+  accuracy: number | null;
+  solved: number;
+}
+
+export interface WeeklyReport {
+  week_start: string;
+  week_end: string;
+  in_progress: boolean;
+  problems_solved: number;
+  by_platform: Record<string, number>;
+  active_days: number;
+  weakest: TopicHighlight[];
+  strongest: TopicHighlight[];
+}
+
 export type Platform = "codeforces" | "leetcode";

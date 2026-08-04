@@ -9,6 +9,7 @@ import type {
   Token,
   User,
   WeakTopics,
+  WeeklyReport,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
@@ -129,6 +130,9 @@ export const api = {
 
   timeline: (token: string, days = 365, platform?: Platform | null) =>
     request<Timeline>(`/dashboard/timeline${qs({ days, platform })}`, token),
+
+  weeklyReport: (token: string) =>
+    request<WeeklyReport>("/dashboard/weekly-report", token),
 
   dailyPlan: (token: string, regenerate = false) =>
     request<DailyPlan>(`/dashboard/daily-plan${qs({ regenerate })}`, token),

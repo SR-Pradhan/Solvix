@@ -56,6 +56,23 @@ class DailyPlanOut(BaseModel):
     unavailable: str | None = None
 
 
+class TopicHighlight(BaseModel):
+    tag: str
+    accuracy: float | None = None
+    solved: int
+
+
+class WeeklyReportOut(BaseModel):
+    week_start: date
+    week_end: date
+    in_progress: bool
+    problems_solved: int
+    by_platform: dict[str, int] = {}
+    active_days: int
+    weakest: list[TopicHighlight] = []
+    strongest: list[TopicHighlight] = []
+
+
 class TopicScore(BaseModel):
     tag: str
     attempts: int

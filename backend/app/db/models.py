@@ -67,3 +67,20 @@ class DailyPlan(Base):
     plan_date = Column(Date, nullable=False)
     payload = Column(JSONB, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class WeeklyReport(Base):
+    """A frozen snapshot of one finished week.
+
+    Scoring rules will change; a report of what happened in March should keep
+    saying what it said in March rather than being rewritten by today's formula.
+    """
+
+    __tablename__ = "weekly_reports"
+    __table_args__ = (UniqueConstraint("user_id", "week_start"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    week_start = Column(Date, nullable=False)
+    payload = Column(JSONB, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())

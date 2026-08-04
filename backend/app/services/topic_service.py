@@ -34,7 +34,7 @@ MIN_ATTEMPTS = 3
 # How long a tag takes to fully decay in the weakness score. Kept generous so
 # the ranking keeps its resolution: if everything older than a week counted as
 # maximally stale, recency would stop separating topics at all.
-STALE_HORIZON_DAYS = 60
+STALE_HORIZON_DAYS = 90
 # When a topic becomes due for revision. Short on purpose, so the "going stale"
 # list is a this-week to-do rather than a backlog.
 REVISION_DUE_DAYS = 7

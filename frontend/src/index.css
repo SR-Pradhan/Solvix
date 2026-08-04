@@ -498,3 +498,23 @@ button.link.inline {
   margin: 14px 0 0;
   font-style: italic;
 }
+
+.week-figures {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 6px;
+}
+
+.week-figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.week-topics {
+  margin-top: 14px;
+}
+
+.week-topics .chips {
+  margin: 6px 0 0;
+}

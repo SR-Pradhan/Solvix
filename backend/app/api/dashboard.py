@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,10 +20,12 @@ from app.schemas.dashboard import (
     TagBreakdownOut,
     TimelineOut,
     WeakTopicsOut,
+    WeeklyReportOut,
 )
 from app.clients.groq_client import GroqError, GroqNotConfigured
 from app.services import (
     plan_service,
+    report_service,
     recommendation_service,
     stats_service,
     topic_service,
@@ -160,6 +164,19 @@ async def read_daily_plan(
         )
     except GroqError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/weekly-report", response_model=WeeklyReportOut)
+async def read_weekly_report(
+    week_start: date | None = Query(
+        default=None, description="Monday of the week to report on; omit for this week"
+    ),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await report_service.get_weekly_report(
+        db, current_user.id, week_start=week_start
+    )
 
 
 @router.get("/weak-topics", response_model=WeakTopicsOut)
