@@ -1,6 +1,11 @@
 import { useState, type ReactNode } from "react";
 
-import type { Stats, WeakTopics } from "../api/types";
+import type {
+  LeetCodeProfile,
+  Platform,
+  Stats,
+  WeakTopics,
+} from "../api/types";
 
 function Card({
   label,
@@ -82,13 +87,48 @@ function DueCard({ topics }: { topics?: WeakTopics }) {
   );
 }
 
+/**
+ * The real solved count, which the database alone cannot give.
+ *
+ * LeetHub only recorded problems solved after it was installed, so row counts
+ * under-report a long-standing LeetCode account. Where a synced profile knows
+ * the true total, swap the tracked LeetCode rows for it.
+ */
+function solvedTotal(
+  stats: Stats,
+  profile: LeetCodeProfile | null,
+  platform: Platform | null,
+): { value: number; untracked: number } {
+  if (!profile || platform === "codeforces") {
+    return { value: stats.problems_solved, untracked: 0 };
+  }
+
+  const untracked = profile.coverage.missing;
+
+  if (platform === "leetcode") {
+    return { value: profile.total_solved, untracked };
+  }
+
+  // Unfiltered: keep every other platform's real rows, replacing only the
+  // LeetCode slice with the profile's authoritative count.
+  return {
+    value: stats.problems_solved - profile.coverage.tracked + profile.total_solved,
+    untracked,
+  };
+}
+
 export function StatCards({
   stats,
   topics,
+  profile = null,
+  platform = null,
 }: {
   stats: Stats;
   topics?: WeakTopics;
+  profile?: LeetCodeProfile | null;
+  platform?: Platform | null;
 }) {
+  const solved = solvedTotal(stats, profile, platform);
   // Every submission accepted means the source only records solutions that
   // passed, so a "100% acceptance" card would be measuring nothing.
   const failuresRecorded = stats.total_submissions > stats.accepted_submissions;
@@ -97,11 +137,13 @@ export function StatCards({
     <div className="stat-grid">
       <Card
         label="Problems solved"
-        value={stats.problems_solved.toLocaleString()}
+        value={solved.value.toLocaleString()}
         sub={
-          failuresRecorded
-            ? `across ${stats.total_submissions.toLocaleString()} attempts`
-            : undefined
+          solved.untracked > 0
+            ? `${solved.untracked} solved before tracking began`
+            : failuresRecorded
+              ? `across ${stats.total_submissions.toLocaleString()} attempts`
+              : undefined
         }
       />
 

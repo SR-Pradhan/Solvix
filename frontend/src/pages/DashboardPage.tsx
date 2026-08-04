@@ -201,7 +201,12 @@ export function DashboardPage() {
         </section>
       ) : (
         <>
-          <StatCards stats={data.stats} topics={data.weakTopics} />
+          <StatCards
+            stats={data.stats}
+            topics={data.weakTopics}
+            profile={lcProfile}
+            platform={platform}
+          />
           {plan && (
             <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
           )}
