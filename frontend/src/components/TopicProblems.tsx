@@ -5,9 +5,9 @@ import type { UnsolvedInTopic } from "../api/types";
 import { useAuth } from "../auth";
 
 const DIFFICULTY_COLOURS: Record<string, string> = {
-  Easy: "#3fb27f",
-  Medium: "#e0a13a",
-  Hard: "#ef5b5b",
+  Easy: "var(--ok)",
+  Medium: "var(--warn)",
+  Hard: "var(--danger)",
 };
 
 export function TopicProblems({

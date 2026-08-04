@@ -23,6 +23,7 @@ import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
 import { StatCards } from "../components/StatCards";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
 import { HandleSetup } from "./HandleSetup";
@@ -181,6 +182,7 @@ export function DashboardPage() {
           <button className="ghost logout" onClick={logout}>
             Log out
           </button>
+          <ThemeToggle />
         </div>
       </header>
 

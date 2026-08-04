@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from "./auth";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ThemeProvider } from "./theme";
 
 function Router() {
   const { token, user, loading } = useAuth();
@@ -17,8 +18,10 @@ function Router() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

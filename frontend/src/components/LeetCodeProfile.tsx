@@ -5,9 +5,9 @@ import type { LeetCodeProfile as Data } from "../api/types";
 import { useAuth } from "../auth";
 
 const BAR_COLOURS: Record<string, string> = {
-  easy: "#3fb27f",
-  medium: "#e0a13a",
-  hard: "#ef5b5b",
+  easy: "var(--ok)",
+  medium: "var(--warn)",
+  hard: "var(--danger)",
 };
 
 function Split({ label, value, total }: { label: string; value: number; total: number }) {

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { useAuth } from "../auth";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -32,7 +33,10 @@ export function LoginPage() {
   return (
     <div className="centered">
       <form className="card auth-card" onSubmit={onSubmit}>
-        <h1 className="brand">Solvix</h1>
+        <div className="topbar">
+          <h1 className="brand">Solvix</h1>
+          <ThemeToggle />
+        </div>
         <p className="muted">Your competitive programming progress, measured.</p>
 
         {mode === "register" && (

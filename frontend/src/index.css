@@ -1,15 +1,70 @@
+/* Every colour in the app comes from a token below. Components never hardcode
+   a hex value, because a hex that reads well on black is usually invisible on
+   white, and the two themes have to be equally good.
+
+   The names say what a colour is for, not what it looks like: --surface, not
+   --dark-grey. That is what lets the light theme be a block of overrides
+   rather than a second stylesheet. */
+
 :root {
-  --bg: #0d1117;
-  --panel: #141922;
-  --border: #232a3a;
-  --text: #e7ecf5;
-  --muted: #7c88a1;
-  --accent: #5b8def;
-  --danger: #ef5b5b;
-  --ok: #3fb27f;
+  color-scheme: dark;
+
+  --bg: #0b0d10;
+  --surface: #14171c;
+  --surface-2: #1b1f26;
+  --border: #23272f;
+  --border-strong: #2e333c;
+
+  --text: #e8eaed;
+  --text-dim: #b4bcc8;
+  --muted: #98a1ae;
+  --faint: #6b7480;
+
+  --accent: #6e8aff; /* text, borders, selected state */
+  --accent-solid: #4c6ef5; /* filled buttons, where white text sits on top */
+  --accent-soft: rgba(110, 138, 255, 0.14);
+  --on-accent: #ffffff;
+
+  --ok: #3ecf8e;
+  --warn: #e0a22b;
+  --danger: #f0616d;
+  --violet: #b57bee;
+
+  --input-bg: #0f1217;
+  /* Shadows are invisible against black, so depth in the dark theme comes
+     from borders alone. */
+  --shadow: none;
 
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --border: #e1e5ea;
+  --border-strong: #d3d9e0;
+
+  --text: #14171c;
+  --text-dim: #3c444f;
+  --muted: #5c6673;
+  --faint: #838c99;
+
+  --accent: #4c6ef5;
+  --accent-solid: #4c6ef5;
+  --accent-soft: rgba(76, 110, 245, 0.1);
+  --on-accent: #ffffff;
+
+  /* Darkened: the dark theme's mint and coral wash out on white. */
+  --ok: #0e9f6e;
+  --warn: #b7791f;
+  --danger: #d63c4a;
+  --violet: #8b5cf6;
+
+  --input-bg: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
 * {
@@ -20,6 +75,23 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Only the surfaces cross-fade on a theme switch. Animating everything makes
+   the toggle feel sluggish on a long dashboard. */
+body,
+.card,
+input {
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .page {
@@ -39,10 +111,11 @@ body {
 }
 
 .card {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 18px;
+  box-shadow: var(--shadow);
 }
 
 .auth-card {
@@ -63,6 +136,7 @@ body {
 .card-head h2 {
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -76,11 +150,13 @@ body {
 
 .actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .brand {
   font-size: 22px;
+  font-weight: 650;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -115,6 +191,7 @@ body {
 .stat-value {
   font-size: 28px;
   font-weight: 650;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -139,7 +216,7 @@ label {
 }
 
 input {
-  background: #0f141c;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
@@ -153,8 +230,8 @@ input:focus {
 }
 
 button {
-  background: var(--accent);
-  color: #fff;
+  background: var(--accent-solid);
+  color: var(--on-accent);
   border: 0;
   border-radius: 8px;
   padding: 10px 14px;
@@ -174,12 +251,42 @@ button.ghost {
   color: var(--muted);
 }
 
+button.ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
 button.link {
   background: none;
   color: var(--muted);
   padding: 0;
   font-weight: 400;
   text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Square, quiet, and the same footprint as the ghost buttons beside it. */
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 
 .error {
@@ -202,12 +309,12 @@ button.link {
 }
 
 .chip {
-  background: #1b2434;
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 3px 10px;
   font-size: 12px;
-  color: #a9b6cc;
+  color: var(--text-dim);
 }
 
 .rec-list {
@@ -246,12 +353,12 @@ button.link {
 }
 
 .rating-pill {
-  background: #1b2434;
+  background: var(--surface-2);
   border-radius: 6px;
   padding: 2px 8px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: #a9b6cc;
+  color: var(--text-dim);
 }
 
 .inline-form {
@@ -279,7 +386,7 @@ button.link {
 }
 
 .label-bar {
-  background: #1b2434;
+  background: var(--surface-2);
   border-radius: 999px;
   height: 8px;
   overflow: hidden;
@@ -341,7 +448,7 @@ button.link {
 .acc-bar {
   flex: 1;
   height: 6px;
-  background: #1b2434;
+  background: var(--surface-2);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -370,10 +477,15 @@ button.link {
   font-weight: 500;
 }
 
+.chip-btn:hover:not(.on) {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
 .chip-btn.on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: var(--on-accent);
 }
 
 .topic-list {
@@ -472,7 +584,7 @@ button.link.inline {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #1b2434;
+  background: var(--surface-2);
   color: var(--muted);
   font-size: 11px;
   display: grid;
@@ -539,7 +651,7 @@ button.link.inline {
 }
 
 .problem-list a {
-  color: #a9b6cc;
+  color: var(--text-dim);
   text-decoration: none;
   font-size: 13px;
 }
@@ -563,7 +675,7 @@ button.link.inline {
 
 .problems-toggle:hover {
   color: var(--accent);
-  background: #1b2434;
+  background: var(--surface-2);
 }
 
 .problems-toggle.open {
@@ -588,7 +700,7 @@ button.link.inline {
 .pill-btn:hover:not(:disabled) {
   color: var(--text);
   border-color: var(--accent);
-  background: #1b2434;
+  background: var(--accent-soft);
 }
 
 .plan-rebuild {
@@ -609,7 +721,7 @@ button.link.inline {
 /* Log out is not a third sync button; a gap and dimmer text separate it. */
 .actions .logout {
   margin-left: 8px;
-  color: #6b7789;
+  color: var(--faint);
 }
 
 .actions .logout:hover {

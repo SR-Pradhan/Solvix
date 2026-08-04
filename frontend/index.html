@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solvix</title>
+    <!-- Runs before first paint so a light-theme user never sees a dark
+         flash while the bundle loads. -->
+    <script>
+      (function () {
+        var saved = localStorage.getItem("solvix-theme");
+        document.documentElement.dataset.theme =
+          saved === "light" || saved === "dark"
+            ? saved
+            : matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

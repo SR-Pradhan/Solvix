@@ -10,18 +10,27 @@ import {
 } from "recharts";
 
 import type { RatingDistribution, TagBreakdown, Timeline } from "../api/types";
+import { useThemeTokens, type ChartTokens } from "../theme";
 
-const AXIS = { stroke: "#7c88a1", fontSize: 12 };
-const GRID = "#232a3a";
+/* Recharts writes its colours into SVG attributes, where `var(--border)` is
+   not resolved. So the theme is read out of the cascade first and handed over
+   as plain values. */
 
-const tooltipStyle = {
-  background: "#141922",
-  border: "1px solid #2a3242",
-  borderRadius: 8,
-  color: "#e7ecf5",
-};
+function axis(t: ChartTokens) {
+  return { stroke: t.muted, fontSize: 12 };
+}
+
+function tooltip(t: ChartTokens) {
+  return {
+    background: t.surface,
+    border: `1px solid ${t.border}`,
+    borderRadius: 8,
+    color: t.text,
+  };
+}
 
 export function TagChart({ data }: { data: TagBreakdown }) {
+  const t = useThemeTokens();
   if (!data.tags.length) return <Empty note="No tags yet." />;
 
   return (
@@ -31,23 +40,22 @@ export function TagChart({ data }: { data: TagBreakdown }) {
       height={Math.max(240, data.tags.length * 28)}
     >
       <BarChart data={data.tags} layout="vertical" margin={{ left: 8, right: 16 }}>
-        <CartesianGrid stroke={GRID} horizontal={false} />
-        <XAxis type="number" {...AXIS} />
-        <YAxis type="category" dataKey="tag" width={150} {...AXIS} />
-        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#1b2130" }} />
-        <Bar dataKey="solved_count" name="solved" fill="#5b8def" radius={[0, 4, 4, 0]} />
+        <CartesianGrid stroke={t.border} horizontal={false} />
+        <XAxis type="number" {...axis(t)} />
+        <YAxis type="category" dataKey="tag" width={150} {...axis(t)} />
+        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
+        <Bar dataKey="solved_count" name="solved" fill={t.accent} radius={[0, 4, 4, 0]} />
       </BarChart>
     </ChartCard>
   );
 }
 
-const LABEL_COLOURS: Record<string, string> = {
-  Easy: "#3fb27f",
-  Medium: "#e0a13a",
-  Hard: "#ef5b5b",
-};
+function labelColour(t: ChartTokens, label: string): string {
+  return { Easy: t.ok, Medium: t.warn, Hard: t.danger }[label] ?? t.accent;
+}
 
 function LeetCodeLabels({ data }: { data: RatingDistribution }) {
+  const t = useThemeTokens();
   if (!data.labels.length) return null;
   const total = data.labels.reduce((sum, l) => sum + l.solved_count, 0);
 
@@ -55,14 +63,14 @@ function LeetCodeLabels({ data }: { data: RatingDistribution }) {
     <div className="labels">
       {data.labels.map((l) => (
         <div key={l.label} className="label-row">
-          <span className="small" style={{ color: LABEL_COLOURS[l.label] }}>
+          <span className="small" style={{ color: labelColour(t, l.label) }}>
             {l.label}
           </span>
           <div className="label-bar">
             <div
               style={{
                 width: `${(l.solved_count / total) * 100}%`,
-                background: LABEL_COLOURS[l.label] ?? "#5b8def",
+                background: labelColour(t, l.label),
               }}
             />
           </div>
@@ -74,6 +82,8 @@ function LeetCodeLabels({ data }: { data: RatingDistribution }) {
 }
 
 export function RatingChart({ data }: { data: RatingDistribution }) {
+  const t = useThemeTokens();
+
   // A LeetCode-only user has no numeric ratings at all, so the labelled
   // breakdown stands in for the histogram rather than showing an empty chart.
   if (!data.buckets.length) {
@@ -93,7 +103,13 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
   // Codeforces colours ratings by tier; echoing that makes the histogram
   // readable at a glance to anyone who uses the site.
   const colourFor = (rating: number) =>
-    rating >= 2400 ? "#ef5b5b" : rating >= 1900 ? "#c07be0" : rating >= 1600 ? "#5b8def" : "#3fb27f";
+    rating >= 2400
+      ? t.danger
+      : rating >= 1900
+        ? t.violet
+        : rating >= 1600
+          ? t.accent
+          : t.ok;
 
   return (
     <ChartCard
@@ -102,10 +118,10 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
       height={280}
     >
       <BarChart data={data.buckets} margin={{ left: 0, right: 8 }}>
-        <CartesianGrid stroke={GRID} vertical={false} />
-        <XAxis dataKey="rating" {...AXIS} />
-        <YAxis {...AXIS} />
-        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#1b2130" }} />
+        <CartesianGrid stroke={t.border} vertical={false} />
+        <XAxis dataKey="rating" {...axis(t)} />
+        <YAxis {...axis(t)} />
+        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
         <Bar dataKey="solved_count" name="solved" radius={[4, 4, 0, 0]}>
           {data.buckets.map((b) => (
             <Cell key={b.rating} fill={colourFor(b.rating)} />
@@ -117,16 +133,17 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
 }
 
 export function ActivityChart({ data }: { data: Timeline }) {
+  const t = useThemeTokens();
   if (!data.points.length) return <Empty note="No activity in this window." />;
 
   return (
     <ChartCard title="Activity" note={`last ${data.days} days`} height={240}>
       <BarChart data={data.points} margin={{ left: 0, right: 8 }}>
-        <CartesianGrid stroke={GRID} vertical={false} />
-        <XAxis dataKey="day" {...AXIS} minTickGap={40} />
-        <YAxis allowDecimals={false} {...AXIS} />
-        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#1b2130" }} />
-        <Bar dataKey="solved_count" name="solved" fill="#3fb27f" radius={[3, 3, 0, 0]} />
+        <CartesianGrid stroke={t.border} vertical={false} />
+        <XAxis dataKey="day" {...axis(t)} minTickGap={40} />
+        <YAxis allowDecimals={false} {...axis(t)} />
+        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
+        <Bar dataKey="solved_count" name="solved" fill={t.ok} radius={[3, 3, 0, 0]} />
       </BarChart>
     </ChartCard>
   );

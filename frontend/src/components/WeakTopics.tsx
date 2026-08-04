@@ -6,9 +6,9 @@ import { TopicProblems } from "./TopicProblems";
 
 // Plain words instead of a 0-1 score: nobody reads "weakness 0.78".
 const STATUS_COLOUR: Record<string, string> = {
-  "Needs work": "#ef5b5b",
-  Rusty: "#e0a13a",
-  Solid: "#3fb27f",
+  "Needs work": "var(--danger)",
+  Rusty: "var(--warn)",
+  Solid: "var(--ok)",
 };
 
 function freshness(days: number | null): string {
