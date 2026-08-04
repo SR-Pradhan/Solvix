@@ -60,7 +60,7 @@ class WeakTopicsOut(BaseModel):
     scored_on_accuracy: int
     stale_count: int
     stale_horizon_days: int
-    stale_examples: list[str] = []
+    stale_topics: list[str] = []
 
 
 class WeakTag(BaseModel):

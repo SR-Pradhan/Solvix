@@ -103,7 +103,7 @@ export interface WeakTopics {
   scored_on_accuracy: number;
   stale_count: number;
   stale_horizon_days: number;
-  stale_examples: string[];
+  stale_topics: string[];
 }
 
 export type Platform = "codeforces" | "leetcode";

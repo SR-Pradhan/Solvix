@@ -171,7 +171,6 @@ async def get_weak_topics(
         "scored_on_accuracy": scored_on_accuracy,
         "stale_count": len(stale),
         "stale_horizon_days": REVISION_DUE_DAYS,
-        # Enough for the card to name them all in the common case; the
-        # frontend summarises when the list is long.
-        "stale_examples": [t["tag"] for t in stale[:12]],
+        # Every due topic, so the UI can reveal the full list on demand.
+        "stale_topics": [t["tag"] for t in stale],
     }

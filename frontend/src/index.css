@@ -412,3 +412,9 @@ button.link {
     min-width: 170px;
   }
 }
+
+button.link.inline {
+  font-size: inherit;
+  color: var(--accent);
+  vertical-align: baseline;
+}

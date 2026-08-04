@@ -1,3 +1,5 @@
+import { useState, type ReactNode } from "react";
+
 import type { Stats, WeakTopics } from "../api/types";
 
 function Card({
@@ -7,7 +9,7 @@ function Card({
 }: {
   label: string;
   value: string;
-  sub?: string;
+  sub?: ReactNode;
 }) {
   return (
     <div className="card stat">
@@ -32,26 +34,52 @@ function windowLabel(days: number): string {
   return `${days} days`;
 }
 
-// Name every stale topic while the list stays readable; past that, name a
-// few and count the rest.
-const NAMES_SHOWN = 6;
+// Beyond this the card grows taller than its neighbours, so the rest hide
+// behind a toggle rather than being dropped.
+const NAMES_SHOWN = 5;
 
-function staleSub(topics: WeakTopics | undefined): string {
-  if (!topics) return "";
+function DueCard({ topics }: { topics?: WeakTopics }) {
+  const [expanded, setExpanded] = useState(false);
 
+  if (!topics) return <Card label="Due for revision" value="0" />;
+
+  const { stale_count: count, stale_topics: names } = topics;
   const age = windowLabel(topics.stale_horizon_days);
-  if (topics.stale_count === 0) return "all revised this week";
+  const value = `${count} ${count === 1 ? "topic" : "topics"}`;
 
-  const names = topics.stale_examples;
-  if (!names.length) return `not touched in ${age}`;
-
-  if (topics.stale_count <= NAMES_SHOWN) {
-    return `${names.join(", ")}. Not touched in ${age}`;
+  if (count === 0) {
+    return (
+      <Card label="Due for revision" value={value} sub="all revised this week" />
+    );
   }
 
-  const shown = names.slice(0, NAMES_SHOWN - 1).join(", ");
-  const rest = topics.stale_count - (NAMES_SHOWN - 1);
-  return `${shown} and ${rest} more. Not touched in ${age}`;
+  const hidden = count - NAMES_SHOWN;
+  const visible = expanded ? names : names.slice(0, NAMES_SHOWN);
+
+  return (
+    <Card
+      label="Due for revision"
+      value={value}
+      sub={
+        <>
+          {visible.join(", ")}
+          {hidden > 0 && (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="link inline"
+                onClick={() => setExpanded(!expanded)}
+              >
+                {expanded ? "show fewer" : `and ${hidden} more`}
+              </button>
+            </>
+          )}
+          . Not touched in {age}
+        </>
+      }
+    />
+  );
 }
 
 export function StatCards({
@@ -91,15 +119,7 @@ export function StatCards({
         />
       )}
 
-      <Card
-        label="Due for revision"
-        value={
-          topics === undefined
-            ? "0"
-            : `${topics.stale_count} ${topics.stale_count === 1 ? "topic" : "topics"}`
-        }
-        sub={staleSub(topics)}
-      />
+      <DueCard topics={topics} />
 
       <Card
         label="Current streak"
