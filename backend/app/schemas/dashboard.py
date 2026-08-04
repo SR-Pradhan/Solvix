@@ -86,6 +86,35 @@ class RemindersOut(BaseModel):
     reminders: list[ReminderItem] = []
 
 
+class SolvedProblem(BaseModel):
+    id: str
+    name: str
+    platform: str
+    last_solved_at: date
+    days_ago: int
+    url: str | None = None
+
+
+class SolvedInTopicOut(BaseModel):
+    tag: str
+    problems: list[SolvedProblem] = []
+
+
+class UnsolvedProblem(BaseModel):
+    id: str
+    name: str
+    difficulty: str | None = None
+    rating: int | None = None
+    tags: list[str] = []
+    url: str
+
+
+class UnsolvedInTopicOut(BaseModel):
+    tag: str
+    platform: str
+    problems: list[UnsolvedProblem] = []
+
+
 class TopicScore(BaseModel):
     tag: str
     attempts: int

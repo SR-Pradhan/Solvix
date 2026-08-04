@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 import type { Reminders as Data } from "../api/types";
+import { RevisionProblems } from "./RevisionProblems";
 
 const KIND_LABELS: Record<string, string> = {
   problem: "Revisit",
@@ -6,6 +9,9 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 export function Reminders({ data }: { data: Data }) {
+  // Declared before the empty-list early return so hook order stays stable.
+  const [openTag, setOpenTag] = useState<string | null>(null);
+
   if (!data.reminders.length) {
     return (
       <section className="card">
@@ -31,9 +37,21 @@ export function Reminders({ data }: { data: Data }) {
       <ul className="topic-list">
         {data.reminders.map((r) => (
           <li key={`${r.kind}:${r.subject}`}>
-            <span className="topic-name">{r.title}</span>
+            {r.kind === "topic" ? (
+              <button
+                type="button"
+                className="topic-name topic-toggle"
+                onClick={() => setOpenTag(openTag === r.subject ? null : r.subject)}
+                aria-expanded={openTag === r.subject}
+              >
+                {r.title}
+              </button>
+            ) : (
+              <span className="topic-name">{r.title}</span>
+            )}
             <span className="badge">{KIND_LABELS[r.kind] ?? r.kind}</span>
             <span className="muted small topic-why">{r.reason}</span>
+            {openTag === r.subject && <RevisionProblems tag={r.subject} />}
           </li>
         ))}
       </ul>

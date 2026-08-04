@@ -17,15 +17,19 @@ from app.schemas.dashboard import (
     RatingDistributionOut,
     RecommendationsOut,
     RemindersOut,
+    SolvedInTopicOut,
     StatsOut,
     TagBreakdownOut,
     TimelineOut,
+    UnsolvedInTopicOut,
     WeakTopicsOut,
     WeeklyReportOut,
 )
 from app.clients.groq_client import GroqError, GroqNotConfigured
+from app.clients.leetcode_client import LeetCodeError
 from app.services import (
     plan_service,
+    problem_service,
     reminder_service,
     report_service,
     recommendation_service,
@@ -165,6 +169,33 @@ async def read_daily_plan(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e)
         )
     except GroqError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/topics/{tag}/solved", response_model=SolvedInTopicOut)
+async def read_solved_in_topic(
+    tag: str,
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await problem_service.solved_in_topic(db, current_user.id, tag, limit=limit)
+
+
+@router.get("/topics/{tag}/unsolved", response_model=UnsolvedInTopicOut)
+async def read_unsolved_in_topic(
+    tag: str,
+    platform: str = Query(default="leetcode"),
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await problem_service.unsolved_in_topic(
+            db, current_user.id, tag, platform=_validated(platform) or "leetcode",
+            limit=limit,
+        )
+    except (LeetCodeError, CodeforcesError) as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
 

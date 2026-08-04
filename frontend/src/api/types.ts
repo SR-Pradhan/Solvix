@@ -151,4 +151,33 @@ export interface Reminders {
   reminders: ReminderItem[];
 }
 
+export interface SolvedProblem {
+  id: string;
+  name: string;
+  platform: string;
+  last_solved_at: string;
+  days_ago: number;
+  url: string | null;
+}
+
+export interface SolvedInTopic {
+  tag: string;
+  problems: SolvedProblem[];
+}
+
+export interface UnsolvedProblem {
+  id: string;
+  name: string;
+  difficulty: string | null;
+  rating: number | null;
+  tags: string[];
+  url: string;
+}
+
+export interface UnsolvedInTopic {
+  tag: string;
+  platform: string;
+  problems: UnsolvedProblem[];
+}
+
 export type Platform = "codeforces" | "leetcode";

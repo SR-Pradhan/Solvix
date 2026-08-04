@@ -204,7 +204,7 @@ export function DashboardPage() {
             <Recommendations data={data.recommendations} />
           )}
           <div className="grid-2">
-            <WeakTopics data={data.weakTopics} />
+            <WeakTopics data={data.weakTopics} platform={platform} />
             <TagChart data={data.tags} />
           </div>
           <RatingChart data={data.ratings} />

@@ -3,11 +3,13 @@ import type {
   RatingDistribution,
   Recommendations,
   Reminders,
+  SolvedInTopic,
   Stats,
   TagBreakdown,
   Timeline,
   Platform,
   Token,
+  UnsolvedInTopic,
   User,
   WeakTopics,
   WeeklyReport,
@@ -131,6 +133,23 @@ export const api = {
 
   timeline: (token: string, days = 365, platform?: Platform | null) =>
     request<Timeline>(`/dashboard/timeline${qs({ days, platform })}`, token),
+
+  solvedInTopic: (token: string, tag: string, limit = 8) =>
+    request<SolvedInTopic>(
+      `/dashboard/topics/${encodeURIComponent(tag)}/solved${qs({ limit })}`,
+      token,
+    ),
+
+  unsolvedInTopic: (
+    token: string,
+    tag: string,
+    platform: Platform,
+    limit = 10,
+  ) =>
+    request<UnsolvedInTopic>(
+      `/dashboard/topics/${encodeURIComponent(tag)}/unsolved${qs({ platform, limit })}`,
+      token,
+    ),
 
   reminders: (token: string) =>
     request<Reminders>("/dashboard/reminders", token),

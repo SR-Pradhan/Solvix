@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-import type { WeakTopics as Data } from "../api/types";
+import type { Platform, WeakTopics as Data } from "../api/types";
+import { TopicProblems } from "./TopicProblems";
 
 // Plain words instead of a 0-1 score: nobody reads "weakness 0.78".
 const STATUS_COLOUR: Record<string, string> = {
@@ -35,10 +36,17 @@ function reason(
 // the bottom rather than leaving a gap under it.
 const ROWS_SHOWN = 8;
 
-export function WeakTopics({ data }: { data: Data }) {
+export function WeakTopics({
+  data,
+  platform,
+}: {
+  data: Data;
+  platform: Platform | null;
+}) {
   // Declared before any early return: hooks must run in the same order on
   // every render, and this list is empty until the first import finishes.
   const [expanded, setExpanded] = useState(false);
+  const [openTag, setOpenTag] = useState<string | null>(null);
 
   if (!data.topics.length) {
     return (
@@ -68,7 +76,14 @@ export function WeakTopics({ data }: { data: Data }) {
       <ul className="topic-list">
         {visible.map((t) => (
           <li key={t.tag}>
-            <span className="topic-name">{t.tag}</span>
+            <button
+              type="button"
+              className="topic-name topic-toggle"
+              onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
+              aria-expanded={openTag === t.tag}
+            >
+              {t.tag}
+            </button>
             <span
               className="badge"
               style={{
@@ -81,6 +96,17 @@ export function WeakTopics({ data }: { data: Data }) {
             <span className="muted small topic-why">
               {reason(t.status, t.accuracy, t.days_since_last_solve)}
             </span>
+            {openTag === t.tag && (
+              <TopicProblems
+                tag={t.tag}
+                // With no filter chosen, ask the platform the tag came from:
+                // capitalised tags are LeetCode's, lowercase are Codeforces'.
+                platform={
+                  platform ??
+                  (t.tag === t.tag.toLowerCase() ? "codeforces" : "leetcode")
+                }
+              />
+            )}
           </li>
         ))}
       </ul>
