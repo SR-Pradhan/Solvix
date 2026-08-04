@@ -7,6 +7,7 @@ from app.services.topic_service import (
     STALE_HORIZON_DAYS,
     _is_stale,
     score_topic,
+    status_for,
 )
 
 TODAY = date(2026, 8, 4)
@@ -94,3 +95,29 @@ def test_revision_window_is_shorter_than_the_scoring_horizon():
 
 def test_solved_today_is_not_stale():
     assert _is_stale(0) is False
+
+
+def test_status_uses_the_weakness_bands_when_accuracy_exists():
+    assert status_for(0.7, accuracy=0.4, days_since=5) == "Needs work"
+    assert status_for(0.4, accuracy=0.6, days_since=5) == "Rusty"
+    assert status_for(0.1, accuracy=0.9, days_since=1) == "Solid"
+
+
+def test_status_without_accuracy_falls_back_to_age():
+    # 28 days scores only 0.31 on the combined scale, which would read "Solid"
+    # while the reminder card calls the same topic due.
+    assert status_for(0.31, accuracy=None, days_since=28) == "Rusty"
+
+
+def test_status_without_accuracy_agrees_with_the_reminder_threshold():
+    assert status_for(0.0, accuracy=None, days_since=REVISION_DUE_DAYS) == "Solid"
+    assert status_for(0.0, accuracy=None, days_since=13) == "Solid"
+    assert status_for(0.0, accuracy=None, days_since=14) == "Rusty"
+
+
+def test_status_without_accuracy_escalates_when_very_stale():
+    assert status_for(0.0, accuracy=None, days_since=60) == "Needs work"
+
+
+def test_status_of_a_never_solved_topic_is_the_worst_band():
+    assert status_for(1.0, accuracy=None, days_since=None) == "Needs work"

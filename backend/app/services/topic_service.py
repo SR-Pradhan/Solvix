@@ -44,13 +44,33 @@ ACCURACY_WEIGHT, RECENCY_WEIGHT = 0.6, 0.4
 
 # Plain-language bands, so the UI never has to show a raw score.
 STATUS_BANDS = ((0.60, "Needs work"), (0.35, "Rusty"), (0.0, "Solid"))
+# Bands in days, for topics with no pass rate to score against. Anchored to the
+# same 14-day mark the revision reminders use, so a topic flagged as due is
+# never simultaneously labelled "Solid".
+STALE_STATUS_BANDS = ((42, "Needs work"), (14, "Rusty"), (0, "Solid"))
 
 
 def utc_today() -> date:
     return datetime.now(timezone.utc).date()
 
 
-def status_for(weakness: float) -> str:
+def status_for(
+    weakness: float, accuracy: float | None = None, days_since: int | None = None
+) -> str:
+    """Plain-language label for a topic.
+
+    With no pass rate the weakness score is recency rescaled, and the numeric
+    bands were calibrated for a combined score — a topic untouched for a month
+    lands at 0.31 and reads "Solid" while the reminder card calls it due. For
+    those topics the label comes from the age directly.
+    """
+    if accuracy is None:
+        age = days_since if days_since is not None else 10_000
+        for threshold, label in STALE_STATUS_BANDS:
+            if age >= threshold:
+                return label
+        return "Solid"
+
     for threshold, label in STATUS_BANDS:
         if weakness >= threshold:
             return label
@@ -152,7 +172,7 @@ async def get_weak_topics(
                 "last_solved_at": last_solved,
                 "days_since_last_solve": days_since,
                 "weakness": weakness,
-                "status": status_for(weakness),
+                "status": status_for(weakness, accuracy, days_since),
             }
         )
 
