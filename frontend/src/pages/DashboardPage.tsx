@@ -61,8 +61,8 @@ export function DashboardPage() {
           api.ratings(token, platform),
           api.timeline(token, 365, platform),
           api.weakTopics(token, 30, platform),
-          api.weeklyReport(token),
-          api.reminders(token),
+          api.weeklyReport(token, platform),
+          api.reminders(token, platform),
         ]);
       setData({
         stats,

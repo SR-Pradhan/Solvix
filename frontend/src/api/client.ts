@@ -151,11 +151,11 @@ export const api = {
       token,
     ),
 
-  reminders: (token: string) =>
-    request<Reminders>("/dashboard/reminders", token),
+  reminders: (token: string, platform?: Platform | null) =>
+    request<Reminders>(`/dashboard/reminders${qs({ platform })}`, token),
 
-  weeklyReport: (token: string) =>
-    request<WeeklyReport>("/dashboard/weekly-report", token),
+  weeklyReport: (token: string, platform?: Platform | null) =>
+    request<WeeklyReport>(`/dashboard/weekly-report${qs({ platform })}`, token),
 
   dailyPlan: (token: string, regenerate = false) =>
     request<DailyPlan>(`/dashboard/daily-plan${qs({ regenerate })}`, token),

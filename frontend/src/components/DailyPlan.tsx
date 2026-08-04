@@ -31,7 +31,8 @@ export function DailyPlan({
       <header className="card-head">
         <h2>Today's plan</h2>
         <span className="muted small">
-          {minutes > 0 ? `about ${minutes} minutes` : ""}
+          across all platforms
+          {minutes > 0 ? `, about ${minutes} minutes` : ""}
         </span>
       </header>
 

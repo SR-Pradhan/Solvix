@@ -52,7 +52,7 @@ def pick_highlights(topics: list[dict]) -> tuple[list[dict], list[dict]]:
 
 
 async def _week_activity(
-    db: AsyncSession, user_id: int, start: date, end: date
+    db: AsyncSession, user_id: int, start: date, end: date, platform: str | None = None
 ) -> dict:
     """Counts for problems first solved inside [start, end]."""
     window_start = datetime.combine(start, datetime.min.time())
@@ -66,7 +66,11 @@ async def _week_activity(
             Submission.platform,
             func.min(Submission.solved_at).label("first_solved_at"),
         )
-        .where(Submission.user_id == user_id, Submission.verdict == ACCEPTED)
+        .where(
+            Submission.user_id == user_id,
+            Submission.verdict == ACCEPTED,
+            *((Submission.platform == platform,) if platform else ()),
+        )
         .group_by(Submission.external_problem_id, Submission.platform)
         .subquery()
     )
@@ -91,6 +95,7 @@ async def _week_activity(
                 Submission.verdict == ACCEPTED,
                 Submission.solved_at >= window_start,
                 Submission.solved_at < window_end,
+                *((Submission.platform == platform,) if platform else ()),
             )
         )
     ).scalar_one()
@@ -102,10 +107,14 @@ async def _week_activity(
     }
 
 
-async def _build_report(db: AsyncSession, user_id: int, start: date) -> dict:
+async def _build_report(
+    db: AsyncSession, user_id: int, start: date, platform: str | None = None
+) -> dict:
     end = start + timedelta(days=6)
-    activity = await _week_activity(db, user_id, start, end)
-    topics = (await topic_service.get_weak_topics(db, user_id))["topics"]
+    activity = await _week_activity(db, user_id, start, end, platform)
+    topics = (
+        await topic_service.get_weak_topics(db, user_id, platform=platform)
+    )["topics"]
     weakest, strongest = pick_highlights(topics)
 
     return {
@@ -118,14 +127,20 @@ async def _build_report(db: AsyncSession, user_id: int, start: date) -> dict:
 
 
 async def get_weekly_report(
-    db: AsyncSession, user_id: int, week_start: date | None = None
+    db: AsyncSession,
+    user_id: int,
+    week_start: date | None = None,
+    platform: str | None = None,
 ) -> dict:
     today = date.today()
     current_week = week_start_for(today)
     start = week_start or current_week
     finished = start < current_week
 
-    if finished:
+    # Only the unfiltered view is frozen. A per-platform slice is a lens on the
+    # same week, not a different week, so storing one under the same key would
+    # let whichever filter loaded first define the archived snapshot.
+    if finished and platform is None:
         stored = await db.scalar(
             select(WeeklyReport).where(
                 WeeklyReport.user_id == user_id, WeeklyReport.week_start == start
@@ -134,11 +149,11 @@ async def get_weekly_report(
         if stored:
             return {"in_progress": False, **stored.payload}
 
-    report = await _build_report(db, user_id, start)
+    report = await _build_report(db, user_id, start, platform)
 
     # Only finished weeks are frozen. The current week is still accumulating,
     # so storing it would pin a half-finished snapshot for good.
-    if finished:
+    if finished and platform is None:
         stmt = insert(WeeklyReport).values(
             user_id=user_id, week_start=start, payload=report
         )

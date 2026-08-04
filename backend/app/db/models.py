@@ -96,13 +96,16 @@ class Reminder(Base):
 
     __tablename__ = "reminders"
     __table_args__ = (
-        UniqueConstraint("user_id", "run_date", "kind", "subject"),
+        UniqueConstraint("user_id", "run_date", "kind", "platform", "subject"),
     )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     run_date = Column(Date, nullable=False)
     kind = Column(String(20), nullable=False)
+    # Which platform the reminder is about, so a filtered dashboard can show
+    # only its own reminders.
+    platform = Column(String(20), nullable=False)
     # Stable identity for dedupe: a tag name, or "platform:problem_id".
     subject = Column(String(200), nullable=False)
     title = Column(String(255), nullable=False)

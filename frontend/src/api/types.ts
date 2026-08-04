@@ -140,6 +140,7 @@ export interface WeeklyReport {
 
 export interface ReminderItem {
   kind: string;
+  platform: string;
   subject: string;
   title: string;
   reason: string;

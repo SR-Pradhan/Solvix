@@ -75,6 +75,7 @@ class WeeklyReportOut(BaseModel):
 
 class ReminderItem(BaseModel):
     kind: str
+    platform: str
     subject: str
     title: str
     reason: str

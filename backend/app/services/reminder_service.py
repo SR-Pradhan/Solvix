@@ -21,6 +21,7 @@ from app.db.models import Reminder, Submission
 from app.services import topic_service
 
 ACCEPTED = "OK"
+PLATFORMS = ("codeforces", "leetcode")
 
 # Revisit a solved problem after this long — the first spacing interval.
 REVISIT_AFTER_DAYS = 3
@@ -120,6 +121,7 @@ async def _problems_to_revisit(
     return [
         {
             "kind": "problem",
+            "platform": platform,
             "subject": f"{platform}:{pid}",
             "title": name or pid,
             "reason": describe_problem(name or pid, REVISIT_AFTER_DAYS),
@@ -134,17 +136,25 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
 
     problems = await _problems_to_revisit(db, user_id, today)
 
-    scored = (await topic_service.get_weak_topics(db, user_id))["topics"]
-    topics = [
-        {
-            "kind": "topic",
-            "subject": t["tag"],
-            "title": t["tag"],
-            "reason": describe_topic(t["days_since_last_solve"], t["accuracy"]),
-        }
-        for t in scored
-        if topic_is_due(t)
-    ]
+    # Scored per platform rather than pooled, so every reminder knows which
+    # platform it came from. Without that, a dashboard filtered to Codeforces
+    # would still be shown LeetCode topics.
+    topics = []
+    for platform in PLATFORMS:
+        scored = (
+            await topic_service.get_weak_topics(db, user_id, platform=platform)
+        )["topics"]
+        topics.extend(
+            {
+                "kind": "topic",
+                "platform": platform,
+                "subject": t["tag"],
+                "title": t["tag"],
+                "reason": describe_topic(t["days_since_last_solve"], t["accuracy"]),
+            }
+            for t in scored
+            if topic_is_due(t)
+        )
 
     selected = select_reminders(problems, topics)
 
@@ -153,6 +163,7 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
             user_id=user_id,
             run_date=today,
             kind=item["kind"],
+            platform=item["platform"],
             subject=item["subject"],
             title=item["title"],
             reason=item["reason"],
@@ -160,7 +171,7 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
         # Re-running on the same day refreshes nothing and duplicates nothing.
         await db.execute(
             stmt.on_conflict_do_nothing(
-                index_elements=["user_id", "run_date", "kind", "subject"]
+                index_elements=["user_id", "run_date", "kind", "platform", "subject"]
             )
         )
     await db.commit()
@@ -172,11 +183,13 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
     }
 
 
-async def list_reminders(db: AsyncSession, user_id: int) -> dict:
+async def list_reminders(
+    db: AsyncSession, user_id: int, platform: str | None = None
+) -> dict:
     """Today's stored reminders, generating them on first read of the day."""
     today = date.today()
 
-    rows = (
+    stored = (
         await db.execute(
             select(Reminder)
             .where(Reminder.user_id == user_id, Reminder.run_date == today)
@@ -184,19 +197,24 @@ async def list_reminders(db: AsyncSession, user_id: int) -> dict:
         )
     ).scalars().all()
 
-    if not rows:
-        return await run_reminders(db, user_id)
-
-    return {
-        "run_date": today,
-        "generated": len(rows),
-        "reminders": [
+    if not stored:
+        generated = await run_reminders(db, user_id)
+        items = generated["reminders"]
+    else:
+        items = [
             {
                 "kind": r.kind,
+                "platform": r.platform,
                 "subject": r.subject,
                 "title": r.title,
                 "reason": r.reason,
             }
-            for r in rows
-        ],
-    }
+            for r in stored
+        ]
+
+    # Filtering happens on read, not on generation: the run stays a single
+    # capped batch, and switching the dashboard filter never regenerates it.
+    if platform:
+        items = [i for i in items if i["platform"] == platform]
+
+    return {"run_date": today, "generated": len(items), "reminders": items}

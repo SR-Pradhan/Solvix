@@ -18,8 +18,14 @@ def topic(days=30, weakness=0.7, accuracy=0.8):
     }
 
 
-def item(kind="problem", n=0):
-    return {"kind": kind, "subject": f"{kind}{n}", "title": f"{kind}{n}", "reason": ""}
+def item(kind="problem", n=0, platform="codeforces"):
+    return {
+        "kind": kind,
+        "platform": platform,
+        "subject": f"{kind}{n}",
+        "title": f"{kind}{n}",
+        "reason": "",
+    }
 
 
 def test_weak_and_stale_topic_is_due():
@@ -105,3 +111,13 @@ def test_stale_topic_without_a_pass_rate_is_due_on_staleness_alone():
 
 def test_fresh_topic_without_a_pass_rate_is_still_not_due():
     assert not topic_is_due(topic(days=2, weakness=0.9, accuracy=None))
+
+
+
+def test_every_reminder_carries_the_platform_it_came_from():
+    # Without this the dashboard cannot filter: a Codeforces-only view would
+    # still be shown LeetCode topics.
+    selected = select_reminders(
+        [item("problem", 0, "leetcode")], [item("topic", 0, "codeforces")]
+    )
+    assert [r["platform"] for r in selected] == ["leetcode", "codeforces"]

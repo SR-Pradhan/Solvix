@@ -201,10 +201,13 @@ async def read_unsolved_in_topic(
 
 @router.get("/reminders", response_model=RemindersOut)
 async def read_reminders(
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await reminder_service.list_reminders(db, current_user.id)
+    return await reminder_service.list_reminders(
+        db, current_user.id, platform=_validated(platform)
+    )
 
 
 @router.post("/reminders/run", response_model=RemindersOut)
@@ -220,11 +223,12 @@ async def read_weekly_report(
     week_start: date | None = Query(
         default=None, description="Monday of the week to report on; omit for this week"
     ),
+    platform: str | None = PlatformQuery,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await report_service.get_weekly_report(
-        db, current_user.id, week_start=week_start
+        db, current_user.id, week_start=week_start, platform=_validated(platform)
     )
 
 
