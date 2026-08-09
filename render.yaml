@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: solvix-api
+    runtime: python
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Migrations run on every boot, so a schema change ships with the code that
+    # needs it. $PORT is assigned by Render, not chosen by the app.
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13"
+      # Set in the Render dashboard, never here:
+      #   DATABASE_URL   postgresql+asyncpg://...neon.tech/neondb?ssl=require
+      #   JWT_SECRET_KEY
+      #   GROQ_API_KEY
+      #   CORS_ORIGINS   https://<your-app>.vercel.app
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

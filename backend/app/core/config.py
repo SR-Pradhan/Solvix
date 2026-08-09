@@ -1,6 +1,10 @@
+import json
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Annotated
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
@@ -10,7 +14,12 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 30
-    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # NoDecode stops pydantic-settings JSON-parsing the env var before the
+    # validator below sees it, so a plain comma-separated string is accepted.
+    cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
     # Optional: raises GitHub's rate limit from 60 to 5000 requests per hour,
     # which a first LeetCode import needs.
     github_token: str | None = None
@@ -27,6 +36,17 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_starttls: bool = True
     mail_from: str = "Solvix <no-reply@solvix.local>"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value):
+        # Hosting dashboards only accept plain strings, so a JSON list is
+        # awkward to type into one. Accept "a,b" as well as '["a","b"]'.
+        if isinstance(value, str):
+            if value.lstrip().startswith("["):
+                return json.loads(value)
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
     @property
     def mail_configured(self) -> bool:
