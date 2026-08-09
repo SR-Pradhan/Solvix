@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { useAuth } from "../auth";
+import { PasswordInput } from "../components/PasswordInput";
 import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
 
@@ -61,16 +62,14 @@ export function LoginPage() {
           />
         </label>
 
-        <label>
-          Password
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
+        <PasswordInput
+          label="Password"
+          required
+          minLength={8}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          value={password}
+          onChange={setPassword}
+        />
 
         {error && <p className="error">{error}</p>}
 

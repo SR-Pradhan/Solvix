@@ -114,6 +114,36 @@ input {
   gap: 16px;
 }
 
+/* The reveal button sits inside the field rather than beside it, so the
+   form keeps one column and the label still spans the whole control. */
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 64px;
+}
+
+.password-field .reveal {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  width: auto;
+}
+
+.password-field .reveal:hover {
+  color: var(--text);
+}
+
 /* Deliberately quiet: it is provenance, not navigation. */
 .version-footer {
   display: flex;

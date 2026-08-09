@@ -30,6 +30,32 @@ export class ApiError extends Error {
   }
 }
 
+/** One retry, for the free instance's cold start.
+ *
+ * The API sleeps after 15 minutes idle and takes up to a minute to come back,
+ * and the first request while it is waking fails at the network layer. Failing
+ * the user's login for that reads as a broken site, so the request is tried
+ * once more after a pause — long enough for the wake to finish, short enough
+ * that a genuinely dead backend still reports quickly.
+ */
+async function fetchWithWakeRetry(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (first) {
+    // Only idempotent-by-nature failures reach here: a request that never
+    // left the browser cannot have been applied on the server.
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      return await fetch(url, init);
+    } catch {
+      throw first;
+    }
+  }
+}
+
 async function send(
   path: string,
   token: string | null,
@@ -48,9 +74,12 @@ async function send(
 
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { ...init, headers });
+    res = await fetchWithWakeRetry(`${BASE}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError(0, "Cannot reach the API. Is the backend running?");
+    throw new ApiError(
+      0,
+      "The server is still waking up. Give it a few seconds and try again.",
+    );
   }
 
   if (!res.ok) {

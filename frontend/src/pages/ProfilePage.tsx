@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { ApiError, api } from "../api/client";
 import type { User } from "../api/types";
 import { useAuth } from "../auth";
+import { PasswordInput } from "../components/PasswordInput";
 import { Avatar } from "../components/Avatar";
 import { EmailChange } from "../components/EmailChange";
 
@@ -259,40 +260,31 @@ function PasswordCard({ token }: { token: string }) {
       </header>
 
       <form className="profile-form" onSubmit={onSubmit}>
-        <label>
-          Current password
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-          />
-        </label>
+        <PasswordInput
+          label="Current password"
+          required
+          autoComplete="current-password"
+          value={current}
+          onChange={setCurrent}
+        />
 
-        <label>
-          New password
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={next}
-            onChange={(e) => setNext(e.target.value)}
-          />
-        </label>
+        <PasswordInput
+          label="New password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          value={next}
+          onChange={setNext}
+        />
 
-        <label>
-          Confirm new password
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
-        </label>
+        <PasswordInput
+          label="Confirm new password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          value={confirm}
+          onChange={setConfirm}
+        />
 
         {error && <p className="error small">{error}</p>}
         {done && <p className="notice small">Password changed.</p>}
