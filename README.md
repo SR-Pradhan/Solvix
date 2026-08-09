@@ -107,6 +107,10 @@ automatically.
 
 All `/users` and `/dashboard` routes need `Authorization: Bearer <token>`.
 
+The table above is the core of the API, not all of it. The full, always-current
+list is generated from the code and browsable at
+[`/docs`](https://solvix-api.onrender.com/docs).
+
 ## Layout
 
 ```
@@ -139,10 +143,3 @@ not just a restart.
 cd backend && ../.venv/bin/python -m pytest
 ```
 
-## Roadmap
-
-- [x] Problem recommendations from weak tags
-- [x] LeetCode ingestion via LeetHub-synced GitHub repo
-- [x] Deployment (Neon + Render + Vercel)
-- [ ] Scheduled sync and email reminders
-- [ ] AtCoder ingestion
