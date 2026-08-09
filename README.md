@@ -4,6 +4,12 @@ Competitive programming analytics. Import your Codeforces submissions and see
 what you have actually been practising — solved counts, tag strengths,
 difficulty spread, and activity over time.
 
+**Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app) ·
+API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
+
+> The API runs on a free instance that sleeps when idle, so the first request
+> after a quiet spell takes about 50 seconds to wake it.
+
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-15-336791)
@@ -108,6 +114,25 @@ backend/    FastAPI app, Alembic migrations, tests
 frontend/   React client
 ```
 
+## Deployment
+
+| Piece    | Host                                                          |
+| -------- | ------------------------------------------------------------- |
+| Database | Neon (managed Postgres)                                       |
+| API      | Render, from [`render.yaml`](render.yaml) — migrations run on every boot |
+| Frontend | Vercel, root directory `frontend`                             |
+
+Two settings the app needs in production, both environment variables so nothing
+is hardcoded to one machine:
+
+- `DATABASE_URL` — must use the `postgresql+asyncpg://` scheme and `?ssl=require`.
+  asyncpg does not understand the `sslmode=require` that hosted providers hand out.
+- `CORS_ORIGINS` — the deployed frontend's address. Accepts a comma-separated
+  list or a JSON array.
+
+The frontend reads `VITE_API_BASE` at build time, so changing it needs a rebuild,
+not just a restart.
+
 ## Tests
 
 ```bash
@@ -118,5 +143,6 @@ cd backend && ../.venv/bin/python -m pytest
 
 - [x] Problem recommendations from weak tags
 - [x] LeetCode ingestion via LeetHub-synced GitHub repo
+- [x] Deployment (Neon + Render + Vercel)
+- [ ] Scheduled sync and email reminders
 - [ ] AtCoder ingestion
-- [ ] Deployment
