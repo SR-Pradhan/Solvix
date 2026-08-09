@@ -215,6 +215,7 @@ function DetailsCard({
 }
 
 function PasswordCard({ token }: { token: string }) {
+  const { login } = useAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -236,7 +237,10 @@ function PasswordCard({ token }: { token: string }) {
 
     setBusy(true);
     try {
-      await api.changePassword(token, current, next);
+      // The old token stopped being valid the moment the password changed,
+      // so the replacement has to be stored or every later request 401s.
+      const { access_token } = await api.changePassword(token, current, next);
+      login(access_token);
       setCurrent("");
       setNext("");
       setConfirm("");

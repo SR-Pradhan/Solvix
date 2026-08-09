@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
 import { useAuth } from "../auth";
+import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 export function LoginPage() {
@@ -90,6 +91,9 @@ export function LoginPage() {
             : "Already have an account? Log in"}
         </button>
       </form>
+      {/* Also a quiet cold-start signal: the free API sleeps when idle, and a
+          visitor who sees nothing happening assumes the site is broken. */}
+      <VersionFooter />
     </div>
   );
 }

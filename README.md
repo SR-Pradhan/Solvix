@@ -107,6 +107,12 @@ automatically.
 
 All `/users` and `/dashboard` routes need `Authorization: Bearer <token>`.
 
+Auth details worth knowing: login allows five failed attempts per caller in
+five minutes before a fifteen-minute pause, and a password change bumps a
+`token_version` on the user row, which retires every token issued before it —
+a stateless JWT made revocable without a session store. `/health` reports the
+running version, which the UI footer displays.
+
 The table above is the core of the API, not all of it. The full, always-current
 list is generated from the code and browsable at
 [`/docs`](https://solvix-api.onrender.com/docs).

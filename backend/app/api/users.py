@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.email_client import MailError, send_mail
 from app.core.deps import get_current_user
-from app.core.security import hash_password, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.db.database import get_db
 from app.db.models import EmailChangeRequest, User
 from app.schemas.user import (
@@ -17,6 +17,7 @@ from app.schemas.user import (
     SetCodeforcesHandle,
     SetLeetcodeRepo,
     SetLeetcodeUsername,
+    Token,
     UpdateProfile,
     UserOut,
     VerifyEmailChange,
@@ -76,7 +77,7 @@ async def update_profile(
     return current_user
 
 
-@router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/me/password", response_model=Token)
 async def change_password(
     payload: ChangePassword,
     current_user: User = Depends(get_current_user),
@@ -84,9 +85,12 @@ async def change_password(
 ):
     """Change the password, proving ownership with the current one first.
 
-    Note that tokens issued before the change keep working until they expire.
-    Revoking them needs a token version on the user row; worth doing before
-    this is public, not needed while it is single-user.
+    Changing a password is how someone locks an intruder out, so every token
+    minted before this moment stops being accepted: `token_version` is bumped
+    and the dependency compares it against the `tv` claim. That retires the
+    caller's own token too, so a replacement is issued here — otherwise
+    changing your password would silently sign you out of the tab you are
+    standing in.
     """
     if not verify_password(payload.current_password, current_user.password_hash):
         raise HTTPException(
@@ -101,8 +105,14 @@ async def change_password(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 
     current_user.password_hash = hash_password(payload.new_password)
+    current_user.token_version = (current_user.token_version or 0) + 1
     await db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    await db.refresh(current_user)
+    return Token(
+        access_token=create_access_token(
+            subject=str(current_user.id), token_version=current_user.token_version
+        )
+    )
 
 
 async def _live_request(

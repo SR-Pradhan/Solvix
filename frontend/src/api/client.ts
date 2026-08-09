@@ -1,5 +1,6 @@
 import type {
   DailyPlan,
+  Health,
   LeetCodeProfile,
   RatingDistribution,
   Recommendations,
@@ -104,6 +105,9 @@ function qs(
 }
 
 export const api = {
+  /** Unauthenticated: also how the UI learns which build is live. */
+  health: () => request<Health>("/health", null),
+
   register: (email: string, password: string, displayName?: string) =>
     request<User>("/auth/register", null, {
       method: "POST",
@@ -146,8 +150,10 @@ export const api = {
   cancelEmailChange: (token: string) =>
     requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
 
+  // Returns a replacement token: changing a password retires every token
+  // issued before it, including the one making this call.
   changePassword: (token: string, current: string, next: string) =>
-    requestEmpty("/users/me/password", token, {
+    request<Token>("/users/me/password", token, {
       method: "POST",
       body: JSON.stringify({
         current_password: current,

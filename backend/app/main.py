@@ -5,9 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import auth, dashboard, users
 from app.core.config import settings
+from app.core.version import APP_VERSION
 from app.db.database import get_db
 
-app = FastAPI(title="Solvix")
+app = FastAPI(title="Solvix", version=APP_VERSION)
 
 # The frontend runs on its own origin in development, so the browser blocks
 # every request without this.
@@ -27,4 +28,6 @@ app.include_router(dashboard.router)
 @app.get("/health")
 async def health(db: AsyncSession = Depends(get_db)):
     await db.execute(text("SELECT 1"))
-    return {"status": "ok", "db": "connected"}
+    # The version travels with the health check so "which build is live?" is
+    # answerable without opening a dashboard. The UI footer reads it from here.
+    return {"status": "ok", "db": "connected", "version": APP_VERSION}

@@ -38,6 +38,11 @@ class User(Base):
     avatar = deferred(Column(LargeBinary))
     # Doubles as the "has a photo" flag, so `has_avatar` needs no extra query.
     avatar_mime = Column(String(30))
+    # Bumped whenever every existing session should stop working — currently
+    # only a password change. Tokens carry the value they were minted with, so
+    # a mismatch is what lets a stateless JWT be revoked without a session
+    # store.
+    token_version = Column(Integer, nullable=False, server_default="0")
     created_at = Column(DateTime, server_default=func.now())
 
     @property

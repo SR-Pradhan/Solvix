@@ -23,11 +23,16 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        user_id = int(decode_access_token(credentials.credentials))
+        subject, token_version = decode_access_token(credentials.credentials)
+        user_id = int(subject)
     except (JWTError, TypeError, ValueError):
         raise credentials_error
 
     user = await db.get(User, user_id)
     if user is None:
+        raise credentials_error
+    # A password change bumps the row, which retires every token minted before
+    # it — including one an attacker is holding.
+    if token_version != user.token_version:
         raise credentials_error
     return user

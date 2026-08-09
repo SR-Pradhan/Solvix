@@ -24,6 +24,7 @@ import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
 import { StatCards } from "../components/StatCards";
+import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
@@ -251,6 +252,8 @@ export function DashboardPage() {
           <ActivityChart data={data.timeline} />
         </>
       )}
+
+      <VersionFooter />
     </div>
   );
 }

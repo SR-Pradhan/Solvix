@@ -214,3 +214,9 @@ export interface LeetCodeProfile {
 }
 
 export type Platform = "codeforces" | "leetcode";
+
+export interface Health {
+  status: string;
+  db: string;
+  version: string;
+}
