@@ -70,9 +70,11 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
             emailed += 1
         except MailError:
             # The reminders are already stored, so the dashboard still shows
-            # them; only the delivery was lost.
+            # them; only the delivery was lost. Logged with the cause attached:
+            # "mail failed" alone is unactionable, and the useful part is
+            # always the SMTP server's own complaint.
             failures += 1
-            log.warning("reminder mail failed for user %s", user.id)
+            log.exception("reminder mail failed for user %s", user.id)
         except Exception:
             failures += 1
             log.exception("reminder run failed for user %s", user.id)
