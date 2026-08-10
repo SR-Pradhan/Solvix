@@ -92,8 +92,15 @@ export function DashboardPage() {
         .then(setPlan)
         .catch(() => setPlan(null));
 
+      // The card that offers "Refresh from LeetCode" only renders once a
+      // profile exists, so an account that has never synced one had no way to
+      // get the first — the real total simply never appeared. Fetching it
+      // here closes that loop: one public GraphQL call, no button to find.
       api
         .leetcodeProfile(token)
+        .then((profile) =>
+          profile ?? (user?.leetcode_username ? api.syncLeetcodeProfile(token) : null),
+        )
         .then(setLcProfile)
         .catch(() => setLcProfile(null));
 
@@ -108,7 +115,10 @@ export function DashboardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     }
-  }, [token, platform]);
+    // The username rather than the whole user object: `refreshUser` hands back
+    // a new object each time, which would reload the entire dashboard for a
+    // changed avatar.
+  }, [token, platform, user?.leetcode_username]);
 
   useEffect(() => {
     if (user?.codeforces_handle) void load();
