@@ -50,6 +50,10 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
     processed = 0
     emailed = 0
     failures = 0
+    # Reported back to the caller, not just logged. Only the holder of the job
+    # key can read this, and a scheduled job that answers "1 failure" without
+    # saying why forces a log hunt for something the run already knew.
+    errors: list[str] = []
 
     for user in users:
         try:
@@ -68,15 +72,17 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
                 body=reminder_mail.body(reminders, today, settings.app_url),
             )
             emailed += 1
-        except MailError:
+        except MailError as exc:
             # The reminders are already stored, so the dashboard still shows
-            # them; only the delivery was lost. Logged with the cause attached:
-            # "mail failed" alone is unactionable, and the useful part is
-            # always the SMTP server's own complaint.
+            # them; only the delivery was lost. The useful part is always the
+            # mail server's own complaint, which is the chained cause.
             failures += 1
+            reason = str(exc.__cause__ or exc)
+            errors.append(f"user {user.id}: {reason}")
             log.exception("reminder mail failed for user %s", user.id)
-        except Exception:
+        except Exception as exc:
             failures += 1
+            errors.append(f"user {user.id}: {type(exc).__name__}: {exc}")
             log.exception("reminder run failed for user %s", user.id)
 
     return {
@@ -87,4 +93,5 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
         # Says out loud when mail is going to the log instead of an inbox,
         # which is otherwise indistinguishable from a successful run.
         "mail_configured": settings.mail_configured,
+        "errors": errors,
     }
