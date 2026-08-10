@@ -17,6 +17,27 @@ from sqlalchemy.sql import func
 from app.db.database import Base
 
 
+class SyncState(Base):
+    """Whether a platform's history has ever been imported in full.
+
+    Incremental sync resumes from the newest stored submission, which is only
+    correct if an earlier import actually finished. Without this row a single
+    stray submission — from an import that was interrupted — makes the app
+    believe it is up to date and the rest of the history is never fetched.
+    """
+
+    __tablename__ = "sync_states"
+    __table_args__ = (UniqueConstraint("user_id", "platform", name="uq_sync_user_platform"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    platform = Column(String(20), nullable=False)
+    # Set only after a full fetch has been committed. Null means "never
+    # finished", which is what forces the next sync to start from scratch.
+    full_import_completed_at = Column(DateTime)
+    last_synced_at = Column(DateTime)
+
+
 class User(Base):
     __tablename__ = "users"
 
