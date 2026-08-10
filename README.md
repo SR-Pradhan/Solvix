@@ -65,7 +65,26 @@ SMTP_PORT=587
 SMTP_USER=
 SMTP_PASSWORD=
 MAIL_FROM=Solvix <no-reply@solvix.local>
+
+# Optional. Shared secret for POST /jobs/daily-reminders, which a scheduler
+# calls once a day. Unset means that endpoint refuses every request.
+CRON_KEY=
+APP_URL=http://localhost:5173
 ```
+
+### Scheduled reminders
+
+`POST /jobs/daily-reminders` generates the day's reminders for every account
+and emails whoever has something due. It authenticates with a shared secret in
+the `X-Cron-Key` header rather than a user token, because no user is present:
+
+```bash
+curl -X POST https://solvix-api.onrender.com/jobs/daily-reminders \
+  -H "X-Cron-Key: $CRON_KEY"
+```
+
+The schedule itself lives outside the app — the API sleeps when idle, so an
+in-process timer would only fire while someone happened to be using it.
 
 **Backend** — http://localhost:8000 (docs at `/docs`):
 

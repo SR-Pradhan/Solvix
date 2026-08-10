@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True
     mail_from: str = "Solvix <no-reply@solvix.local>"
 
+    # Where an email should send the reader back to.
+    app_url: str = "http://localhost:5173"
+    # Shared secret for the scheduled-job endpoint. Unset means the endpoint
+    # refuses every call rather than running unauthenticated — a job that
+    # rewrites reminders and sends mail must not be open to the internet
+    # merely because nobody configured it.
+    cron_key: str | None = None
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value):

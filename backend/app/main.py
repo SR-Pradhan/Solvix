@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api import auth, dashboard, users
+from app.api import auth, dashboard, jobs, users
 from app.core.config import settings
 from app.core.version import APP_VERSION
 from app.db.database import get_db
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
+app.include_router(jobs.router)
 
 
 @app.get("/health")

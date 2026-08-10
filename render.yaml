@@ -26,3 +26,18 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      # Mail and the scheduled reminder job:
+      #   SMTP_HOST=smtp.gmail.com  SMTP_USER=<address>  SMTP_PASSWORD=<app password>
+      #   MAIL_FROM, APP_URL, CRON_KEY
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: CRON_KEY
+        sync: false
