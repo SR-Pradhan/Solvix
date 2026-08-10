@@ -39,16 +39,27 @@ export function ConnectLeetCode({ onDone }: { onDone: () => Promise<void> }) {
       <header className="card-head">
         <h2>Connect LeetCode</h2>
       </header>
+      {/* The extension is named here and nowhere else: this is the one screen
+          where the reader has to act on it. Everywhere after this, what
+          matters is what Solvix knows, not where it came from. */}
       <p className="muted small">
-        Solvix reads your solved problems from a GitHub repo synced by the
-        LeetHub extension. LeetCode itself has no public API.
+        LeetCode has no public API for your submission history, so Solvix reads
+        it from a GitHub repository of your solutions. The{" "}
+        <a
+          href="https://github.com/QasimWani/LeetHub"
+          target="_blank"
+          rel="noreferrer"
+        >
+          LeetHub
+        </a>{" "}
+        browser extension keeps that repository up to date automatically.
       </p>
       <form className="inline-form" onSubmit={onSubmit}>
         <input
           value={repo}
           onChange={(e) => setRepo(e.target.value)}
           placeholder="owner/LeetCode-Problems"
-          aria-label="LeetHub repository"
+          aria-label="GitHub repository holding your LeetCode solutions"
         />
         <button type="submit" disabled={busy}>
           {busy ? "Importing…" : "Import"}

@@ -62,14 +62,17 @@ export function LeetCodeProfile({
         <span className="muted small">@{data.username}</span>
       </header>
 
+      {/* The real total leads. The tracked figure is smaller and always will
+          be, so presenting them as equals invites the reader to treat the
+          smaller one as a shortfall rather than as the depth of the record. */}
       <div className="week-figures">
         <div>
           <span className="stat-value">{data.total_solved}</span>
-          <span className="muted small">solved on LeetCode</span>
+          <span className="muted small">problems solved</span>
         </div>
         <div>
           <span className="stat-value">{coverage.tracked}</span>
-          <span className="muted small">tracked in detail</span>
+          <span className="muted small">with full history</span>
         </div>
       </div>
 
@@ -87,10 +90,13 @@ export function LeetCodeProfile({
       )}
 
       {coverage.missing > 0 && (
+        // Names what Solvix knows, not which extension supplied it — the
+        // reader has no use for the plumbing at this point in the flow.
         <p className="muted small skipped">
-          {coverage.missing} problems were solved before LeetHub was installed,
-          so Solvix knows the count but not the dates. Topic timing is based on
-          the {coverage.tracked} it can see ({coverage.percent}%).
+          {coverage.missing} of these were solved before your solutions were
+          being synced, so their dates and topics are not recorded. Revision
+          timing uses the {coverage.tracked} with a full history ({coverage.percent}
+          % of your total).
         </p>
       )}
 
