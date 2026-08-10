@@ -86,6 +86,18 @@ curl -X POST https://solvix-api.onrender.com/jobs/daily-reminders \
 The schedule itself lives outside the app — the API sleeps when idle, so an
 in-process timer would only fire while someone happened to be using it.
 
+Render's free instances block outbound SMTP (ports 25, 465 and 587), so mail
+cannot leave the deployed API at all. `?deliver=false` therefore returns the
+composed messages instead of sending them, and the scheduler delivers:
+
+```bash
+curl -X POST "https://solvix-api.onrender.com/jobs/daily-reminders?deliver=false" \
+  -H "X-Cron-Key: $CRON_KEY"
+```
+
+Composition stays in the app either way — the wording is the part worth
+testing, and it should not drift into a workflow tool.
+
 **Backend** — http://localhost:8000 (docs at `/docs`):
 
 ```bash

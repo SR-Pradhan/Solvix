@@ -37,8 +37,16 @@ async def require_cron_key(x_cron_key: str | None = Header(default=None)) -> Non
 
 
 @router.post("/daily-reminders", dependencies=[Depends(require_cron_key)])
-async def daily_reminders(db: AsyncSession = Depends(get_db)):
-    """Generate today's reminders for every account and email them.
+async def daily_reminders(
+    deliver: bool = True, db: AsyncSession = Depends(get_db)
+):
+    """Generate today's reminders for every account, and email them.
+
+    `deliver=false` composes the messages and hands them back instead of
+    sending. That exists because the host's free tier blocks outbound SMTP
+    entirely, so the scheduler — which can reach a mail provider — does the
+    delivering. Composition stays here either way: the wording is the part
+    worth testing, and it should not drift into a workflow tool.
 
     One account's failure must not end the run — a bounced address would
     otherwise silently cancel everybody else's reminders — so each is caught
@@ -54,6 +62,7 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
     # key can read this, and a scheduled job that answers "1 failure" without
     # saying why forces a log hunt for something the run already knew.
     errors: list[str] = []
+    messages: list[dict] = []
 
     for user in users:
         try:
@@ -66,11 +75,17 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
             if not reminders:
                 continue
 
-            await send_mail(
-                to=user.email,
-                subject=reminder_mail.subject_line(reminders, today),
-                body=reminder_mail.body(reminders, today, settings.app_url),
-            )
+            message = {
+                "to": user.email,
+                "subject": reminder_mail.subject_line(reminders, today),
+                "body": reminder_mail.body(reminders, today, settings.app_url),
+            }
+
+            if not deliver:
+                messages.append(message)
+                continue
+
+            await send_mail(**message)
             emailed += 1
         except MailError as exc:
             # The reminders are already stored, so the dashboard still shows
@@ -94,4 +109,6 @@ async def daily_reminders(db: AsyncSession = Depends(get_db)):
         # which is otherwise indistinguishable from a successful run.
         "mail_configured": settings.mail_configured,
         "errors": errors,
+        # Empty unless deliver=false. The scheduler sends these itself.
+        "messages": messages,
     }
