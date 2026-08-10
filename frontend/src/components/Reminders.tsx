@@ -38,7 +38,21 @@ export function Reminders({ data }: { data: Data }) {
       <ul className="topic-list">
         {data.reminders.map((r) => (
           <li key={`${r.kind}:${r.subject}`}>
-            <span className="topic-name">{r.title}</span>
+            {/* A revisit reminder that does not open the problem leaves the
+                reader to go and find it, which is where a reminder gets
+                ignored. Topics have no page to link to, so they stay text. */}
+            {r.url ? (
+              <a
+                className="topic-name"
+                href={r.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {r.title}
+              </a>
+            ) : (
+              <span className="topic-name">{r.title}</span>
+            )}
             <span className="badge">{KIND_LABELS[r.kind] ?? r.kind}</span>
             <span className="muted small topic-why">{r.reason}</span>
             {r.kind === "topic" ? (

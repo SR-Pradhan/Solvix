@@ -160,6 +160,8 @@ export interface ReminderItem {
   subject: string;
   title: string;
   reason: string;
+  // Problem reminders only — a topic is not a page anywhere.
+  url: string | null;
 }
 
 export interface Reminders {

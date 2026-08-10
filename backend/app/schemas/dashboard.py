@@ -101,6 +101,8 @@ class ReminderItem(BaseModel):
     subject: str
     title: str
     reason: str
+    # Only problem reminders have one: a topic is not a page anywhere.
+    url: str | None = None
 
 
 class RemindersOut(BaseModel):

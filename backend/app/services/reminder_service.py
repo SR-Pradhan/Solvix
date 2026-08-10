@@ -18,7 +18,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Reminder, Revision, Submission
-from app.services import revision_schedule, topic_service
+from app.services import problem_service, revision_schedule, topic_service
 
 ACCEPTED = "OK"
 PLATFORMS = ("codeforces", "leetcode")
@@ -192,6 +192,10 @@ async def _problems_to_revisit(
                 r.problem_name or r.external_problem_id,
                 (today - r.first_solved_at.date()).days,
             ),
+            # Telling someone to revisit a problem without linking to it leaves
+            # them to go and find it themselves, which is the moment a reminder
+            # gets ignored.
+            "url": problem_service.problem_url(r.platform, r.external_problem_id),
         }
         for r in due
     ]
@@ -268,6 +272,14 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
     }
 
 
+def _reminder_url(kind: str, platform: str, subject: str) -> str | None:
+    """The problem a stored reminder points at, from its "platform:id" subject."""
+    if kind != "problem":
+        return None
+    _, _, external_id = subject.partition(":")
+    return problem_service.problem_url(platform, external_id) if external_id else None
+
+
 async def list_reminders(
     db: AsyncSession, user_id: int, platform: str | None = None
 ) -> dict:
@@ -293,6 +305,9 @@ async def list_reminders(
                 "subject": r.subject,
                 "title": r.title,
                 "reason": r.reason,
+                # Rebuilt from the subject rather than stored: the link is
+                # derived from the id, so a second copy could only ever drift.
+                "url": _reminder_url(r.kind, r.platform, r.subject),
             }
             for r in stored
         ]

@@ -1,5 +1,6 @@
 from app.services.reminder_service import (
     MAX_PER_RUN,
+    _reminder_url,
     STALE_THRESHOLD_DAYS,
     WEAK_THRESHOLD,
     describe_problem,
@@ -121,3 +122,28 @@ def test_every_reminder_carries_the_platform_it_came_from():
         [item("problem", 0, "leetcode")], [item("topic", 0, "codeforces")]
     )
     assert [r["platform"] for r in selected] == ["leetcode", "codeforces"]
+
+
+def test_problem_reminder_links_to_leetcode():
+    # The subject carries "platform:id", so the link is derived rather than
+    # stored — a second copy could only drift from the id it came from.
+    assert (
+        _reminder_url("problem", "leetcode", "leetcode:0162-find-peak-element")
+        == "https://leetcode.com/problems/find-peak-element/"
+    )
+
+
+def test_problem_reminder_links_to_codeforces():
+    assert (
+        _reminder_url("problem", "codeforces", "codeforces:2238A")
+        == "https://codeforces.com/problemset/problem/2238/A"
+    )
+
+
+def test_topic_reminders_have_no_link():
+    # A tag is not a page anywhere.
+    assert _reminder_url("topic", "leetcode", "Math") is None
+
+
+def test_a_subject_without_an_id_has_no_link():
+    assert _reminder_url("problem", "leetcode", "leetcode:") is None
