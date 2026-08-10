@@ -153,7 +153,13 @@ list is generated from the code and browsable at
 ```
 backend/    FastAPI app, Alembic migrations, tests
 frontend/   React client
+n8n/        scheduled workflows, exported as JSON
 ```
+
+Scheduled work is kept in [`n8n/`](n8n/) rather than in the API: the free
+instance sleeps when idle, so an in-process timer would only fire while
+somebody happened to be using the app. n8n decides *when*; Solvix decides
+*what*, so replacing the scheduler changes no behaviour.
 
 ## Deployment
 

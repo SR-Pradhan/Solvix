@@ -1,0 +1,98 @@
+{
+  "name": "Solvix — daily reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "0f5a5c6e-0001-4a1a-9a01-000000000001",
+      "name": "Every morning at 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://solvix-api.onrender.com/jobs/daily-reminders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "deliver",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "retry": {
+            "retry": {
+              "maxTries": 3,
+              "waitBetweenTries": 20000
+            }
+          }
+        }
+      },
+      "id": "0f5a5c6e-0002-4a1a-9a01-000000000002",
+      "name": "Ask Solvix what is due",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [20, 0],
+      "notes": "deliver=false: the API composes the emails but cannot send them, because free-tier hosting blocks outbound SMTP. Retries cover the ~50s cold start on the first call of the day."
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "messages",
+        "options": {}
+      },
+      "id": "0f5a5c6e-0003-4a1a-9a01-000000000003",
+      "name": "One item per person",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [260, 0],
+      "notes": "An empty list produces no items, so nobody with nothing due gets an email."
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "0f5a5c6e-0004-4a1a-9a01-000000000004",
+      "name": "Send it",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [500, 0],
+      "notes": "Delivery only. The wording is composed and tested in the Solvix codebase, so it does not drift into a workflow nobody reviews."
+    }
+  ],
+  "connections": {
+    "Every morning at 08:00": {
+      "main": [[{ "node": "Ask Solvix what is due", "type": "main", "index": 0 }]]
+    },
+    "Ask Solvix what is due": {
+      "main": [[{ "node": "One item per person", "type": "main", "index": 0 }]]
+    },
+    "One item per person": {
+      "main": [[{ "node": "Send it", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}
