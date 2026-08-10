@@ -17,14 +17,13 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Reminder, Submission
-from app.services import topic_service
+from app.db.models import Reminder, Revision, Submission
+from app.services import revision_schedule, topic_service
 
 ACCEPTED = "OK"
 PLATFORMS = ("codeforces", "leetcode")
 
-# Revisit a solved problem after this long — the first spacing interval.
-REVISIT_AFTER_DAYS = 3
+# Revisit intervals live in revision_schedule; the first one is 3 days.
 # A topic must be untouched this long before it is worth nagging about.
 STALE_THRESHOLD_DAYS = 14
 # And weak enough to be worth the slot.
@@ -36,7 +35,11 @@ MAX_PER_RUN = 5
 def describe_problem(name: str, days: int) -> str:
     if days == 1:
         return "solved yesterday"
-    return f"solved {days} days ago"
+    if days < 14:
+        return f"solved {days} days ago"
+    if days < 60:
+        return f"solved {round(days / 7)} weeks ago"
+    return f"solved {round(days / 30)} months ago"
 
 
 def describe_topic(days_since: int | None, accuracy: float | None) -> str:
@@ -83,18 +86,17 @@ def topic_is_due(topic: dict) -> bool:
     return topic["weakness"] >= WEAK_THRESHOLD
 
 
-async def _problems_to_revisit(
-    db: AsyncSession, user_id: int, today: date
-) -> list[dict]:
-    """Problems whose first solve was exactly REVISIT_AFTER_DAYS ago."""
-    target = today - timedelta(days=REVISIT_AFTER_DAYS)
-    window_start = datetime.combine(target, datetime.min.time())
-    window_end = window_start + timedelta(days=1)
+async def _record_new_solves(db: AsyncSession, user_id: int, today: date) -> None:
+    """Give every solved problem a schedule, once.
 
+    Problems solved before this feature existed slot in at the first interval
+    still ahead of them, and anything past the whole ladder is retired rather
+    than dumped into today's queue.
+    """
     first_solves = (
         select(
-            Submission.external_problem_id,
-            Submission.platform,
+            Submission.external_problem_id.label("pid"),
+            Submission.platform.label("platform"),
             func.min(Submission.problem_name).label("problem_name"),
             func.min(Submission.solved_at).label("first_solved_at"),
         )
@@ -103,38 +105,104 @@ async def _problems_to_revisit(
         .subquery()
     )
 
-    rows = (
-        await db.execute(
-            select(
-                first_solves.c.external_problem_id,
-                first_solves.c.platform,
-                first_solves.c.problem_name,
-            )
-            .where(
-                first_solves.c.first_solved_at >= window_start,
-                first_solves.c.first_solved_at < window_end,
-            )
-            .order_by(first_solves.c.external_problem_id)
-        )
-    ).all()
+    known = select(Revision.platform, Revision.external_problem_id).where(
+        Revision.user_id == user_id
+    )
+    known_pairs = {(r.platform, r.external_problem_id) for r in (await db.execute(known)).all()}
 
-    return [
+    rows = (await db.execute(select(first_solves))).all()
+    for row in rows:
+        if (row.platform, row.pid) in known_pairs or row.first_solved_at is None:
+            continue
+        placed = revision_schedule.schedule_for_existing(
+            row.first_solved_at.date(), today
+        )
+        step, due = placed if placed else (len(revision_schedule.INTERVALS) - 1, None)
+        db.add(
+            Revision(
+                user_id=user_id,
+                platform=row.platform,
+                external_problem_id=row.pid,
+                problem_name=row.problem_name,
+                first_solved_at=row.first_solved_at,
+                step=step,
+                due_on=due,
+            )
+        )
+    await db.flush()
+
+
+async def _revisit_outcome(
+    db: AsyncSession, user_id: int, revision: Revision, today: date
+) -> str:
+    """How the last revisit went, according to the platform's own record.
+
+    Only asked about problems the app can actually see failures for. Anywhere
+    else the answer would be "clean" by construction, which is a guess wearing
+    a fact's clothes.
+    """
+    if revision.platform not in topic_service.PLATFORMS_WITH_FAILURES:
+        return revision_schedule.CLEAN
+
+    since = revision.last_reminded_on or revision.first_solved_at.date()
+    attempts = (
+        await db.execute(
+            select(Submission.verdict)
+            .where(
+                Submission.user_id == user_id,
+                Submission.platform == revision.platform,
+                Submission.external_problem_id == revision.external_problem_id,
+                Submission.solved_at >= datetime.combine(since, datetime.min.time()),
+            )
+            .order_by(Submission.solved_at)
+        )
+    ).scalars().all()
+
+    return revision_schedule.outcome_for_platform(
+        revision.platform, list(attempts), can_see_failures=True
+    )
+
+
+async def _problems_to_revisit(
+    db: AsyncSession, user_id: int, today: date
+) -> tuple[list[dict], list[Revision]]:
+    """Problems whose revision is due, oldest first."""
+    await _record_new_solves(db, user_id, today)
+
+    due = (
+        await db.execute(
+            select(Revision)
+            .where(
+                Revision.user_id == user_id,
+                Revision.due_on.isnot(None),
+                Revision.due_on <= today,
+            )
+            .order_by(Revision.due_on, Revision.id)
+            .limit(MAX_PER_RUN)
+        )
+    ).scalars().all()
+
+    items = [
         {
             "kind": "problem",
-            "platform": platform,
-            "subject": f"{platform}:{pid}",
-            "title": name or pid,
-            "reason": describe_problem(name or pid, REVISIT_AFTER_DAYS),
+            "platform": r.platform,
+            "subject": f"{r.platform}:{r.external_problem_id}",
+            "title": r.problem_name or r.external_problem_id,
+            "reason": describe_problem(
+                r.problem_name or r.external_problem_id,
+                (today - r.first_solved_at.date()).days,
+            ),
         }
-        for pid, platform, name in rows
+        for r in due
     ]
+    return items, list(due)
 
 
 async def run_reminders(db: AsyncSession, user_id: int) -> dict:
     """Generate today's reminders and persist them."""
     today = date.today()
 
-    problems = await _problems_to_revisit(db, user_id, today)
+    problems, due_revisions = await _problems_to_revisit(db, user_id, today)
 
     # Scored per platform rather than pooled, so every reminder knows which
     # platform it came from. Without that, a dashboard filtered to Codeforces
@@ -174,6 +242,23 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
                 index_elements=["user_id", "run_date", "kind", "platform", "subject"]
             )
         )
+
+    # Advance only what actually made it past the cap. A problem that was due
+    # but dropped keeps its date and comes back tomorrow, rather than silently
+    # sliding to the next interval without ever being shown.
+    shown = {item["subject"] for item in selected if item["kind"] == "problem"}
+    for revision in due_revisions:
+        if f"{revision.platform}:{revision.external_problem_id}" not in shown:
+            continue
+        outcome = await _revisit_outcome(db, user_id, revision, today)
+        nxt = revision_schedule.next_schedule(revision.step, outcome, today)
+        revision.last_reminded_on = today
+        if nxt is None:
+            # Recalled through the whole ladder; stop scheduling it.
+            revision.due_on = None
+        else:
+            revision.step, revision.due_on = nxt
+
     await db.commit()
 
     return {

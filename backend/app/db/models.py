@@ -17,6 +17,35 @@ from sqlalchemy.sql import func
 from app.db.database import Base
 
 
+class Revision(Base):
+    """The revision schedule for one solved problem.
+
+    Kept as a row rather than recomputed, because the schedule depends on what
+    happened at each earlier revisit, not only on the original solve date.
+    """
+
+    __tablename__ = "revisions"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "platform", "external_problem_id", name="uq_revision_problem"
+        ),
+        Index("ix_revisions_due", "user_id", "due_on"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    platform = Column(String(20), nullable=False)
+    external_problem_id = Column(String(100), nullable=False)
+    problem_name = Column(String(255))
+    first_solved_at = Column(DateTime, nullable=False)
+    # Index into revision_schedule.INTERVALS.
+    step = Column(Integer, nullable=False, server_default="0")
+    # Null means retired: recalled through the whole ladder, or already older
+    # than it when this feature first saw the problem.
+    due_on = Column(Date)
+    last_reminded_on = Column(Date)
+
+
 class SyncState(Base):
     """Whether a platform's history has ever been imported in full.
 
