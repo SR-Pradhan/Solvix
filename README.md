@@ -1,8 +1,12 @@
 # Solvix
 
-Competitive programming analytics. Import your Codeforces submissions and see
-what you have actually been practising — solved counts, tag strengths,
-difficulty spread, and activity over time.
+An AI-powered DSA practice tracker for placement preparation. It reads your
+Codeforces and LeetCode history automatically, works out which topics have
+decayed, and turns that into a daily plan and spaced revision reminders.
+
+The constraint that shapes everything: **no manual logging.** Every figure is
+derived from data the platforms already hold, and several otherwise-obvious
+features are deliberately absent for that reason.
 
 **Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app) ·
 API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
@@ -16,24 +20,34 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 
 ## What it does
 
-- **Imports** your full Codeforces submission history, then syncs incrementally
-- **Imports** LeetCode solves from a LeetHub-synced GitHub repo
+- **Imports** your full Codeforces history, then syncs incrementally; LeetCode
+  comes from a LeetHub-synced GitHub repo plus the public profile for the true
+  solved total the repo cannot know
 - **Deduplicates** attempts into problems — ten wrong answers on one problem
   count as one solve, not eleven
-- **Breaks down** solves by tag and difficulty rating
-- **Tracks** daily activity, current streak, and longest streak
 - **Scores** each topic by accuracy and recency, so a tag you brute-forced
-  through or last touched months ago ranks as weak
+  through or last touched months ago ranks as weak. The two platforms are
+  scored separately, because only one of them records failures
+- **Plans** your day with an LLM, from those scores, cached once per day
+- **Reminds** you to revisit solved problems on a widening ladder — 3, 7, 14,
+  30, 60 days — adjusted by how the revisit went where the platform records
+  enough to tell
+- **Emails** that list each morning, with links, so it can be acted on without
+  opening the app
 - **Recommends** unsolved problems from the tags you practise least, at a
   difficulty just above your current level
+- **Reports** each finished week, frozen as it was rather than recomputed by
+  today's rules
 
 ## Stack
 
-| Layer    | Tech                                                     |
-| -------- | -------------------------------------------------------- |
-| Backend  | FastAPI, async SQLAlchemy, Alembic, JWT auth              |
-| Database | PostgreSQL 15 (Docker)                                   |
-| Frontend | React, TypeScript, Vite, Recharts                        |
+| Layer     | Tech                                                    |
+| --------- | ------------------------------------------------------- |
+| Backend   | FastAPI, async SQLAlchemy, Alembic, JWT auth            |
+| Database  | PostgreSQL (Docker locally, Neon in production)         |
+| Frontend  | React, TypeScript, Vite, Recharts                       |
+| LLM       | Groq (`llama-3.3-70b-versatile`), JSON mode             |
+| Scheduled | GitHub Actions — the API sleeps when idle, so the clock lives outside it |
 
 ## Getting started
 
@@ -186,4 +200,10 @@ not just a restart.
 ```bash
 cd backend && ../.venv/bin/python -m pytest
 ```
+
+241 tests, under two seconds, with no database and no network — the logic worth
+testing is written as pure functions over values, and third-party calls are
+stubbed at the HTTP layer. They aim at boundaries rather than coverage: exactly
+at the staleness threshold, when a platform records no failures, when the model
+returns nonsense, when a problem index is `E2` rather than `E`.
 
