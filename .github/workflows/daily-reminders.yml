@@ -1,0 +1,87 @@
+# Daily revision reminders.
+#
+# The same job the n8n workflow in n8n/ runs, kept here as the long-lived
+# version: n8n Cloud is a paid product after its trial, while this is free and
+# runs whether or not any machine of mine is switched on.
+#
+# Only one of the two should be enabled at a time — both would send every
+# reminder twice. This one starts disabled: `schedule` is commented out, so it
+# only runs when triggered by hand until the switch is made.
+#
+# The division of labour is the point: this file decides *when* and posts the
+# letter. Solvix decides *what* a reminder is and writes the wording, which is
+# why neither scheduler contains a line of product logic.
+
+name: Daily reminders
+
+on:
+  workflow_dispatch:
+  # Uncomment to take over from n8n. 02:30 UTC is 08:00 IST; GitHub's cron has
+  # no timezone, so the offset is baked in.
+  # schedule:
+  #   - cron: "30 2 * * *"
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask Solvix what is due
+        id: reminders
+        env:
+          API: ${{ secrets.SOLVIX_API_URL }}
+          CRON_KEY: ${{ secrets.SOLVIX_CRON_KEY }}
+        run: |
+          set -euo pipefail
+
+          # --retry covers the cold start: the free instance sleeps after 15
+          # minutes, and the first call of the day spends ~50s waking it.
+          response=$(curl -sS --fail-with-body \
+            --retry 3 --retry-delay 20 --retry-connrefused \
+            --max-time 120 \
+            -X POST "$API/jobs/daily-reminders?deliver=false" \
+            -H "X-Cron-Key: $CRON_KEY")
+
+          echo "$response" | jq -c '{users, failures, count: (.messages | length)}'
+
+          # A run that failed for somebody must not look like a success. The
+          # reminders are already stored either way, so the dashboard still
+          # shows them; only this run is marked bad.
+          if [ "$(echo "$response" | jq '.failures')" -gt 0 ]; then
+            echo "::error::$(echo "$response" | jq -c '.errors')"
+            exit 1
+          fi
+
+          echo "$response" | jq -c '.messages' > messages.json
+
+      - name: Send them
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: |
+          set -euo pipefail
+
+          # Python's stdlib rather than a marketplace action: this is a dozen
+          # lines, and a third-party action here would be handed the mail
+          # password on every run.
+          python - <<'PY'
+          import json, os, smtplib, sys
+          from email.message import EmailMessage
+
+          messages = json.load(open("messages.json"))
+          if not messages:
+              print("nothing due today")
+              sys.exit(0)
+
+          with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as server:
+              server.starttls()
+              server.login(os.environ["SMTP_USER"], os.environ["SMTP_PASSWORD"])
+              for item in messages:
+                  mail = EmailMessage()
+                  mail["From"] = os.environ["MAIL_FROM"]
+                  mail["To"] = item["to"]
+                  mail["Subject"] = item["subject"]
+                  mail.set_content(item["body"])
+                  server.send_message(mail)
+                  print("sent to", item["to"])
+          PY

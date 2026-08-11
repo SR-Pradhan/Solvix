@@ -156,10 +156,13 @@ frontend/   React client
 n8n/        scheduled workflows, exported as JSON
 ```
 
-Scheduled work is kept in [`n8n/`](n8n/) rather than in the API: the free
-instance sleeps when idle, so an in-process timer would only fire while
-somebody happened to be using the app. n8n decides *when*; Solvix decides
-*what*, so replacing the scheduler changes no behaviour.
+Scheduled work is kept outside the API: the free instance sleeps when idle, so
+an in-process timer would only fire while somebody happened to be using the
+app. The scheduler decides *when*; Solvix decides *what*, so replacing it
+changes no behaviour — which is why the same job exists twice, as
+[`n8n/daily-reminders.json`](n8n/daily-reminders.json) and as
+[`.github/workflows/daily-reminders.yml`](.github/workflows/daily-reminders.yml).
+Only one runs at a time.
 
 ## Deployment
 
