@@ -83,3 +83,38 @@ def test_body_survives_a_problem_with_no_link():
 
 def test_body_always_points_home():
     assert APP in body([topic()], TODAY, APP)
+
+
+def topic_with_suggestions():
+    t = topic("Bit Manipulation")
+    t["suggestions"] = [
+        {
+            "name": "Single Number",
+            "difficulty": "Easy",
+            "url": "https://leetcode.com/problems/single-number/",
+        },
+        {"name": "Counting Bits", "difficulty": "Easy", "url": None},
+    ]
+    return t
+
+
+def test_a_stale_topic_offers_a_way_in():
+    # Naming a gap without offering a problem leaves the reader to go hunting,
+    # which is friction at the moment they were already reluctant.
+    text = body([topic_with_suggestions()], TODAY, APP)
+    assert "try: Single Number (Easy)" in text
+    assert "https://leetcode.com/problems/single-number/" in text
+
+
+def test_a_suggestion_without_a_link_still_renders():
+    text = body([topic_with_suggestions()], TODAY, APP)
+    assert "try: Counting Bits (Easy)" in text
+    assert "None" not in text
+
+
+def test_topics_without_suggestions_are_unchanged():
+    # The catalogue lookup is a third-party call; losing it must cost the
+    # suggestions, not the reminder.
+    text = body([topic()], TODAY, APP)
+    assert "Sliding Window" in text
+    assert "try:" not in text

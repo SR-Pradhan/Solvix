@@ -17,7 +17,11 @@ from app.clients.email_client import MailError, send_mail
 from app.core.config import settings
 from app.db.database import get_db
 from app.db.models import User
-from app.services import reminder_mail, reminder_service
+from app.services import problem_service, reminder_mail, reminder_service
+
+# Two per topic. The email is a nudge, not a curriculum: a list long enough to
+# scroll is a list you postpone.
+SUGGESTIONS_PER_TOPIC = 2
 
 log = logging.getLogger("solvix.jobs")
 

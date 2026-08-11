@@ -58,6 +58,16 @@ def body(reminders: list[dict], today: date, app_url: str) -> str:
         lines.append(f"Going stale ({len(topics)}) — no practice in a while:")
         for r in topics:
             lines.append(f"  - {r['title']} — {r['reason']}")
+            # Naming a gap without offering a way in leaves the reader to go
+            # hunting, which is friction at exactly the moment they were
+            # already reluctant. Suggestions are optional: a catalogue lookup
+            # can fail, and the reminder is still worth sending without them.
+            for problem in r.get("suggestions") or []:
+                label = problem.get("difficulty") or problem.get("rating")
+                detail = f" ({label})" if label else ""
+                lines.append(f"      try: {problem['name']}{detail}")
+                if problem.get("url"):
+                    lines.append(f"      {problem['url']}")
         lines.append("")
 
     lines.append(f"Open Solvix: {app_url}")
