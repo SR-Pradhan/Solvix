@@ -153,16 +153,14 @@ list is generated from the code and browsable at
 ```
 backend/    FastAPI app, Alembic migrations, tests
 frontend/   React client
-n8n/        scheduled workflows, exported as JSON
+.github/    the daily reminder schedule
 ```
 
 Scheduled work is kept outside the API: the free instance sleeps when idle, so
 an in-process timer would only fire while somebody happened to be using the
 app. The scheduler decides *when*; Solvix decides *what*, so replacing it
-changes no behaviour — which is why the same job exists twice, as
-[`n8n/daily-reminders.json`](n8n/daily-reminders.json) and as
+changes no behaviour. It runs as
 [`.github/workflows/daily-reminders.yml`](.github/workflows/daily-reminders.yml).
-Only one runs at a time.
 
 ## Deployment
 

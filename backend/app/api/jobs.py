@@ -1,9 +1,9 @@
 """Endpoints a scheduler calls, not a person.
 
 Solvix has no in-process scheduler on purpose: the API sleeps when idle, so
-anything that must happen at a fixed time has to be started from outside. n8n
-holds the clock and calls this; the decisions stay here, which means swapping
-the scheduler later changes nothing about what a reminder is.
+anything that must happen at a fixed time has to be started from outside. A
+GitHub Actions workflow holds the clock and calls this; the decisions stay
+here, so swapping the scheduler changes nothing about what a reminder is.
 """
 
 import logging

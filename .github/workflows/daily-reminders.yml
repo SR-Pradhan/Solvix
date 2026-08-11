@@ -1,25 +1,23 @@
 # Daily revision reminders.
 #
-# The same job the n8n workflow in n8n/ runs, kept here as the long-lived
-# version: n8n Cloud is a paid product after its trial, while this is free and
-# runs whether or not any machine of mine is switched on.
-#
-# Only one of the two should be enabled at a time — both would send every
-# reminder twice. This one starts disabled: `schedule` is commented out, so it
-# only runs when triggered by hand until the switch is made.
+# Runs on GitHub's machines rather than the API host, for two reasons: the free
+# instance sleeps when idle, so an in-process timer would only fire while
+# somebody happened to be using the app; and that host blocks outbound SMTP
+# entirely, so mail cannot leave it at all.
 #
 # The division of labour is the point: this file decides *when* and posts the
-# letter. Solvix decides *what* a reminder is and writes the wording, which is
-# why neither scheduler contains a line of product logic.
+# letter. Solvix decides *what* a reminder is and writes the wording, so the
+# scheduler holds no product logic and could be replaced by anything that can
+# make an HTTP call.
 
 name: Daily reminders
 
 on:
   workflow_dispatch:
-  # Uncomment to take over from n8n. 02:30 UTC is 08:00 IST; GitHub's cron has
-  # no timezone, so the offset is baked in.
-  # schedule:
-  #   - cron: "30 2 * * *"
+  # 02:30 UTC is 08:00 IST. GitHub's cron has no timezone, so the offset is
+  # written into the expression rather than declared anywhere.
+  schedule:
+    - cron: "30 2 * * *"
 
 jobs:
   send:
