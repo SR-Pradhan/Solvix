@@ -56,13 +56,21 @@ def test_body_links_every_problem():
 
 def test_body_separates_the_two_kinds():
     text = body([problem(), topic()], TODAY, APP)
-    assert text.index("Revisit:") < text.index("Going stale:")
+    assert text.index("Revisit") < text.index("Going stale")
 
 
 def test_body_omits_an_empty_section():
     text = body([topic()], TODAY, APP)
-    assert "Revisit:" not in text
-    assert "Going stale:" in text
+    assert "Revisit" not in text
+    assert "Going stale" in text
+
+
+def test_headings_count_what_is_under_them():
+    # Five problems at once looks arbitrary until the heading says they are
+    # spaced revisits rather than a backlog.
+    text = body([problem(), problem("Two Sum"), topic()], TODAY, APP)
+    assert "Revisit (2)" in text
+    assert "Going stale (1)" in text
 
 
 def test_body_survives_a_problem_with_no_link():

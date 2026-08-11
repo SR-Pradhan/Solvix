@@ -43,7 +43,10 @@ def body(reminders: list[dict], today: date, app_url: str) -> str:
     lines = [f"Your practice for {today:%A %-d %B}.", ""]
 
     if problems:
-        lines.append("Revisit:")
+        # Headed by count, because five problems arriving at once looks
+        # arbitrary until you know they are spaced revisits rather than a
+        # backlog.
+        lines.append(f"Revisit ({len(problems)}) — spaced from when you solved them:")
         for r in problems:
             # The link matters more than the name: a reminder you have to go
             # and search for is a reminder you skip.
@@ -52,7 +55,7 @@ def body(reminders: list[dict], today: date, app_url: str) -> str:
         lines.append("")
 
     if topics:
-        lines.append("Going stale:")
+        lines.append(f"Going stale ({len(topics)}) — no practice in a while:")
         for r in topics:
             lines.append(f"  - {r['title']} — {r['reason']}")
         lines.append("")

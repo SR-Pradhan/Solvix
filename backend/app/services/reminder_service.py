@@ -5,7 +5,8 @@ Two kinds, from the same data the rest of Solvix already ingests:
 - **problem** — you solved something a few days ago, and the spacing effect says
   now is when revisiting it pays. Time-sensitive, so these win the cap.
 - **topic** — a tag that is both weak and stale. Not urgent on any given day,
-  so these fill whatever slots are left.
+  so problems lead — but a share of the cap is held back for them, because a
+  reminder that can be crowded out every single day does not exist.
 
 Generation is deliberately separate from delivery. Today the dashboard reads
 these rows; an email sender later is another reader, not a rewrite.
@@ -30,6 +31,9 @@ STALE_THRESHOLD_DAYS = 14
 WEAK_THRESHOLD = 0.35
 # Cap per run, so a long-inactive account is not flooded at once.
 MAX_PER_RUN = 5
+# ...of which this many are held for topics, so a steady stream of due problems
+# cannot crowd them out entirely.
+TOPIC_SLOTS = 2
 
 
 def describe_problem(name: str, days: int) -> str:
@@ -60,12 +64,21 @@ def describe_topic(days_since: int | None, accuracy: float | None) -> str:
 def select_reminders(
     problems: list[dict], topics: list[dict], cap: int = MAX_PER_RUN
 ) -> list[dict]:
-    """Merge both kinds into one capped list.
+    """Merge both kinds into one capped list, with a slot reserved for topics.
 
-    Problem reminders come first: their window is a specific few days, while a
-    stale topic is equally stale tomorrow.
+    Problems still come first — their window is a specific few days, while a
+    stale topic is equally stale tomorrow. But once the spacing ladder matured,
+    five problems fell due every morning and filled the cap outright, so topics
+    silently stopped appearing at all. A reminder that can be crowded out
+    permanently is a reminder that does not exist.
+
+    So each kind is guaranteed a share, and whatever the other kind cannot fill
+    is given back rather than wasted: a day with one problem due still shows
+    four topics.
     """
-    return (problems + topics)[:cap]
+    topic_slots = min(len(topics), max(cap - len(problems), TOPIC_SLOTS))
+    problem_slots = cap - min(topic_slots, TOPIC_SLOTS if topics else 0)
+    return problems[:problem_slots] + topics[:topic_slots]
 
 
 def topic_is_due(topic: dict) -> bool:

@@ -1,5 +1,6 @@
 from app.services.reminder_service import (
     MAX_PER_RUN,
+    TOPIC_SLOTS,
     _reminder_url,
     STALE_THRESHOLD_DAYS,
     WEAK_THRESHOLD,
@@ -57,13 +58,34 @@ def test_reminders_are_capped():
     assert len(select_reminders(problems, topics)) == MAX_PER_RUN
 
 
-def test_problems_win_the_cap_over_topics():
+def test_problems_come_first_but_cannot_crowd_topics_out():
     # A problem's revisit window is a specific few days; a stale topic is
-    # equally stale tomorrow, so problems come first.
+    # equally stale tomorrow, so problems lead. But once the spacing ladder
+    # matured, enough problems fell due every morning to fill the cap outright
+    # and topics stopped appearing at all — so a share is held back for them.
     problems = [item("problem", i) for i in range(MAX_PER_RUN)]
     topics = [item("topic", i) for i in range(5)]
     selected = select_reminders(problems, topics)
+
+    kinds = [r["kind"] for r in selected]
+    assert len(selected) == MAX_PER_RUN
+    assert kinds == ["problem"] * (MAX_PER_RUN - TOPIC_SLOTS) + ["topic"] * TOPIC_SLOTS
+
+
+def test_the_reserved_slots_are_not_wasted_when_no_topic_is_due():
+    # Holding seats empty for a kind that has nobody waiting would shrink the
+    # day's reminders for no reason.
+    problems = [item("problem", i) for i in range(MAX_PER_RUN)]
+    selected = select_reminders(problems, [])
+    assert len(selected) == MAX_PER_RUN
     assert all(r["kind"] == "problem" for r in selected)
+
+
+def test_a_single_topic_takes_only_the_seat_it_needs():
+    problems = [item("problem", i) for i in range(MAX_PER_RUN)]
+    selected = select_reminders(problems, [item("topic", 0)])
+    assert len(selected) == MAX_PER_RUN
+    assert [r["kind"] for r in selected].count("topic") == 1
 
 
 def test_topics_fill_the_remaining_slots():
