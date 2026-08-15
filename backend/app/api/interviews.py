@@ -74,6 +74,19 @@ async def reply_to_interview(
         raise _handle(exc) from exc
 
 
+@router.delete("/{interview_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def abandon_interview(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Discard an interview nobody answered, so it leaves no trace."""
+    try:
+        await interview_service.abandon(db, current_user.id, interview_id)
+    except InterviewError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
 @router.post("/{interview_id}/finish", response_model=InterviewOut)
 async def finish_interview(
     interview_id: int,

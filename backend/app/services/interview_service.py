@@ -41,6 +41,19 @@ def as_dict(interview: Interview) -> dict:
     }
 
 
+async def abandon(db: AsyncSession, user_id: int, interview_id: int) -> None:
+    """Throw away an interview that never started.
+
+    Leaving unanswered sessions lying around would fill the history with
+    non-events, and the history is meant to be a record of practice.
+    """
+    interview = await _owned(db, user_id, interview_id)
+    if any(t.get("role") == "user" for t in interview.transcript or []):
+        raise InterviewError("This interview has answers; finish it instead")
+    await db.delete(interview)
+    await db.commit()
+
+
 async def _owned(db: AsyncSession, user_id: int, interview_id: int) -> Interview:
     """Load an interview, or refuse. Ownership is checked here, once.
 
@@ -127,6 +140,15 @@ async def finish(db: AsyncSession, user_id: int, interview_id: int) -> dict:
 
     if interview.status == FINISHED:
         return as_dict(interview)
+
+    # Nothing was said, so there is nothing to assess. Left unchecked the model
+    # dutifully reviews the silence — "the candidate did not provide a
+    # solution" — which reads as a verdict on the person rather than on an
+    # interview that never happened.
+    if not any(t.get("role") == "user" for t in interview.transcript or []):
+        raise InterviewError(
+            "Answer at least one question before ending the interview."
+        )
 
     problem = {
         "name": interview.problem_name,

@@ -150,3 +150,15 @@ async def test_an_empty_reply_from_the_model_is_an_error(monkeypatch):
         await interview_agent.next_question(
             {"name": "Two Sum", "topic": "Hash Table", "url": None}, turns(2)
         )
+
+
+def test_an_unanswered_transcript_has_nothing_to_assess():
+    # The guard that stops a review of silence: with only the opening question
+    # there is no answer to judge, and the model will otherwise dutifully write
+    # "the candidate did not provide a solution" — a verdict on a person for an
+    # interview that never happened.
+    opener = [{"role": "assistant", "content": "Tell me your approach."}]
+    assert not any(t["role"] == "user" for t in opener)
+
+    answered = opener + [{"role": "user", "content": "Use a prefix sum array."}]
+    assert any(t["role"] == "user" for t in answered)

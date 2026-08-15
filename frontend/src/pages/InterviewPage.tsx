@@ -82,6 +82,10 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
   }
 
   const finished = interview.status === "finished";
+  // Nothing to assess until they have actually said something, so ending is
+  // offered only once there is a transcript worth reviewing. Before that the
+  // honest action is to walk away, not to be graded on silence.
+  const hasAnswered = interview.turns.some((t) => t.role === "user");
 
   return (
     <div className="page">
@@ -150,14 +154,32 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
               <button type="submit" disabled={busy || !answer.trim()}>
                 {busy ? "Thinking…" : "Send"}
               </button>
-              <button
-                type="button"
-                className="link"
-                disabled={busy}
-                onClick={() => run(() => api.finishInterview(token!, interview.id))}
-              >
-                End and get feedback
-              </button>
+              {hasAnswered ? (
+                <button
+                  type="button"
+                  className="link"
+                  disabled={busy}
+                  onClick={() => run(() => api.finishInterview(token!, interview.id))}
+                >
+                  End and get feedback
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="link"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (!token) return;
+                    // Discarded rather than kept: an interview nobody answered
+                    // is not a practice record, and keeping it would pad the
+                    // history with non-events.
+                    await api.abandonInterview(token, interview.id).catch(() => {});
+                    setInterview(null);
+                  }}
+                >
+                  Leave this one
+                </button>
+              )}
             </div>
           </form>
         )}

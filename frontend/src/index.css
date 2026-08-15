@@ -164,6 +164,15 @@ input {
   font: inherit;
 }
 
+/* The status badges elsewhere are one-word labels sized to a fixed pill, which
+   these sentences overflow. Sizing to the text instead of the pill is what the
+   fixed width was hiding. */
+.badge-ok,
+.badge-warn {
+  width: auto;
+  padding: 2px 10px;
+}
+
 .badge-ok {
   color: var(--ok);
   border-color: var(--ok);
@@ -172,6 +181,15 @@ input {
 .badge-warn {
   color: var(--warn);
   border-color: var(--warn);
+}
+
+/* A long badge next to a heading needs somewhere to go on a narrow screen. */
+.card-head {
+  flex-wrap: wrap;
+}
+
+.interview-turns .turn:last-of-type {
+  margin-bottom: 2px;
 }
 
 .plan-why {

@@ -196,6 +196,9 @@ export const api = {
   finishInterview: (token: string, id: number) =>
     request<Interview>(`/interviews/${id}/finish`, token, { method: "POST" }),
 
+  abandonInterview: (token: string, id: number) =>
+    requestEmpty(`/interviews/${id}`, token, { method: "DELETE" }),
+
   // Returns a replacement token: changing a password retires every token
   // issued before it, including the one making this call.
   changePassword: (token: string, current: string, next: string) =>
