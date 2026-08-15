@@ -80,7 +80,14 @@ def test_parse_ignores_non_object_tasks():
 
 
 def test_parse_survives_a_completely_empty_response():
-    assert parse_plan({}) == {"focus": [], "tasks": [], "note": ""}
+    assert parse_plan({}) == {
+        "focus": [],
+        "tasks": [],
+        "note": "",
+        # Empty rather than absent: the one-shot prompt has no reasoning to
+        # give, and inventing one would be the model's words put in its mouth.
+        "reasoning": "",
+    }
 
 
 def test_parse_truncates_runaway_text():

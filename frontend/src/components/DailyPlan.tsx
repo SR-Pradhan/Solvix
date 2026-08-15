@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { DailyPlan as Data } from "../api/types";
 
 function totalMinutes(data: Data): number {
@@ -25,6 +27,7 @@ export function DailyPlan({
   }
 
   const minutes = totalMinutes(data);
+  const [showSteps, setShowSteps] = useState(false);
 
   return (
     <section className="card">
@@ -59,6 +62,35 @@ export function DailyPlan({
       </ol>
 
       {data.note && <p className="muted small plan-note">{data.note}</p>}
+
+      {/* The reasoning is the difference between a plan and a horoscope: it
+          says which of your numbers drove the choice, so a wrong plan can be
+          argued with rather than merely ignored. */}
+      {data.reasoning && (
+        <p className="muted small plan-why">{data.reasoning}</p>
+      )}
+
+      {data.steps.length > 0 && (
+        <div className="plan-steps">
+          <button
+            type="button"
+            className="link small"
+            onClick={() => setShowSteps(!showSteps)}
+            aria-expanded={showSteps}
+          >
+            {showSteps ? "Hide" : "Show"} what it checked ({data.steps.length})
+          </button>
+          {/* Collapsed by default: it is provenance, wanted once and then
+              trusted, not something to read every morning. */}
+          {showSteps && (
+            <ol className="muted small">
+              {data.steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
 
       <button
         type="button"

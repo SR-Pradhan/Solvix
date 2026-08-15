@@ -52,6 +52,12 @@ class DailyPlanOut(BaseModel):
     focus: list[str] = []
     tasks: list[PlanTask] = []
     note: str = ""
+    # Why the agent chose this. Empty when the one-shot fallback wrote the
+    # plan, which has nothing to explain.
+    reasoning: str = ""
+    # What the agent looked at, in order. The honest part of the feature: it
+    # shows the plan came from the user's data rather than from nowhere.
+    steps: list[str] = []
     # Set when there is not enough practice data to plan a session.
     unavailable: str | None = None
 

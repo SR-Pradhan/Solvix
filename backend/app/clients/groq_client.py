@@ -1,7 +1,12 @@
 """Minimal Groq chat-completions client.
 
 Groq exposes an OpenAI-compatible endpoint, so this is a single POST rather
-than an SDK dependency. Only JSON-mode completions are needed here.
+than an SDK dependency. Two shapes are needed: a JSON-mode completion, and a
+tool-calling turn for the planner agent.
+
+The endpoint is OpenAI-compatible on purpose — swapping to another provider is
+a base URL, a key and a model name, not a rewrite. Which model runs the agent
+should stay a configuration decision.
 """
 
 import json
@@ -75,3 +80,55 @@ async def complete_json(
     if not isinstance(parsed, dict):
         raise GroqError("Groq returned JSON that is not an object")
     return parsed
+
+
+async def complete_with_tools(
+    messages: list[dict],
+    tools: list[dict],
+    api_key: str | None,
+    model: str,
+    timeout: float = 60.0,
+) -> dict:
+    """One turn of a tool-calling conversation.
+
+    Returns the assistant message as given, tool calls and all. Deciding what
+    to do with them is the agent's job, not the client's — this layer knows
+    about HTTP and nothing about planning.
+    """
+    if not api_key:
+        raise GroqNotConfigured(
+            "GROQ_API_KEY is not set. Add it to backend/.env to enable daily plans."
+        )
+
+    payload = {
+        "model": model,
+        "temperature": 0.3,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {api_key}"},
+                json=payload,
+            )
+    except httpx.RequestError as e:
+        raise GroqError(f"Could not reach Groq: {e}") from e
+
+    if response.status_code == 401:
+        raise GroqNotConfigured("Groq rejected the API key. Check GROQ_API_KEY.")
+    if response.status_code == 429:
+        raise GroqError("Groq rate limit reached. Try again shortly.")
+    if response.status_code >= 400:
+        raise GroqError(
+            f"Groq returned HTTP {response.status_code}: {response.text[:200]}"
+        )
+
+    try:
+        body = response.json()
+        return body["choices"][0]["message"]
+    except (ValueError, KeyError, IndexError) as e:
+        raise GroqError("Groq returned an unexpected response shape") from e

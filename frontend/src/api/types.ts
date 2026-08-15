@@ -134,6 +134,10 @@ export interface DailyPlan {
   focus: string[];
   tasks: PlanTask[];
   note: string;
+  // Why the agent chose this plan. Empty when the one-shot fallback wrote it.
+  reasoning: string;
+  // What the agent looked at, in order.
+  steps: string[];
   unavailable: string | null;
 }
 

@@ -116,6 +116,21 @@ input {
 
 /* The reveal button sits inside the field rather than beside it, so the
    form keeps one column and the label still spans the whole control. */
+.plan-why {
+  border-left: 2px solid var(--border-strong);
+  padding-left: 10px;
+  font-style: italic;
+}
+
+.plan-steps {
+  margin-top: 8px;
+}
+
+.plan-steps ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
 .password-field {
   position: relative;
   display: block;

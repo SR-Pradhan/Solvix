@@ -1,19 +1,36 @@
-"""Builds a daily practice plan from the user's weak-topic scores.
+"""Builds a daily practice plan.
 
 The plan is generated once per day and stored, so revisiting the dashboard does
 not spend a model call (or hand the user a different plan every refresh).
+
+Two ways of producing it, tried in order:
+
+1. **The agent** (`planner_agent`) — the model is given read-only tools and
+   decides what to look at: which topics have decayed, what problems are left
+   in them, what is already due, whether they have practised lately.
+2. **The one-shot prompt** — the original: a fixed snapshot of the six weakest
+   topics, pasted into a prompt.
+
+The fallback is not ceremony. A tool-calling loop has more ways to fail than a
+single completion — a model that never stops calling tools, a provider that
+handles tools badly — and a plan is a daily habit, so degrading to a simpler
+plan beats showing an error. Which model runs the agent is configuration, so
+the loop can move to a stronger provider without touching this file.
 """
 
+import logging
 from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.groq_client import complete_json
+from app.clients.groq_client import GroqError, complete_json
 from app.core.config import settings
 from app.db.models import DailyPlan
-from app.services import stats_service, topic_service
+from app.services import planner_agent, stats_service, topic_service
+
+log = logging.getLogger("solvix.plan")
 
 MIN_TOPICS_FOR_PLAN = 3
 TOPICS_IN_PROMPT = 6
@@ -93,6 +110,9 @@ def parse_plan(raw: dict) -> dict:
         "focus": focus,
         "tasks": tasks,
         "note": str(raw.get("note") or "").strip()[:300],
+        # The agent explains its choice; the one-shot prompt has nothing to
+        # explain, so this is empty there rather than invented.
+        "reasoning": str(raw.get("reasoning") or "").strip()[:500],
     }
 
 
@@ -125,14 +145,25 @@ async def get_daily_plan(
             ),
         }
 
-    stats = await stats_service.get_stats(db, user_id)
-    raw = await complete_json(
-        system=SYSTEM_PROMPT,
-        user=build_user_prompt(stats, topics),
-        api_key=settings.groq_api_key,
-        model=settings.groq_model,
-    )
+    trace: list[str] = []
+    try:
+        raw, trace = await planner_agent.run(db, user_id)
+    except GroqError as exc:
+        # Falling back rather than failing: a plan is a daily habit, and a
+        # simpler plan beats an error where today's practice should be.
+        log.warning("planner agent fell back to the one-shot prompt: %s", exc)
+        stats = await stats_service.get_stats(db, user_id)
+        raw = await complete_json(
+            system=SYSTEM_PROMPT,
+            user=build_user_prompt(stats, topics),
+            api_key=settings.groq_api_key,
+            model=settings.groq_model,
+        )
+
     plan = parse_plan(raw)
+    # What the agent actually looked at, shown in the UI. Without it the reader
+    # has no way to tell a plan built from their data from one invented whole.
+    plan["steps"] = trace
 
     # on_conflict_do_update so a regenerate replaces today's plan rather than
     # colliding with the row written by the first request of the day.
