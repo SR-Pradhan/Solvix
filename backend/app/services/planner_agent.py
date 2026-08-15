@@ -146,7 +146,10 @@ async def run_tool(
     """Execute one tool call. The user id comes from the session, never the model."""
     if name == "get_weak_topics":
         limit = clamp_limit(arguments.get("limit"), default=6, maximum=MAX_TOPICS)
-        result = await topic_service.get_weak_topics(db, user_id, limit=limit)
+        # Labelled with the platform, because the very next thing the model
+        # does is ask for problems in one of these topics — and it has to say
+        # where to look.
+        topics = await topic_service.weak_topics_with_platform(db, user_id, limit=limit)
         return {
             "topics": [
                 {
@@ -156,7 +159,7 @@ async def run_tool(
                     "accuracy": t["accuracy"],
                     "days_since_last_solve": t["days_since_last_solve"],
                 }
-                for t in result["topics"]
+                for t in topics
             ]
         }
 

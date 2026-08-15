@@ -29,6 +29,7 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
 import { HandleSetup } from "./HandleSetup";
+import { InterviewPage } from "./InterviewPage";
 import { ProfilePage } from "./ProfilePage";
 
 interface Dashboard {
@@ -55,6 +56,7 @@ export function DashboardPage() {
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
   const [showProfile, setShowProfile] = useState(false);
+  const [showInterview, setShowInterview] = useState(false);
 
   const connected: Platform[] = [];
   if (user?.codeforces_handle) connected.push("codeforces");
@@ -165,6 +167,10 @@ export function DashboardPage() {
     return <HandleSetup onDone={refreshUser} />;
   }
 
+  if (showInterview) {
+    return <InterviewPage onBack={() => setShowInterview(false)} />;
+  }
+
   if (showProfile) {
     return <ProfilePage onBack={() => setShowProfile(false)} />;
   }
@@ -199,6 +205,9 @@ export function DashboardPage() {
               Sync LeetCode
             </button>
           )}
+          <button className="ghost" onClick={() => setShowInterview(true)}>
+            Mock interview
+          </button>
           <button className="ghost logout" onClick={logout}>
             Log out
           </button>

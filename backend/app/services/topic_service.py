@@ -194,3 +194,28 @@ async def get_weak_topics(
         # Every due topic, so the UI can reveal the full list on demand.
         "stale_topics": [t["tag"] for t in stale],
     }
+
+
+async def weak_topics_with_platform(
+    db: AsyncSession, user_id: int, limit: int = 8
+) -> list[dict]:
+    """Weak topics, each labelled with the platform it was scored on.
+
+    `get_weak_topics` deliberately does not return a platform: scoring is done
+    per platform and the caller passes which one. But anything that acts on a
+    topic — recommending a problem, choosing an interview question — needs to
+    know where to look, and a tag alone cannot say. So this scores each
+    platform in turn and keeps the label, the same way the reminder job does.
+
+    Sorted across platforms by weakness, because the caller wants "what is
+    weakest", not "what is weakest on Codeforces and then what is weakest on
+    LeetCode".
+    """
+    combined: list[dict] = []
+    for platform in PLATFORMS_WITH_FAILURES + ("leetcode",):
+        scored = await get_weak_topics(db, user_id, platform=platform)
+        for topic in scored["topics"]:
+            combined.append({**topic, "platform": platform})
+
+    combined.sort(key=lambda t: t["weakness"], reverse=True)
+    return combined[:limit]

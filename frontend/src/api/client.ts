@@ -1,6 +1,8 @@
 import type {
   DailyPlan,
   Health,
+  Interview,
+  Interviews,
   LeetCodeProfile,
   RatingDistribution,
   Recommendations,
@@ -178,6 +180,21 @@ export const api = {
 
   cancelEmailChange: (token: string) =>
     requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
+
+  startInterview: (token: string) =>
+    request<Interview>("/interviews", token, { method: "POST" }),
+
+  listInterviews: (token: string) =>
+    request<Interviews>("/interviews", token),
+
+  replyToInterview: (token: string, id: number, answer: string) =>
+    request<Interview>(`/interviews/${id}/reply`, token, {
+      method: "POST",
+      body: JSON.stringify({ answer }),
+    }),
+
+  finishInterview: (token: string, id: number) =>
+    request<Interview>(`/interviews/${id}/finish`, token, { method: "POST" }),
 
   // Returns a replacement token: changing a password retires every token
   // issued before it, including the one making this call.

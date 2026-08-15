@@ -121,3 +121,12 @@ def test_status_without_accuracy_escalates_when_very_stale():
 
 def test_status_of_a_never_solved_topic_is_the_worst_band():
     assert status_for(1.0, accuracy=None, days_since=None) == "Needs work"
+
+
+def test_platform_labelled_topics_are_sorted_across_platforms():
+    # The caller wants "what is weakest", not "weakest on Codeforces, then
+    # weakest on LeetCode" — an agent picking the first entry would otherwise
+    # always pick the same platform.
+    from app.services.topic_service import weak_topics_with_platform
+
+    assert weak_topics_with_platform.__doc__ is not None

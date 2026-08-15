@@ -17,6 +17,37 @@ from sqlalchemy.sql import func
 from app.db.database import Base
 
 
+class Interview(Base):
+    """One mock interview: the problem, the transcript, and what it revealed.
+
+    The transcript is JSONB on the row rather than a table of turns. A
+    conversation is only ever read whole, never queried across, and appending
+    to a list is cheaper to reason about than ordering rows by a sequence that
+    has to stay gapless.
+    """
+
+    __tablename__ = "interviews"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # What the interview is about, captured at the time: the catalogue can
+    # change, and a finished interview should keep describing what it was.
+    topic = Column(String(80))
+    platform = Column(String(20))
+    problem_name = Column(String(255))
+    problem_url = Column(String(500))
+    # "open" or "finished". A closed interview accepts no more turns.
+    status = Column(String(20), nullable=False, server_default="open")
+    transcript = Column(JSONB, nullable=False, server_default="[]")
+    # The agent's closing assessment. Kept apart from the weak-topic scores on
+    # purpose — see the notes: demonstrated weakness is real signal, but it is
+    # a different kind of evidence from a pass rate and mixing them would make
+    # the score unexplainable.
+    findings = Column(JSONB)
+    created_at = Column(DateTime, server_default=func.now())
+    ended_at = Column(DateTime)
+
+
 class Revision(Base):
     """The revision schedule for one solved problem.
 

@@ -116,6 +116,64 @@ input {
 
 /* The reveal button sits inside the field rather than beside it, so the
    form keeps one column and the label still spans the whole control. */
+.interview-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* The two speakers are distinguished by alignment and surface rather than by
+   colour: the palette's colours already mean difficulty and status elsewhere,
+   and reusing them here would imply something about the answer. */
+.turn {
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.turn p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
+
+.turn-them {
+  align-self: flex-start;
+  background: var(--surface-2, var(--surface));
+}
+
+.turn-you {
+  align-self: flex-end;
+  background: transparent;
+  border-color: var(--border-strong);
+}
+
+.interview-answer {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.interview-answer textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+}
+
+.badge-ok {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.badge-warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
 .plan-why {
   border-left: 2px solid var(--border-strong);
   padding-left: 10px;

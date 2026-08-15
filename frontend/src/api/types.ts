@@ -226,3 +226,32 @@ export interface Health {
   db: string;
   version: string;
 }
+
+export interface InterviewTurn {
+  role: string;
+  content: string;
+}
+
+export interface InterviewFindings {
+  verdict: string;
+  strengths: string[];
+  gaps: string[];
+  complexity_handled: boolean;
+  advice: string;
+}
+
+export interface Interview {
+  id: number;
+  topic: string | null;
+  platform: string | null;
+  problem_name: string | null;
+  problem_url: string | null;
+  status: string;
+  turns: InterviewTurn[];
+  findings: InterviewFindings | null;
+  created_at: string | null;
+}
+
+export interface Interviews {
+  interviews: Interview[];
+}
