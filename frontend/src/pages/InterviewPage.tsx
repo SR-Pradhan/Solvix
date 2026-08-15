@@ -8,9 +8,62 @@ function message(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }
 
+/** How often complexity came up, across finished interviews.
+ *
+ * The point of keeping the findings at all. One interview's feedback is a
+ * model's opinion; the same gap four sessions running is a fact about you —
+ * and it is the one thing neither platform can measure, because they know
+ * whether you solved something, never whether you could explain it.
+ */
+function complexityRate(history: Interview[]): string | null {
+  const judged = history.filter((i) => i.findings);
+  if (judged.length < 2) return null;
+  const covered = judged.filter((i) => i.findings?.complexity_handled).length;
+  return `Complexity covered in ${covered} of your last ${judged.length}`;
+}
+
+function PastInterviews({
+  history,
+  onOpen,
+}: {
+  history: Interview[];
+  onOpen: (interview: Interview) => void;
+}) {
+  if (!history.length) return null;
+  const rate = complexityRate(history);
+
+  return (
+    <section className="card">
+      <header className="card-head">
+        <h2>Past interviews</h2>
+        {rate && <span className="muted small">{rate}</span>}
+      </header>
+
+      <ul className="topic-list">
+        {history.map((item) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              className="link inline topic-name"
+              onClick={() => onOpen(item)}
+            >
+              {item.problem_name}
+            </button>
+            <span className="badge">{item.topic}</span>
+            <span className="muted small topic-why">
+              {item.findings?.verdict ?? "Not finished"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function InterviewPage({ onBack }: { onBack: () => void }) {
   const { token } = useAuth();
   const [interview, setInterview] = useState<Interview | null>(null);
+  const [history, setHistory] = useState<Interview[]>([]);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +74,16 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     endOfTurns.current?.scrollIntoView({ behavior: "smooth" });
   }, [interview?.turns.length]);
+
+  // Reloaded whenever a session ends rather than only on mount, so a finished
+  // interview appears in the list without a refresh.
+  useEffect(() => {
+    if (!token) return;
+    api
+      .listInterviews(token)
+      .then((r) => setHistory(r.interviews.filter((i) => i.findings)))
+      .catch(() => setHistory([]));
+  }, [token, interview?.status]);
 
   async function run(action: () => Promise<Interview>) {
     if (!token) return;
@@ -77,6 +140,8 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
             </button>
           </div>
         </section>
+
+        <PastInterviews history={history} onOpen={setInterview} />
       </div>
     );
   }
@@ -157,7 +222,7 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
               {hasAnswered ? (
                 <button
                   type="button"
-                  className="link"
+                  className="ghost"
                   disabled={busy}
                   onClick={() => run(() => api.finishInterview(token!, interview.id))}
                 >
@@ -166,7 +231,7 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
               ) : (
                 <button
                   type="button"
-                  className="link"
+                  className="ghost"
                   disabled={busy}
                   onClick={async () => {
                     if (!token) return;
@@ -192,8 +257,8 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
             <span
               className={
                 interview.findings.complexity_handled
-                  ? "badge badge-ok"
-                  : "badge badge-warn"
+                  ? "badge badge-sentence badge-ok"
+                  : "badge badge-sentence badge-warn"
               }
             >
               {interview.findings.complexity_handled
