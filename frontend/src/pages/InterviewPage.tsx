@@ -39,20 +39,39 @@ function PastInterviews({
         {rate && <span className="muted small">{rate}</span>}
       </header>
 
-      <ul className="topic-list">
+      <ul className="interview-list">
         {history.map((item) => (
           <li key={item.id}>
-            <button
-              type="button"
-              className="link inline topic-name"
-              onClick={() => onOpen(item)}
-            >
-              {item.problem_name}
+            {/* The whole row opens it: a transcript is the reason to click,
+                and a small link inside a wide row is a target you miss. */}
+            <button type="button" onClick={() => onOpen(item)}>
+              <span className="interview-row-head">
+                <span className="interview-problem">{item.problem_name}</span>
+                <span className="muted small">
+                  {item.topic}
+                  {item.created_at
+                    ? ` · ${new Date(item.created_at).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                      })}`
+                    : ""}
+                </span>
+              </span>
+              <span className="muted small interview-verdict">
+                {item.findings?.verdict}
+              </span>
+              <span
+                className={
+                  item.findings?.complexity_handled
+                    ? "badge badge-sentence badge-ok"
+                    : "badge badge-sentence badge-warn"
+                }
+              >
+                {item.findings?.complexity_handled
+                  ? "Complexity covered"
+                  : "Complexity missed"}
+              </span>
             </button>
-            <span className="badge">{item.topic}</span>
-            <span className="muted small topic-why">
-              {item.findings?.verdict ?? "Not finished"}
-            </span>
           </li>
         ))}
       </ul>

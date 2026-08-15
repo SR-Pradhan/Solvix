@@ -116,6 +116,58 @@ input {
 
 /* The reveal button sits inside the field rather than beside it, so the
    form keeps one column and the label still spans the whole control. */
+/* One interview per row. The whole row is the button, so the click target is
+   the row rather than a word inside it. */
+.interview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.interview-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.interview-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 8px;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  font-weight: 400;
+  text-align: left;
+}
+
+.interview-list button:hover {
+  background: var(--surface-2);
+}
+
+.interview-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.interview-problem {
+  font-size: 14px;
+  font-weight: 550;
+}
+
+/* Two lines is enough to recognise which interview this was; the transcript is
+   one click away for anyone who wants the rest. */
+.interview-verdict {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .interview-turns {
   display: flex;
   flex-direction: column;
