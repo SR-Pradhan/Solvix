@@ -672,6 +672,22 @@ button.link {
   gap: 6px;
 }
 
+.dash-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* The Today / Progress switch. Same control as the platform filter, because
+   they are the same kind of choice and a second style for one would only ask
+   the reader to work out whether the difference means anything. */
+.view-switch {
+  display: flex;
+  gap: 8px;
+}
+
 .chip-btn {
   background: transparent;
   border: 1px solid var(--border);

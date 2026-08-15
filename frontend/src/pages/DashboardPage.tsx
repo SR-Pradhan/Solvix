@@ -60,6 +60,12 @@ export function DashboardPage() {
   // route. Worth revisiting if a third screen appears.
   const [showProfile, setShowProfile] = useState(false);
   const [showInterview, setShowInterview] = useState(false);
+  // Nine cards on one screen is a wall, not a dashboard. The split is by
+  // purpose rather than by density: Today is what to act on now, Progress is
+  // what to review. A two-column layout was tried first and reverted — it
+  // packed the same nine cards tighter, which is not the same as showing
+  // fewer.
+  const [view, setView] = useState<"today" | "progress">("today");
 
   const connected: Platform[] = [];
   if (user?.codeforces_handle) connected.push("codeforces");
@@ -236,11 +242,37 @@ export function DashboardPage() {
         </div>
       </header>
 
-      <PlatformFilter
-        available={connected}
-        value={platform}
-        onChange={setPlatform}
-      />
+      {/* Both controls on one line: they are both "narrow what I am looking
+          at", and stacking them makes two rows of near-identical chips that
+          the reader has to tell apart. */}
+      <div className="dash-controls">
+        <div className="view-switch" role="tablist" aria-label="Dashboard view">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "today"}
+          className={view === "today" ? "chip-btn on" : "chip-btn"}
+          onClick={() => setView("today")}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === "progress"}
+          className={view === "progress" ? "chip-btn on" : "chip-btn"}
+          onClick={() => setView("progress")}
+        >
+          Progress
+        </button>
+        </div>
+
+        <PlatformFilter
+          available={connected}
+          value={platform}
+          onChange={setPlatform}
+        />
+      </div>
 
       {notice && <p className="notice">{notice}</p>}
       {error && <p className="error">{error}</p>}
@@ -256,31 +288,44 @@ export function DashboardPage() {
         </section>
       ) : (
         <>
-          <StatCards
-            stats={data.stats}
-            topics={data.weakTopics}
-            profile={lcProfile}
-            platform={platform}
-          />
-
-          {plan && (
-            <DailyPlan data={plan} onRegenerate={regeneratePlan} busy={planBusy} />
+          {view === "today" ? (
+            <>
+              {/* Only what today asks of you. Everything here is an action. */}
+              {plan && (
+                <DailyPlan
+                  data={plan}
+                  onRegenerate={regeneratePlan}
+                  busy={planBusy}
+                />
+              )}
+              <Reminders data={data.reminders} />
+              {data.recommendations && (
+                <Recommendations data={data.recommendations} />
+              )}
+              {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
+            </>
+          ) : (
+            <>
+              {/* Everything that answers "how am I doing", which is a
+                  different question and a different mood. */}
+              <StatCards
+                stats={data.stats}
+                topics={data.weakTopics}
+                profile={lcProfile}
+                platform={platform}
+              />
+              <WeeklyReport data={data.weekly} />
+              {lcProfile && (
+                <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
+              )}
+              <div className="grid-2">
+                <WeakTopics data={data.weakTopics} platform={platform} />
+                <TagChart data={data.tags} />
+              </div>
+              <RatingChart data={data.ratings} />
+              <ActivityChart data={data.timeline} />
+            </>
           )}
-          <Reminders data={data.reminders} />
-          {lcProfile && (
-            <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
-          )}
-          <WeeklyReport data={data.weekly} />
-          {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
-          {data.recommendations && (
-            <Recommendations data={data.recommendations} />
-          )}
-          <div className="grid-2">
-            <WeakTopics data={data.weakTopics} platform={platform} />
-            <TagChart data={data.tags} />
-          </div>
-          <RatingChart data={data.ratings} />
-          <ActivityChart data={data.timeline} />
         </>
       )}
 
