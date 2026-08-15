@@ -322,7 +322,17 @@ export function DashboardPage() {
                 <WeakTopics data={data.weakTopics} platform={platform} />
                 <TagChart data={data.tags} />
               </div>
-              <RatingChart data={data.ratings} />
+              {/* The standalone difficulty card is a stand-in for the rating
+                  histogram when there are no numeric ratings to plot. Once a
+                  LeetCode profile exists it is a second Easy/Medium/Hard
+                  breakdown beside the profile card's — same labels, different
+                  totals, because one counts imported problems and the other
+                  counts every problem solved. Two numbers claiming the same
+                  thing teaches the reader to trust neither, so the
+                  authoritative one wins and this only appears without it. */}
+              {(data.ratings.buckets.length > 0 || !lcProfile) && (
+                <RatingChart data={data.ratings} />
+              )}
               <ActivityChart data={data.timeline} />
             </>
           )}
