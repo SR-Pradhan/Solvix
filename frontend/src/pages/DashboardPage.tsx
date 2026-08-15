@@ -47,7 +47,10 @@ export function DashboardPage() {
   const { token, user, logout, refreshUser } = useAuth();
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
+  // Which platform is syncing, not merely whether one is: a single flag made
+  // each button report the other's work, so pressing "Sync LeetCode" showed
+  // "Syncing…" on the Codeforces button.
+  const [syncingPlatform, setSyncingPlatform] = useState<Platform | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
@@ -126,26 +129,29 @@ export function DashboardPage() {
     if (user?.codeforces_handle) void load();
   }, [user?.codeforces_handle, load]);
 
-  async function sync(platform: "codeforces" | "leetcode" = "codeforces") {
+  async function sync(platform: Platform = "codeforces") {
     if (!token) return;
-    setSyncing(true);
+    setSyncingPlatform(platform);
     setError(null);
     setNotice(null);
+    const label = platform === "leetcode" ? "LeetCode" : "Codeforces";
     try {
       const { inserted } =
         platform === "leetcode"
           ? await api.ingestLeetcode(token)
           : await api.ingest(token);
+      // Named, because two buttons produce this line and "Already up to date"
+      // on its own does not say which one finished.
       setNotice(
         inserted === 0
-          ? "Already up to date."
-          : `Imported ${inserted.toLocaleString()} new submissions.`,
+          ? `${label} is already up to date.`
+          : `Imported ${inserted.toLocaleString()} new ${label} submissions.`,
       );
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync failed");
+      setError(err instanceof Error ? err.message : `${label} sync failed`);
     } finally {
-      setSyncing(false);
+      setSyncingPlatform(null);
     }
   }
 
@@ -193,16 +199,22 @@ export function DashboardPage() {
           {/* Both syncs are the same action for different platforms, so they
               carry the same weight. Log out is separated rather than styled
               like a third sibling. */}
-          <button className="ghost" onClick={() => sync("codeforces")} disabled={syncing}>
-            {syncing ? "Syncing…" : "Sync Codeforces"}
+          <button
+            className="ghost"
+            onClick={() => sync("codeforces")}
+            disabled={syncingPlatform !== null}
+          >
+            {syncingPlatform === "codeforces" ? "Syncing…" : "Sync Codeforces"}
           </button>
           {user.leetcode_repo && (
             <button
               className="ghost"
               onClick={() => sync("leetcode")}
-              disabled={syncing}
+              // Both are disabled while either runs: they write to the same
+              // tables, and the dashboard reloads from what they leave behind.
+              disabled={syncingPlatform !== null}
             >
-              Sync LeetCode
+              {syncingPlatform === "leetcode" ? "Syncing…" : "Sync LeetCode"}
             </button>
           )}
           <button className="ghost" onClick={() => setShowInterview(true)}>
