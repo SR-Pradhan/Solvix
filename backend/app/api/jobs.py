@@ -17,7 +17,14 @@ from app.clients.email_client import MailError, send_mail
 from app.core.config import settings
 from app.db.database import get_db
 from app.db.models import User
-from app.services import problem_service, reminder_mail, reminder_service
+from app.services import (
+    leetcode_profile_service,
+    problem_service,
+    reminder_mail,
+    reminder_service,
+)
+from app.services.ingestion_service import ingest_codeforces_submissions
+from app.services.leetcode_ingestion_service import ingest_leetcode_submissions
 
 # Two per topic. The email is a nudge, not a curriculum: a list long enough to
 # scroll is a list you postpone.
@@ -38,6 +45,54 @@ async def require_cron_key(x_cron_key: str | None = Header(default=None)) -> Non
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid job key"
         )
+
+
+async def _refresh(db: AsyncSession, user: User) -> dict:
+    """Pull down whatever the user has solved since the last run.
+
+    Reminders are only as good as the data behind them, and until this existed
+    the only thing that imported anything was a button on the dashboard — so a
+    week without visiting meant a week of reminders built on week-old facts,
+    while the app claimed to need no manual work.
+
+    Each source is attempted independently. One platform being down, rate
+    limited or misconfigured must not cost the other, and none of them may cost
+    the reminder: stale data still produces a useful email, an exception
+    produces nothing.
+    """
+    imported: dict[str, int | str] = {}
+
+    if user.codeforces_handle:
+        try:
+            imported["codeforces"] = await ingest_codeforces_submissions(
+                db, user_id=user.id, handle=user.codeforces_handle
+            )
+        except Exception as exc:
+            imported["codeforces"] = f"failed: {type(exc).__name__}"
+            log.warning("codeforces sync failed for user %s", user.id)
+
+    if user.leetcode_repo:
+        try:
+            imported["leetcode"] = await ingest_leetcode_submissions(
+                db, user_id=user.id, repo=user.leetcode_repo
+            )
+        except Exception as exc:
+            imported["leetcode"] = f"failed: {type(exc).__name__}"
+            log.warning("leetcode sync failed for user %s", user.id)
+
+    if user.leetcode_username:
+        try:
+            # Also the cheapest way to catch solves LeetHub has not pushed yet:
+            # this pulls the twenty most recent accepted submissions.
+            await leetcode_profile_service.sync_profile(
+                db, user.id, user.leetcode_username
+            )
+            imported["profile"] = "synced"
+        except Exception as exc:
+            imported["profile"] = f"failed: {type(exc).__name__}"
+            log.warning("leetcode profile sync failed for user %s", user.id)
+
+    return imported
 
 
 @router.post("/daily-reminders", dependencies=[Depends(require_cron_key)])
@@ -67,9 +122,14 @@ async def daily_reminders(
     # saying why forces a log hunt for something the run already knew.
     errors: list[str] = []
     messages: list[dict] = []
+    synced: dict[int, dict] = {}
 
     for user in users:
         try:
+            # Import before deciding: a reminder built on last week's data can
+            # tell you to revisit something you did yesterday.
+            synced[user.id] = await _refresh(db, user)
+
             generated = await reminder_service.run_reminders(db, user.id)
             processed += 1
 
@@ -112,6 +172,7 @@ async def daily_reminders(
         # Says out loud when mail is going to the log instead of an inbox,
         # which is otherwise indistinguishable from a successful run.
         "mail_configured": settings.mail_configured,
+        "synced": synced,
         "errors": errors,
         # Empty unless deliver=false. The scheduler sends these itself.
         "messages": messages,
