@@ -1,7 +1,12 @@
+from datetime import datetime, timedelta
+
 import pytest
 
 from app.clients.leetcode_client import LeetCodeUserNotFound, parse_profile
+from app.services import leetcode_profile_service as profile_service
 from app.services.leetcode_profile_service import coverage
+
+NOW = datetime(2026, 8, 15, 12, 0, 0)
 
 
 def profile_response(**overrides):
@@ -82,3 +87,21 @@ def test_coverage_never_reports_negative_missing():
 
 def test_coverage_handles_an_empty_profile():
     assert coverage(0, 0) == {"tracked": 0, "missing": 0, "percent": 0}
+
+
+def test_a_missing_snapshot_is_stale():
+    assert profile_service.is_stale(None, NOW)
+
+
+def test_a_fresh_snapshot_is_not_refetched():
+    # Every refresh is a call to somebody else's service; the number only moves
+    # a few times a day.
+    assert not profile_service.is_stale(NOW - timedelta(hours=1), NOW)
+
+
+def test_a_snapshot_past_the_window_is_stale():
+    assert profile_service.is_stale(NOW - timedelta(hours=13), NOW)
+
+
+def test_the_boundary_counts_as_stale():
+    assert profile_service.is_stale(NOW - profile_service.SNAPSHOT_MAX_AGE, NOW)

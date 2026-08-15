@@ -199,7 +199,11 @@ async def read_leetcode_profile(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await leetcode_profile_service.get_profile(db, current_user.id)
+    # The username is passed so a stale snapshot can refresh itself here: the
+    # true solved total is only wrong when somebody is looking at it.
+    return await leetcode_profile_service.get_profile(
+        db, current_user.id, current_user.leetcode_username
+    )
 
 
 @router.get("/topics/{tag}/solved", response_model=SolvedInTopicOut)
