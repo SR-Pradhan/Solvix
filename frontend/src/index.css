@@ -1026,6 +1026,33 @@ button.link.inline {
   font-weight: 550;
 }
 
+/* A row head that lines up down the list.
+ *
+ * The flex version let every row lay itself out, so the badge, the reason and
+ * the chevron landed at a different x on every line — a column of items that
+ * never formed a column. Fixed tracks give each part the same lane in every
+ * row, which is the whole reason a list reads faster than a paragraph. */
+.row-head-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.row-head-cols .badge {
+  justify-self: start;
+}
+
+/* Below this the four lanes stop fitting and the grid starts hyphenating tag
+   names, so it falls back to flowing. */
+@media (max-width: 560px) {
+  .row-head-cols {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+}
+
 a.row-title {
   color: inherit;
   text-decoration: none;
@@ -1130,7 +1157,15 @@ button.row:hover {
 
 .problems-toggle:hover {
   color: var(--accent);
-  background: var(--surface-2);
+  /* --surface-2 is the row's own background, so the old hover was invisible
+     inside a row card. */
+  background: var(--surface);
+}
+
+/* The chevron sits in a 16px lane; its 4px padding would push it out of it. */
+.row-head-cols .problems-toggle {
+  padding: 0;
+  justify-self: end;
 }
 
 .problems-toggle.open {

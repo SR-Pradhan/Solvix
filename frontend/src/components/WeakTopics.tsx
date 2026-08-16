@@ -88,7 +88,7 @@ export function WeakTopics({
              alone is not readable to everyone, and a word alone does not carry
              down a column at a glance. */
           <li key={t.tag} className={`row ${ROW_TONE[t.status] ?? "row-todo"}`}>
-            <div className="row-head">
+            <div className="row-head row-head-cols">
               <span className="row-title">{t.tag}</span>
               <span
                 className="badge"
