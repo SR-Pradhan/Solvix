@@ -73,22 +73,36 @@ export function LoginPage() {
 
         {error && <p className="error">{error}</p>}
 
+        {/* The label says what is happening, not that something is. "Working"
+            is what a program says when it has not been told what it is doing —
+            and on a host that can take fifty seconds to wake, the difference
+            between "Signing in" and a shrug is the difference between waiting
+            and reloading. */}
         <button type="submit" disabled={busy}>
-          {busy ? "Working…" : mode === "login" ? "Log in" : "Create account"}
+          {busy
+            ? mode === "login"
+              ? "Signing in…"
+              : "Creating your account…"
+            : mode === "login"
+              ? "Log in"
+              : "Create account"}
         </button>
 
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            setMode(mode === "login" ? "register" : "login");
-            setError(null);
-          }}
-        >
-          {mode === "login"
-            ? "No account? Register"
-            : "Already have an account? Log in"}
-        </button>
+        {/* The question is context and the action is the link; underlining the
+            whole sentence made a five-word phrase look like one long target. */}
+        <p className="auth-switch">
+          {mode === "login" ? "No account yet?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            className="link inline"
+            onClick={() => {
+              setMode(mode === "login" ? "register" : "login");
+              setError(null);
+            }}
+          >
+            {mode === "login" ? "Create one" : "Log in"}
+          </button>
+        </p>
       </form>
       {/* Also a quiet cold-start signal: the free API sleeps when idle, and a
           visitor who sees nothing happening assumes the site is broken. */}

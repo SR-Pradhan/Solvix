@@ -404,6 +404,26 @@ input {
   font-size: 12px;
 }
 
+/* The switch between signing in and registering. A sentence where only the
+   verb is a link: underlining the whole phrase made five words look like one
+   long target, and the question is context rather than an action. */
+.auth-switch {
+  margin: var(--s2) 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-switch .link {
+  color: var(--accent);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.auth-switch .link:hover {
+  text-decoration: underline;
+}
+
 /* First paint. A quiet bar rather than a spinner: a spinner implies something
    is happening on the screen, and what is actually happening is a wait. */
 .boot {
@@ -414,7 +434,7 @@ input {
 }
 
 .boot-bar {
-  width: 120px;
+  width: 160px;
   height: 2px;
   border-radius: 2px;
   background: linear-gradient(

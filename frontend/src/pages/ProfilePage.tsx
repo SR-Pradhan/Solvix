@@ -81,7 +81,7 @@ function PhotoCard({
             disabled={busy}
             onClick={() => picker.current?.click()}
           >
-            {busy ? "Working…" : user.has_avatar ? "Change photo" : "Upload photo"}
+            {busy ? "Uploading…" : user.has_avatar ? "Change photo" : "Upload photo"}
           </button>
 
           {user.has_avatar && (
