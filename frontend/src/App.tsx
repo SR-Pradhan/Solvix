@@ -9,7 +9,13 @@ function Router() {
   if (loading) {
     return (
       <div className="centered">
-        <p className="muted">Loading…</p>
+        {/* The mark rather than the word "Loading": this is the first paint,
+            before we know whether anyone is signed in, and a brand held for a
+            moment reads better than a status for a state nobody chose. */}
+        <div className="boot" role="status" aria-label="Loading Solvix">
+          <span className="brand">Solvix</span>
+          <span className="boot-bar" />
+        </div>
       </div>
     );
   }

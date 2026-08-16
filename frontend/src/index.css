@@ -362,6 +362,84 @@ input {
   font-size: 12px;
 }
 
+/* First paint. A quiet bar rather than a spinner: a spinner implies something
+   is happening on the screen, and what is actually happening is a wait. */
+.boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.boot-bar {
+  width: 120px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    var(--accent) 50%,
+    var(--border) 100%
+  );
+  background-size: 200% 100%;
+  animation: boot-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes boot-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Motion is the one thing that says "still working" without a number, but it
+   has no place once real content is on screen. */
+@media (prefers-reduced-motion: reduce) {
+  .boot-bar {
+    animation: none;
+  }
+}
+
+.empty-state h2 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+/* Placeholders while content is on its way. Two greys and no motion: a
+   shimmer competes with the content it stands in for, and looks worse the
+   longer it runs — which is exactly the case that matters here. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-bar {
+  height: 11px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.skeleton-title {
+  width: 34%;
+  height: 14px;
+  background: var(--border);
+}
+
+.skeleton-label {
+  width: 45%;
+  height: 9px;
+}
+
+.skeleton-number {
+  width: 28%;
+  height: 24px;
+  background: var(--border);
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

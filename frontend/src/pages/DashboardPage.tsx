@@ -23,6 +23,7 @@ import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
+import { DashboardSkeleton } from "../components/Skeleton";
 import { StatCards } from "../components/StatCards";
 import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -66,6 +67,9 @@ export function DashboardPage() {
   // packed the same nine cards tighter, which is not the same as showing
   // fewer.
   const [view, setView] = useState<"today" | "progress">("today");
+  // Only true once loading has taken long enough to be worth explaining. A
+  // fast load should say nothing at all.
+  const [slowLoad, setSlowLoad] = useState(false);
 
   // Whether the profile card is on screen, which decides two things at once:
   // that card respects the filter, and the difficulty fallback only stands in
@@ -139,6 +143,17 @@ export function DashboardPage() {
   useEffect(() => {
     if (user?.codeforces_handle) void load();
   }, [user?.codeforces_handle, load]);
+
+  // Four seconds is past "the network is fine" and well short of the ~50s a
+  // cold start takes, so the explanation appears while it is still useful.
+  useEffect(() => {
+    if (data) {
+      setSlowLoad(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlowLoad(true), 4000);
+    return () => clearTimeout(timer);
+  }, [data]);
 
   async function sync(platform: Platform = "codeforces") {
     if (!token) return;
@@ -260,13 +275,20 @@ export function DashboardPage() {
       {error && <p className="error">{error}</p>}
 
       {!data ? (
-        <p className="muted">Loading…</p>
+        <DashboardSkeleton waking={slowLoad} />
       ) : data.stats.total_submissions === 0 ? (
-        <section className="card">
-          <p>
-            Nothing imported yet. Hit <strong>Sync Codeforces</strong> to pull
-            your submissions.
+        <section className="card empty-state">
+          <h2>Nothing imported yet</h2>
+          <p className="muted">
+            Solvix imports your history every morning on its own. To see it
+            now, use <strong>Sync Codeforces</strong> in the account menu.
           </p>
+          {user.leetcode_repo ? null : (
+            <p className="muted small">
+              Connecting LeetCode as well gives you topic coverage the
+              Codeforces tags cannot show.
+            </p>
+          )}
         </section>
       ) : (
         <>
