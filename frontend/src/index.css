@@ -486,7 +486,14 @@ input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s3);
+  gap: var(--s5);
+}
+
+/* The lockup is the whole screen for a moment, so it is sized against the
+   viewport rather than pinned: large enough to be the subject, capped so it
+   does not dominate a wide monitor, and it still fits a phone. */
+.boot .logo {
+  --logo-h: clamp(56px, 10vw, 104px);
 }
 
 .boot-bar {

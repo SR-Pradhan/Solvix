@@ -19,9 +19,12 @@ const WORDMARK = "/branding/Solvix-wordmark-no-gap.svg";
 const ICON = "/solvix-icon-assets/solvix-icon-256.png";
 
 export function Logo({
-  height = 28,
+  height,
   className = "",
 }: {
+  /** Omit to let CSS decide — an inline value would win over any stylesheet
+   *  rule, which is exactly what stopped the boot screen's `clamp()` from
+   *  ever applying. */
   height?: number;
   className?: string;
 }) {
@@ -31,7 +34,11 @@ export function Logo({
     // with the element's own attribute.
     <span
       className={`logo ${className}`.trim()}
-      style={{ "--logo-h": `${height}px` } as CSSProperties}
+      style={
+        height === undefined
+          ? undefined
+          : ({ "--logo-h": `${height}px` } as CSSProperties)
+      }
     >
       <img
         src={WORDMARK}
