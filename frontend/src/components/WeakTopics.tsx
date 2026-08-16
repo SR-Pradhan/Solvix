@@ -11,6 +11,14 @@ const STATUS_COLOUR: Record<string, string> = {
   Solid: "var(--ok)",
 };
 
+// The row's left edge, in the same three colours. Scanning a column of edges
+// is faster than reading a column of words.
+const ROW_TONE: Record<string, string> = {
+  "Needs work": "row-alert",
+  Rusty: "row-stale",
+  Solid: "row-done",
+};
+
 function freshness(days: number | null): string {
   if (days === null) return "never";
   if (days === 0) return "today";
@@ -74,27 +82,32 @@ export function WeakTopics({
         <span className="muted small">weakest first</span>
       </header>
 
-      <ul className="topic-list">
+      <ul className="rows">
         {visible.map((t) => (
-          <li key={t.tag}>
-            <span className="topic-name">{t.tag}</span>
-            <span
-              className="badge"
-              style={{
-                color: STATUS_COLOUR[t.status],
-                borderColor: STATUS_COLOUR[t.status],
-              }}
-            >
-              {t.status}
-            </span>
-            <span className="muted small topic-why">
-              {reason(t.status, t.accuracy, t.days_since_last_solve)}
-            </span>
-            <ProblemsToggle
-              open={openTag === t.tag}
-              label={t.tag}
-              onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
-            />
+          /* The edge repeats the status the badge names. Both stay: colour
+             alone is not readable to everyone, and a word alone does not carry
+             down a column at a glance. */
+          <li key={t.tag} className={`row ${ROW_TONE[t.status] ?? "row-todo"}`}>
+            <div className="row-head">
+              <span className="row-title">{t.tag}</span>
+              <span
+                className="badge"
+                style={{
+                  color: STATUS_COLOUR[t.status],
+                  borderColor: STATUS_COLOUR[t.status],
+                }}
+              >
+                {t.status}
+              </span>
+              <span className="muted small">
+                {reason(t.status, t.accuracy, t.days_since_last_solve)}
+              </span>
+              <ProblemsToggle
+                open={openTag === t.tag}
+                label={t.tag}
+                onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
+              />
+            </div>
             {openTag === t.tag && (
               <TopicProblems
                 tag={t.tag}
@@ -113,7 +126,7 @@ export function WeakTopics({
       {(hidden > 0 || expanded) && (
         <button
           type="button"
-          className="link show-more"
+          className="show-more"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? "Show fewer" : `Show ${hidden} more`}

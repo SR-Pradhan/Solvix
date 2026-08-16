@@ -903,9 +903,23 @@ button.link.inline {
   vertical-align: baseline;
 }
 
+/* Same quiet pill as the plan's disclosure: both reveal more of a list, and
+   two different treatments for one action would imply a difference. */
 .show-more {
-  margin-top: 12px;
+  margin-top: var(--s3);
   align-self: flex-start;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.show-more:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
 }
 
 /* Two columns at most: three squeezes the topic rows onto two lines each. */
@@ -970,6 +984,10 @@ button.link.inline {
 
 .row-done {
   border-left-color: var(--ok);
+}
+
+.row-alert {
+  border-left-color: var(--danger);
 }
 
 /* Numbered rows carry a counter in the gutter; unnumbered ones do not reserve
@@ -1064,9 +1082,13 @@ button.row:hover {
   margin: 6px 0 0;
 }
 
+/* The expanded problem list inside a row. `grid-column` is gone with the grid
+   it belonged to; a rule above it is what now says "this belongs to the row
+   you just opened" rather than being the next item down. */
 .topic-problems {
-  grid-column: 1 / -1;
-  margin: 6px 0 2px;
+  margin: var(--s3) 0 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
 }
 
 .problem-list {
