@@ -15,7 +15,7 @@ import type {
   WeeklyReport as WeeklyReportData,
 } from "../api/types";
 import { useAuth } from "../auth";
-import { Avatar } from "../components/Avatar";
+import { AccountMenu } from "../components/AccountMenu";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
@@ -202,43 +202,20 @@ export function DashboardPage() {
           </span>
         </div>
         <div className="actions">
-          {/* Both syncs are the same action for different platforms, so they
-              carry the same weight. Log out is separated rather than styled
-              like a third sibling. */}
-          <button
-            className="ghost"
-            onClick={() => sync("codeforces")}
-            disabled={syncingPlatform !== null}
-          >
-            {syncingPlatform === "codeforces" ? "Syncing…" : "Sync Codeforces"}
-          </button>
-          {user.leetcode_repo && (
-            <button
-              className="ghost"
-              onClick={() => sync("leetcode")}
-              // Both are disabled while either runs: they write to the same
-              // tables, and the dashboard reloads from what they leave behind.
-              disabled={syncingPlatform !== null}
-            >
-              {syncingPlatform === "leetcode" ? "Syncing…" : "Sync LeetCode"}
-            </button>
-          )}
+          {/* One primary action, then the account. Sync used to live here as
+              two buttons; the morning job imports on its own now, so keeping
+              them in the header would claim the app still needs driving. */}
           <button className="ghost" onClick={() => setShowInterview(true)}>
             Mock interview
           </button>
-          <button className="ghost logout" onClick={logout}>
-            Log out
-          </button>
           <ThemeToggle />
-          <button
-            type="button"
-            className="avatar-btn"
-            title="Your profile"
-            aria-label="Your profile"
-            onClick={() => setShowProfile(true)}
-          >
-            <Avatar user={user} size={36} />
-          </button>
+          <AccountMenu
+            user={user}
+            syncingPlatform={syncingPlatform}
+            onSync={sync}
+            onProfile={() => setShowProfile(true)}
+            onLogout={logout}
+          />
         </div>
       </header>
 

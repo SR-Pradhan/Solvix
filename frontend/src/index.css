@@ -982,6 +982,70 @@ button.link.inline {
 
 /* The avatar is the way into the profile, so it has to look pressable
    without becoming another button in the row. */
+/* A menu anchored to the avatar. Absolute rather than a portal: there is one
+   of these, it is always in the header, and a portal would buy nothing but a
+   second place to look for it. */
+.account {
+  position: relative;
+  display: inline-flex;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  /* The only shadow in the app: it is the only thing that floats. */
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.35);
+}
+
+.menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.menu-name {
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.menu button {
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text);
+  text-align: left;
+}
+
+.menu button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.menu button:disabled {
+  color: var(--muted);
+}
+
+.menu-danger {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 7px 7px;
+  color: var(--danger);
+}
+
 .avatar-btn {
   background: none;
   border: 0;
