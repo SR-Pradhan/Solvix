@@ -16,7 +16,7 @@
 import type { CSSProperties } from "react";
 
 const WORDMARK = "/branding/Solvix-wordmark-no-gap.svg";
-const ICON = "/solvix-icon-assets/solvix-icon-256.png";
+const ICON = "/solvix-icon-assets/solvix-icon-128.png";
 
 export function Logo({
   height,

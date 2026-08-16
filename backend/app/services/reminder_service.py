@@ -30,10 +30,20 @@ STALE_THRESHOLD_DAYS = 14
 # And weak enough to be worth the slot.
 WEAK_THRESHOLD = 0.35
 # Cap per run, so a long-inactive account is not flooded at once.
-MAX_PER_RUN = 5
+#
+# Three rather than five, set against what this user actually does: about 2.4
+# problems a day, on top of a plan that already asks for 120 minutes. Five
+# revisions was asking for close to two and a half hours combined, and the
+# failure mode of an over-long list is not doing less of it — it is skipping
+# the whole thing on sight.
+#
+# Nothing is lost by showing fewer: anything due that does not fit keeps its
+# date and returns tomorrow. The cap governs presentation, not the schedule.
+MAX_PER_RUN = 3
 # ...of which this many are held for topics, so a steady stream of due problems
-# cannot crowd them out entirely.
-TOPIC_SLOTS = 2
+# cannot crowd them out entirely. One, because a stale tag is equally stale
+# tomorrow — one a day still surfaces every one of them within a week.
+TOPIC_SLOTS = 1
 
 
 def describe_problem(name: str, days: int) -> str:
@@ -68,13 +78,13 @@ def select_reminders(
 
     Problems still come first — their window is a specific few days, while a
     stale topic is equally stale tomorrow. But once the spacing ladder matured,
-    five problems fell due every morning and filled the cap outright, so topics
+    enough problems fell due every morning to fill the cap outright, so topics
     silently stopped appearing at all. A reminder that can be crowded out
     permanently is a reminder that does not exist.
 
     So each kind is guaranteed a share, and whatever the other kind cannot fill
-    is given back rather than wasted: a day with one problem due still shows
-    four topics.
+    is given back rather than wasted: a day with nothing stale shows problems
+    in every slot, and a day with one problem due fills the rest with topics.
     """
     topic_slots = min(len(topics), max(cap - len(problems), TOPIC_SLOTS))
     problem_slots = cap - min(topic_slots, TOPIC_SLOTS if topics else 0)
