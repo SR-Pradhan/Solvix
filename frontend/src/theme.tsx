@@ -73,7 +73,11 @@ const CHART_TOKENS = [
   "danger",
   "violet",
   "muted",
+  // Axis ticks and the tooltip edge: charts need the quieter greys too, and a
+  // token missing here silently resolves to an empty string.
+  "faint",
   "border",
+  "border-strong",
   "surface",
   "surface-2",
   "text",

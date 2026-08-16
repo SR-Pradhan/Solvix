@@ -16,22 +16,48 @@ import { useThemeTokens, type ChartTokens } from "../theme";
    not resolved. So the theme is read out of the cascade first and handed over
    as plain values. */
 
+/* Ticks carry the information; the lines around them do not. Dropping the
+   axis and tick lines removes two rules per chart without losing a reading,
+   and the labels are what the eye is going to anyway. */
 function axis(t: ChartTokens) {
-  return { stroke: t.muted, fontSize: 12 };
+  return {
+    stroke: t.faint,
+    fontSize: 11,
+    tickLine: false,
+    axisLine: false,
+    tick: { fill: t.faint },
+  };
+}
+
+/* One bar width across every chart. Recharts sizes bars from the container by
+   default, so a chart with four bars drew them three times wider than a chart
+   with forty — the same data looked like a different kind of measurement
+   depending on how much of it there was. */
+const BAR = { maxBarSize: 34 };
+
+function grid(t: ChartTokens) {
+  return { stroke: t.border, strokeDasharray: "3 3" };
+}
+
+function hover(t: ChartTokens) {
+  return { fill: t["surface-2"], radius: 4 };
 }
 
 function tooltip(t: ChartTokens) {
   return {
     background: t.surface,
-    border: `1px solid ${t.border}`,
+    border: `1px solid ${t["border-strong"]}`,
     borderRadius: 8,
     color: t.text,
+    fontSize: 12,
+    padding: "6px 10px",
   };
 }
 
 export function TagChart({ data }: { data: TagBreakdown }) {
   const t = useThemeTokens();
-  if (!data.tags.length) return <Empty note="No tags yet." />;
+  if (!data.tags.length)
+    return <Empty title="Strongest tags" note="No tags yet." />;
 
   // Sized to the longest label rather than fixed: "dp" and "constructive
   // algorithms" need very different gutters, and a fixed 150px either clips
@@ -48,11 +74,17 @@ export function TagChart({ data }: { data: TagBreakdown }) {
       height={Math.max(240, data.tags.length * 28)}
     >
       <BarChart data={data.tags} layout="vertical" margin={{ left: 8, right: 16 }}>
-        <CartesianGrid stroke={t.border} horizontal={false} />
-        <XAxis type="number" {...axis(t)} />
+        <CartesianGrid {...grid(t)} horizontal={false} />
+        <XAxis type="number" allowDecimals={false} {...axis(t)} />
         <YAxis type="category" dataKey="tag" width={labelWidth} {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
-        <Bar dataKey="solved_count" name="solved" fill={t.accent} radius={[0, 4, 4, 0]} />
+        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
+        <Bar
+          dataKey="solved_count"
+          name="solved"
+          fill={t.accent}
+          radius={[0, 4, 4, 0]}
+          {...BAR}
+        />
       </BarChart>
     </ChartCard>
   );
@@ -104,7 +136,7 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
         <LeetCodeLabels data={data} />
       </section>
     ) : (
-      <Empty note="No rated problems yet." />
+      <Empty title="Difficulty distribution" note="No rated problems yet." />
     );
   }
 
@@ -126,11 +158,11 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
       height={280}
     >
       <BarChart data={data.buckets} margin={{ left: 0, right: 8 }}>
-        <CartesianGrid stroke={t.border} vertical={false} />
+        <CartesianGrid {...grid(t)} vertical={false} />
         <XAxis dataKey="rating" {...axis(t)} />
-        <YAxis {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
-        <Bar dataKey="solved_count" name="solved" radius={[4, 4, 0, 0]}>
+        <YAxis allowDecimals={false} width={32} {...axis(t)} />
+        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
+        <Bar dataKey="solved_count" name="solved" radius={[4, 4, 0, 0]} {...BAR}>
           {data.buckets.map((b) => (
             <Cell key={b.rating} fill={colourFor(b.rating)} />
           ))}
@@ -142,16 +174,23 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
 
 export function ActivityChart({ data }: { data: Timeline }) {
   const t = useThemeTokens();
-  if (!data.points.length) return <Empty note="No activity in this window." />;
+  if (!data.points.length)
+    return <Empty title="Activity" note="No activity in this window." />;
 
   return (
     <ChartCard title="Activity" note={`last ${data.days} days`} height={240}>
       <BarChart data={data.points} margin={{ left: 0, right: 8 }}>
-        <CartesianGrid stroke={t.border} vertical={false} />
+        <CartesianGrid {...grid(t)} vertical={false} />
         <XAxis dataKey="day" {...axis(t)} minTickGap={40} />
-        <YAxis allowDecimals={false} {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={{ fill: t["surface-2"] }} />
-        <Bar dataKey="solved_count" name="solved" fill={t.ok} radius={[3, 3, 0, 0]} />
+        <YAxis allowDecimals={false} width={32} {...axis(t)} />
+        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
+        <Bar
+          dataKey="solved_count"
+          name="solved"
+          fill={t.ok}
+          radius={[3, 3, 0, 0]}
+          {...BAR}
+        />
       </BarChart>
     </ChartCard>
   );
@@ -187,9 +226,20 @@ function ChartCard({
   );
 }
 
-function Empty({ note }: { note: string }) {
+/* The same card, minus the plot.
+ *
+ * This used to render a bare sentence with no heading, so a chart with no data
+ * did not merely look empty — it lost its title and became an unlabelled box,
+ * structurally different from its own populated state. A card should be
+ * recognisable as itself whether or not it has anything to show. */
+function Empty({ title, note }: { title?: string; note: string }) {
   return (
     <section className="card">
+      {title && (
+        <header className="card-head">
+          <h2>{title}</h2>
+        </header>
+      )}
       <p className="muted">{note}</p>
     </section>
   );

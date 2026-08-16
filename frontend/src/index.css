@@ -16,9 +16,12 @@
   --border-strong: #2e333c;
 
   --text: #e8eaed;
-  --text-dim: #b4bcc8;
-  --muted: #98a1ae;
-  --faint: #6b7480;
+  --text-dim: #c3cad4;
+  /* Raised from #98a1ae. Helper text — "not practised in 5 weeks" — is read,
+     not glanced at, and the old value sat under 4.5:1 on the card surface.
+     Secondary should recede by weight and size, not by being hard to read. */
+  --muted: #aeb6c2;
+  --faint: #8a929e;
 
   --accent: #6e8aff; /* text, borders, selected state */
   --accent-solid: #4c6ef5; /* filled buttons, where white text sits on top */
@@ -29,6 +32,19 @@
   --warn: #e0a22b;
   --danger: #f0616d;
   --violet: #b57bee;
+
+  /* A 4px grid. Named by step rather than by size so a value can be retuned
+     in one place; used wherever a gap was previously picked by eye. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+
+  /* One measure for every page, so the dashboard and the pages reached from it
+     do not shift width as you move between them. */
+  --page-width: 1000px;
 
   --input-bg: #0f1217;
   /* Shadows are invisible against black, so depth in the dark theme comes
@@ -49,8 +65,10 @@
 
   --text: #14171c;
   --text-dim: #3c444f;
-  --muted: #5c6673;
-  --faint: #838c99;
+  --muted: #55606d;
+  /* #66707d rather than something lighter: faint is used on the page
+     background as well as on white cards, and it has to clear 4.5:1 on both. */
+  --faint: #66707d;
 
   --accent: #4c6ef5;
   --accent-solid: #4c6ef5;
@@ -129,12 +147,12 @@ input {
 }
 
 .page {
-  max-width: 1100px;
+  max-width: var(--page-width);
   margin: 0 auto;
-  padding: 24px 20px 64px;
+  padding: var(--s5) var(--s4) 64px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--s5);
 }
 
 .centered {
@@ -166,7 +184,7 @@ input {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--s2);
   width: 100%;
   padding: 12px 8px;
   background: none;
@@ -205,7 +223,7 @@ input {
 .interview-turns {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s3);
   max-height: 60vh;
   overflow-y: auto;
   padding-right: 4px;
@@ -241,7 +259,7 @@ input {
   margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .interview-answer textarea {
@@ -341,7 +359,7 @@ input {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 18px;
+  padding: var(--s4);
   box-shadow: var(--shadow);
 }
 
@@ -349,15 +367,15 @@ input {
   width: min(400px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s3);
 }
 
 .card-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
 }
 
 .card-head h2 {
@@ -414,7 +432,7 @@ input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: var(--s3);
 }
 
 .boot-bar {
@@ -461,7 +479,7 @@ input {
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .skeleton-bar {
@@ -491,33 +509,37 @@ input {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
+  gap: var(--s3);
 }
 
 .stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .stat-label {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--faint);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
+/* The number is the point of the card. At 30px against 14px body it competed;
+   at 34px with tighter tracking it leads, and the label recedes to match. */
 .stat-value {
-  font-size: 30px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-size: 34px;
+  font-weight: 680;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 14px;
+  gap: var(--s3);
   align-items: stretch;
 }
 
@@ -529,7 +551,7 @@ input {
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s2);
   font-size: 13px;
   color: var(--muted);
 }
@@ -632,11 +654,14 @@ button.link {
   margin: 0;
 }
 
+/* The focus pills under a plan. The bottom margin was picked by eye and read
+   as unclamped space above the first task; on the grid it reads as a gap
+   somebody chose. */
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: var(--s2);
+  margin: 0 0 var(--s3);
 }
 
 .chip {
@@ -680,7 +705,7 @@ button.link {
 .rec-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .rating-pill {
@@ -706,14 +731,14 @@ button.link {
 .labels {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .label-row {
   display: grid;
   grid-template-columns: 64px 1fr 40px;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
 }
 
 .label-bar {
@@ -795,7 +820,7 @@ button.link {
 
 .filter {
   display: flex;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 .dash-controls {
@@ -936,43 +961,58 @@ button.link.inline {
   counter-reset: plan;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
 }
 
+/* Rows were hairline dividers, which reads as a bare table. Each task is now
+   a contained block with a left accent — a plan is a set of things to do, and
+   each one should look like an object you could pick up. */
 .plan-list li {
   counter-increment: plan;
-  padding: 12px 0 12px 30px;
-  border-top: 1px solid var(--border);
   position: relative;
+  padding: var(--s3) var(--s3) var(--s3) 42px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 8px;
 }
 
 .plan-list li::before {
   content: counter(plan);
   position: absolute;
-  left: 0;
+  left: var(--s3);
   top: 13px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--muted);
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: 11px;
+  font-weight: 600;
   display: grid;
   place-items: center;
 }
 
+/* The duration used to be pushed to the far edge of a full-width row, leaving
+   a lane of dead space between a task and its own length. It now sits beside
+   the title, where it belongs to it. */
 .plan-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: baseline;
+  gap: var(--s2);
+  flex-wrap: wrap;
 }
 
 .plan-title {
   font-size: 14px;
+  font-weight: 550;
 }
 
 .plan-detail {
-  margin: 4px 0 0;
+  margin: var(--s1) 0 0;
+  max-width: 68ch;
 }
 
 .plan-note {
@@ -1015,7 +1055,7 @@ button.link.inline {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--s2);
   padding: 6px 0;
 }
 
@@ -1208,7 +1248,7 @@ button.link.inline {
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s3);
   max-width: 420px;
 }
 
