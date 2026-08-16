@@ -23,6 +23,7 @@ import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
+import { Logo } from "../components/Logo";
 import { DashboardSkeleton } from "../components/Skeleton";
 import { StatCards } from "../components/StatCards";
 import { VersionFooter } from "../components/VersionFooter";
@@ -211,7 +212,10 @@ export function DashboardPage() {
     <div className="page">
       <header className="topbar">
         <div>
-          <h1 className="brand">Solvix</h1>
+          {/* The official wordmark, not the word set in the UI font. */}
+          <h1 className="brand-mark">
+            <Logo height={26} />
+          </h1>
           <span className="muted small">
             {[
               user.display_name ?? user.email,

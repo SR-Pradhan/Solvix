@@ -378,9 +378,19 @@ input {
 .topbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--s3);
   align-items: center;
   justify-content: space-between;
+}
+
+/* On a narrow screen the wordmark plus three controls no longer fit on one
+   line, and a shrunken lockup is worse than a smaller one: the height comes
+   down, the proportions do not change. */
+@media (max-width: 520px) {
+  .topbar .logo img {
+    height: 22px !important;
+    width: auto !important;
+  }
 }
 
 .actions {
@@ -389,6 +399,38 @@ input {
   gap: 8px;
 }
 
+/* The wordmark, as supplied. Sized by height with the width left to follow,
+   so it scales without distortion; never recoloured or re-proportioned. */
+.brand-mark {
+  margin: 0;
+  line-height: 0;
+  display: inline-flex;
+}
+
+.logo img {
+  width: auto;
+  max-width: 100%;
+  display: block;
+}
+
+/* "Solv" in the artwork is pure white, so on the light theme it disappears.
+   Rather than recolour the asset, the light theme sets it on a dark plate —
+   the usual way to place a single-tone lockup on a background it was not drawn
+   for. A light-background export would replace this. */
+:root[data-theme="light"] .logo {
+  display: inline-flex;
+  background: #14171c;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.logo-icon {
+  display: block;
+  border-radius: 6px;
+}
+
+/* Page titles that are not the brand — Profile, Mock interview — keep the
+   wordmark's weight and size without pretending to be the logo. */
 .brand {
   font-size: 22px;
   font-weight: 650;

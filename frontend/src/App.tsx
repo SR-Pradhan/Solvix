@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from "./auth";
+import { Logo } from "./components/Logo";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ThemeProvider } from "./theme";
@@ -13,7 +14,7 @@ function Router() {
             before we know whether anyone is signed in, and a brand held for a
             moment reads better than a status for a state nobody chose. */}
         <div className="boot" role="status" aria-label="Loading Solvix">
-          <span className="brand">Solvix</span>
+          <Logo height={44} />
           <span className="boot-bar" />
         </div>
       </div>
