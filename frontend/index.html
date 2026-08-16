@@ -2,13 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- The official icon set. The .ico carries the multi-resolution copy
-         Windows and older browsers ask for; the PNGs are what everything else
-         picks, and the apple-touch icon is the home-screen tile. -->
+    <!-- The icon set, chosen by where it will be drawn.
+         The 16/32 PNGs are transparent with a white upper half, so on a light
+         tab strip the top of the mark vanishes and only the blue arrow shows.
+         The dark-plate version stays legible on any background, so it is the
+         default; browsers that report a dark UI get the transparent artwork,
+         which looks better there. Anything that understands neither falls back
+         to the .ico. -->
     <link rel="icon" href="/solvix-favicon-assets/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/solvix-favicon-assets/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/solvix-favicon-assets/favicon-16.png" />
-    <link rel="apple-touch-icon" href="/solvix-favicon-assets/solvix-apple-touch-icon.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/solvix-favicon-assets/solvix-favicon-dark-bg.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      media="(prefers-color-scheme: dark)"
+      href="/solvix-favicon-assets/favicon-32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      media="(prefers-color-scheme: dark)"
+      href="/solvix-favicon-assets/favicon-16.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/solvix-favicon-assets/solvix-apple-touch-icon.png"
+    />
     <meta name="theme-color" content="#0b0d10" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solvix</title>
