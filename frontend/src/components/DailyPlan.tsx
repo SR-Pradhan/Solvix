@@ -49,14 +49,14 @@ export function DailyPlan({
         </div>
       )}
 
-      <ol className="plan-list">
+      <ol className="rows rows-numbered">
         {data.tasks.map((task, i) => (
-          <li key={i}>
-            <div className="plan-head">
-              <span className="plan-title">{task.title}</span>
-              <span className="rating-pill">{task.minutes}m</span>
+          <li key={i} className="row row-todo">
+            <div className="row-head">
+              <span className="row-title">{task.title}</span>
+              <span className="muted small">{task.minutes}m</span>
             </div>
-            {task.detail && <p className="muted small plan-detail">{task.detail}</p>}
+            {task.detail && <p className="muted small row-detail">{task.detail}</p>}
           </li>
         ))}
       </ol>

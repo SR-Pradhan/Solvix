@@ -34,16 +34,25 @@ export function Recommendations({ data }: { data: Data }) {
           Nothing left unsolved in this range. You have cleared it.
         </p>
       ) : (
-        <ul className="rec-list">
+        <ul className="rows">
           {data.problems.map((p) => (
-            <li key={p.problem_id}>
-              <a href={p.url} target="_blank" rel="noreferrer">
-                {p.name}
-              </a>
-              <span className="rec-meta">
+            /* Unsolved and suggested, so the same accent as a planned task:
+               something to go and do. */
+            <li key={p.problem_id} className="row row-todo">
+              <div className="row-head">
+                <a
+                  className="row-title"
+                  href={p.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {p.name}
+                </a>
                 <span className="rating-pill">{p.rating}</span>
-                <span className="muted small">{p.matched_tags.join(", ")}</span>
-              </span>
+              </div>
+              <p className="muted small row-detail">
+                {p.matched_tags.join(", ")}
+              </p>
             </li>
           ))}
         </ul>

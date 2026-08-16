@@ -39,14 +39,24 @@ function PastInterviews({
         {rate && <span className="muted small">{rate}</span>}
       </header>
 
-      <ul className="interview-list">
+      <ul className="rows">
         {history.map((item) => (
           <li key={item.id}>
             {/* The whole row opens it: a transcript is the reason to click,
-                and a small link inside a wide row is a target you miss. */}
-            <button type="button" onClick={() => onOpen(item)}>
-              <span className="interview-row-head">
-                <span className="interview-problem">{item.problem_name}</span>
+                and a small link inside a wide row is a target you miss.
+                Green when complexity was covered, amber when it was not — the
+                one thing worth seeing without reading the verdict. */}
+            <button
+              type="button"
+              className={
+                item.findings?.complexity_handled
+                  ? "row row-done"
+                  : "row row-stale"
+              }
+              onClick={() => onOpen(item)}
+            >
+              <span className="row-head">
+                <span className="row-title">{item.problem_name}</span>
                 <span className="muted small">
                   {item.topic}
                   {item.created_at
@@ -57,19 +67,8 @@ function PastInterviews({
                     : ""}
                 </span>
               </span>
-              <span className="muted small interview-verdict">
+              <span className="muted small row-detail interview-verdict">
                 {item.findings?.verdict}
-              </span>
-              <span
-                className={
-                  item.findings?.complexity_handled
-                    ? "badge badge-sentence badge-ok"
-                    : "badge badge-sentence badge-warn"
-                }
-              >
-                {item.findings?.complexity_handled
-                  ? "Complexity covered"
-                  : "Complexity missed"}
               </span>
             </button>
           </li>

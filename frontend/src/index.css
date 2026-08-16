@@ -168,51 +168,6 @@ input {
 
 /* The reveal button sits inside the field rather than beside it, so the
    form keeps one column and the label still spans the whole control. */
-/* One interview per row. The whole row is the button, so the click target is
-   the row rather than a word inside it. */
-.interview-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.interview-list li + li {
-  border-top: 1px solid var(--border);
-}
-
-.interview-list button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s2);
-  width: 100%;
-  padding: 12px 8px;
-  background: none;
-  border: 0;
-  border-radius: 8px;
-  color: inherit;
-  font-weight: 400;
-  text-align: left;
-}
-
-.interview-list button:hover {
-  background: var(--surface-2);
-}
-
-.interview-row-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-}
-
-.interview-problem {
-  font-size: 14px;
-  font-weight: 550;
-}
-
-/* Two lines is enough to recognise which interview this was; the transcript is
-   one click away for anyone who wants the rest. */
 .interview-verdict {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -719,43 +674,10 @@ button.link {
   color: var(--text-dim);
 }
 
-.rec-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.rec-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 0;
-  border-top: 1px solid var(--border);
-}
-
-.rec-list a {
-  color: var(--text);
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.rec-list a:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-.rec-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-}
-
+/* Inside a row card the surface is already --surface-2, so the pill needs the
+   card colour to read as a chip rather than a hole. */
 .rating-pill {
-  background: var(--surface-2);
+  background: var(--surface);
   border-radius: 6px;
   padding: 2px 8px;
   font-size: 12px;
@@ -1002,9 +924,25 @@ button.link.inline {
   min-width: 0;
 }
 
-.plan-list {
+/* ---------------------------------------------------------------------------
+   Row cards.
+
+   One row style for anything the reader is meant to act on: a planned task, a
+   revision due today, a suggested problem, a past interview. They were four
+   near-identical lists drifting apart, and a shared class is the only way that
+   stops.
+
+   The rule for using it: **card rows for things you act on, compact rows for
+   things you scan.** Weak topics stays a plain list because thirty cards is a
+   mile of scrolling and the point of that list is comparison, not attention.
+
+   The left edge carries status rather than decoration, using the colours that
+   already mean these things elsewhere in the app — so a glance down the edge
+   reads before any of the words do.
+--------------------------------------------------------------------------- */
+.rows {
   list-style: none;
-  counter-reset: plan;
+  counter-reset: row;
   margin: 0;
   padding: 0;
   display: flex;
@@ -1012,21 +950,36 @@ button.link.inline {
   gap: var(--s2);
 }
 
-/* Rows were hairline dividers, which reads as a bare table. Each task is now
-   a contained block with a left accent — a plan is a set of things to do, and
-   each one should look like an object you could pick up. */
-.plan-list li {
-  counter-increment: plan;
+.row {
+  counter-increment: row;
   position: relative;
-  padding: var(--s3) var(--s3) var(--s3) 42px;
+  padding: var(--s3);
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-left: 2px solid var(--accent);
   border-radius: 8px;
 }
 
-.plan-list li::before {
-  content: counter(plan);
+.row-todo {
+  border-left-color: var(--accent);
+}
+
+.row-stale {
+  border-left-color: var(--warn);
+}
+
+.row-done {
+  border-left-color: var(--ok);
+}
+
+/* Numbered rows carry a counter in the gutter; unnumbered ones do not reserve
+   the space. */
+.rows-numbered .row {
+  padding-left: 42px;
+}
+
+.rows-numbered .row::before {
+  content: counter(row);
   position: absolute;
   left: var(--s3);
   top: 13px;
@@ -1041,24 +994,46 @@ button.link.inline {
   place-items: center;
 }
 
-/* The duration used to be pushed to the far edge of a full-width row, leaving
-   a lane of dead space between a task and its own length. It now sits beside
-   the title, where it belongs to it. */
-.plan-head {
+/* Title and its meta on one line: a duration or a rating belongs to the thing
+   it describes, not to the far edge of a wide row. */
+.row-head {
   display: flex;
   align-items: baseline;
   gap: var(--s2);
   flex-wrap: wrap;
 }
 
-.plan-title {
+.row-title {
   font-size: 14px;
   font-weight: 550;
 }
 
-.plan-detail {
+a.row-title {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.row-title:hover {
+  color: var(--accent);
+}
+
+.row-detail {
   margin: var(--s1) 0 0;
   max-width: 68ch;
+}
+
+/* A whole row that is itself a button — used where the row opens something. */
+button.row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-weight: 400;
+  color: inherit;
+  cursor: pointer;
+}
+
+button.row:hover {
+  border-color: var(--border-strong);
 }
 
 .plan-note {
