@@ -67,6 +67,11 @@ export function DashboardPage() {
   // fewer.
   const [view, setView] = useState<"today" | "progress">("today");
 
+  // Whether the profile card is on screen, which decides two things at once:
+  // that card respects the filter, and the difficulty fallback only stands in
+  // when the authoritative breakdown is absent.
+  const profileVisible = lcProfile !== null && platform !== "codeforces";
+
   const connected: Platform[] = [];
   if (user?.codeforces_handle) connected.push("codeforces");
   if (user?.leetcode_repo) connected.push("leetcode");
@@ -276,7 +281,9 @@ export function DashboardPage() {
                 />
               )}
               <Reminders data={data.reminders} />
-              {data.recommendations && (
+              {/* Recommendations come from the Codeforces problemset only, so
+                  they are not an answer to "show me LeetCode". */}
+              {data.recommendations && platform !== "leetcode" && (
                 <Recommendations data={data.recommendations} />
               )}
               {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
@@ -292,7 +299,11 @@ export function DashboardPage() {
                 platform={platform}
               />
               <WeeklyReport data={data.weekly} />
-              {lcProfile && (
+              {/* The filter has to reach every card or it means nothing: a
+                  LeetCode profile on a screen narrowed to Codeforces makes the
+                  reader doubt whether anything else respected the filter
+                  either. */}
+              {profileVisible && lcProfile && (
                 <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
               )}
               <div className="grid-2">
@@ -307,7 +318,7 @@ export function DashboardPage() {
                   counts every problem solved. Two numbers claiming the same
                   thing teaches the reader to trust neither, so the
                   authoritative one wins and this only appears without it. */}
-              {(data.ratings.buckets.length > 0 || !lcProfile) && (
+              {(data.ratings.buckets.length > 0 || !profileVisible) && (
                 <RatingChart data={data.ratings} />
               )}
               <ActivityChart data={data.timeline} />
