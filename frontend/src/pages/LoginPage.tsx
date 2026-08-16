@@ -38,7 +38,7 @@ export function LoginPage() {
       <form className="card auth-card" onSubmit={onSubmit}>
         <div className="topbar">
           <h1 className="brand-mark">
-            <Logo height={30} />
+            <Logo height={36} />
           </h1>
           <ThemeToggle />
         </div>

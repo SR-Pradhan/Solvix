@@ -13,6 +13,8 @@
  * artwork exactly as designed.
  */
 
+import type { CSSProperties } from "react";
+
 const WORDMARK = "/branding/Solvix-wordmark-no-gap.svg";
 const ICON = "/solvix-icon-assets/solvix-icon-256.png";
 
@@ -24,16 +26,21 @@ export function Logo({
   className?: string;
 }) {
   return (
-    <span className={`logo ${className}`.trim()}>
+    // The height travels as a custom property rather than an inline style, so
+    // a media query can shrink the lockup without fighting a specificity war
+    // with the element's own attribute.
+    <span
+      className={`logo ${className}`.trim()}
+      style={{ "--logo-h": `${height}px` } as CSSProperties}
+    >
       <img
         src={WORDMARK}
         alt="Solvix"
-        height={height}
-        style={{ height }}
-        // Loaded eagerly and given its ratio up front: this is the first thing
-        // painted on the page, and a logo that arrives late shifts everything
-        // under it.
-        width={Math.round(height * (1700 / 560))}
+        // The intrinsic size is declared so the box is reserved before the
+        // image arrives: this is the first thing painted, and a logo that
+        // lands late shifts everything under it.
+        width={1700}
+        height={560}
         decoding="async"
       />
     </span>

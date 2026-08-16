@@ -387,9 +387,8 @@ input {
    line, and a shrunken lockup is worse than a smaller one: the height comes
    down, the proportions do not change. */
 @media (max-width: 520px) {
-  .topbar .logo img {
-    height: 22px !important;
-    width: auto !important;
+  .topbar .logo {
+    --logo-h: 24px;
   }
 }
 
@@ -419,9 +418,13 @@ input {
 }
 
 .logo img {
+  display: block;
+  height: var(--logo-h, 28px);
+  /* Width follows the height from the artwork's own ratio, so the lockup can
+     never be squeezed by its container. */
   width: auto;
   max-width: 100%;
-  display: block;
+  aspect-ratio: 1700 / 560;
 }
 
 /* "Solv" in the artwork is pure white, so on the light theme it disappears.
@@ -487,7 +490,7 @@ input {
 }
 
 .boot-bar {
-  width: 160px;
+  width: clamp(140px, 22vw, 220px);
   height: 2px;
   border-radius: 2px;
   background: linear-gradient(

@@ -14,7 +14,8 @@ function Router() {
             before we know whether anyone is signed in, and a brand held for a
             moment reads better than a status for a state nobody chose. */}
         <div className="boot" role="status" aria-label="Loading Solvix">
-          <Logo height={44} />
+          {/* Sized in CSS against the viewport; see .boot .logo. */}
+          <Logo />
           <span className="boot-bar" />
         </div>
       </div>

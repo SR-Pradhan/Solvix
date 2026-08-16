@@ -214,7 +214,7 @@ export function DashboardPage() {
         <div className="topbar-identity">
           {/* The official wordmark, not the word set in the UI font. */}
           <h1 className="brand-mark">
-            <Logo height={30} />
+            <Logo height={34} />
           </h1>
           <span className="muted small">
             {[
