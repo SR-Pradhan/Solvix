@@ -541,13 +541,27 @@ input {
   gap: var(--s1);
 }
 
-/* A hard ceiling on the supporting line, so one card with more to say cannot
-   set the height of the whole row. */
+/* The supporting line gets exactly two lines' worth of room in every card:
+   clamped so a long one cannot grow, and reserved so a short one does not
+   leave its neighbours ending at a different depth. Four cards side by side
+   are read as a row, and a row with ragged bottoms looks like a mistake even
+   when every card is individually correct. */
 .stat > .small {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: calc(2 * 1.55em);
+}
+
+/* Pins the supporting line to the bottom of the card, so the four line up with
+   each other rather than each sitting wherever its own value left it. */
+.stat {
+  justify-content: flex-start;
+}
+
+.stat > .small {
+  margin-top: auto;
 }
 
 .stat-label {
@@ -1052,20 +1066,23 @@ button.link.inline {
   font-style: italic;
 }
 
+/* Same pair of figures as the stat cards, so the same rhythm: a fixed gap on
+   the scale rather than 32px chosen by eye, and the labels on one baseline. */
 .week-figures {
   display: flex;
-  gap: 32px;
-  margin-bottom: 6px;
+  gap: var(--s6);
+  margin-bottom: var(--s2);
+  align-items: flex-end;
 }
 
 .week-figures > div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s1);
 }
 
 .week-topics {
-  margin-top: 14px;
+  margin-top: var(--s4);
 }
 
 .week-topics .chips {
