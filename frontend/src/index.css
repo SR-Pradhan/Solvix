@@ -76,6 +76,40 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  /* Set explicitly, because the browser default was 16px — larger than the
+     15px card headings above it, so every heading was quietly smaller than the
+     text it introduced. Hierarchy has to be declared to exist. */
+  font-size: 14px;
+  /* 1.55 rather than the default ~1.2: the longest text here is the interview
+     transcript and the plan's reasoning, and prose at 1.2 is a wall. */
+  line-height: 1.55;
+}
+
+/* Rhythm as a rule rather than per component. The browser's 1em paragraph
+   margin scales with font size, which makes small print sit as far apart as
+   body text. */
+p {
+  margin: 0 0 10px;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Long-form text only — a measure this narrow would break the flex rows that
+   put a label and a number on one line. */
+.card > p,
+.empty-state p {
+  max-width: 72ch;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.3;
+  /* Tighter tracking at larger sizes, which is where default spacing looks
+     loose. */
+  letter-spacing: -0.01em;
 }
 
 /* Only the surfaces cross-fade on a theme switch. Animating everything makes
@@ -327,10 +361,22 @@ input {
 }
 
 .card-head h2 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   margin: 0;
+}
+
+/* Section headings inside a card — "Went well", "Worth working on". Smaller
+   than the card's own title and set apart by colour rather than size alone,
+   so three levels stay distinguishable in two points of difference. */
+.card h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 14px 0 6px;
 }
 
 .topbar {
@@ -402,8 +448,10 @@ input {
   }
 }
 
+/* Matches a card title, because that is what it is standing in for. */
 .empty-state h2 {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0 0 6px;
 }
 
@@ -460,7 +508,7 @@ input {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 650;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;

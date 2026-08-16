@@ -290,7 +290,7 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
 
           {interview.findings.strengths.length > 0 && (
             <>
-              <h3 className="small">Went well</h3>
+              <h3>Went well</h3>
               <ul className="muted small">
                 {interview.findings.strengths.map((s, i) => (
                   <li key={i}>{s}</li>
@@ -301,7 +301,7 @@ export function InterviewPage({ onBack }: { onBack: () => void }) {
 
           {interview.findings.gaps.length > 0 && (
             <>
-              <h3 className="small">Worth working on</h3>
+              <h3>Worth working on</h3>
               <ul className="muted small">
                 {interview.findings.gaps.map((g, i) => (
                   <li key={i}>{g}</li>
