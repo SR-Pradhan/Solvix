@@ -211,10 +211,10 @@ export function DashboardPage() {
   return (
     <div className="page">
       <header className="topbar">
-        <div>
+        <div className="topbar-identity">
           {/* The official wordmark, not the word set in the UI font. */}
           <h1 className="brand-mark">
-            <Logo height={26} />
+            <Logo height={30} />
           </h1>
           <span className="muted small">
             {[

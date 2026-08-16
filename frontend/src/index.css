@@ -401,10 +401,21 @@ input {
 
 /* The wordmark, as supplied. Sized by height with the width left to follow,
    so it scales without distortion; never recoloured or re-proportioned. */
+/* `flex`, not `inline-flex`: as an inline box the heading let the line under
+   it — the name and handle — flow up alongside the wordmark instead of sitting
+   beneath it. */
 .brand-mark {
   margin: 0;
   line-height: 0;
-  display: inline-flex;
+  display: flex;
+}
+
+/* The wordmark and the line under it, as one block. The gap is what stops the
+   lockup looking wedged against the text. */
+.topbar-identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
 }
 
 .logo img {
