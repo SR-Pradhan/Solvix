@@ -74,7 +74,7 @@ export function DailyPlan({
         <div className="plan-steps">
           <button
             type="button"
-            className="link small"
+            className=""
             onClick={() => setShowSteps(!showSteps)}
             aria-expanded={showSteps}
           >

@@ -39,9 +39,11 @@ function windowLabel(days: number): string {
   return `${days} days`;
 }
 
-// Beyond this the card grows taller than its neighbours, so the rest hide
-// behind a toggle rather than being dropped.
-const NAMES_SHOWN = 5;
+// Two, because the grid stretches every stat card to the tallest one: five
+// topic names ran to three lines and left the other three cards with two lines
+// of dead space under their own single line. The rest hide behind a toggle
+// rather than being dropped.
+const NAMES_SHOWN = 2;
 
 function DueCard({ topics }: { topics?: WeakTopics }) {
   const [expanded, setExpanded] = useState(false);
