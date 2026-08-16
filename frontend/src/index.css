@@ -12,8 +12,15 @@
   --bg: #0b0d10;
   --surface: #14171c;
   --surface-2: #1b1f26;
-  --border: #23272f;
-  --border-strong: #2e333c;
+  /* Blue-grey rather than neutral grey: every card edge and divider carries a
+     trace of the brand, which is a cheaper way to feel branded than colouring
+     things in. Deliberately a hue shift only — the contrast against the card
+     surface is unchanged (1.20:1 → 1.22:1), so separation is as strong as it
+     was.
+     True accent stays reserved for state: selected, focused, in progress, to
+     do. If every border were accent, none of those would read as special. */
+  --border: #232838;
+  --border-strong: #2e3547;
 
   --text: #e8eaed;
   --text-dim: #c3cad4;
@@ -60,8 +67,8 @@
   --bg: #f6f7f9;
   --surface: #ffffff;
   --surface-2: #eef0f4;
-  --border: #e1e5ea;
-  --border-strong: #d3d9e0;
+  --border: #dee3ee;
+  --border-strong: #ced6e6;
 
   --text: #14171c;
   --text-dim: #3c444f;
