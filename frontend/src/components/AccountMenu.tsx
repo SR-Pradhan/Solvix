@@ -97,6 +97,10 @@ export function AccountMenu({
           <button
             type="button"
             role="menuitem"
+            // Both rows are disabled while either runs, but only the one doing
+            // the work is marked as working — a spinner on the idle row says it
+            // is busy too.
+            className={syncingPlatform === "codeforces" ? "is-working" : ""}
             disabled={syncing}
             onClick={() => onSync("codeforces")}
           >
@@ -110,6 +114,7 @@ export function AccountMenu({
               role="menuitem"
               // Both disabled while either runs: they write to the same tables,
               // and the dashboard reloads from what they leave behind.
+              className={syncingPlatform === "leetcode" ? "is-working" : ""}
               disabled={syncing}
               onClick={() => onSync("leetcode")}
             >

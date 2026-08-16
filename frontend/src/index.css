@@ -430,12 +430,21 @@ input {
 /* "Solv" in the artwork is pure white, so on the light theme it disappears.
    Rather than recolour the asset, the light theme sets it on a dark plate —
    the usual way to place a single-tone lockup on a background it was not drawn
-   for. A light-background export would replace this. */
+   for.
+ *
+ * Sized to sit close to the artwork rather than framing it: a wide margin
+ * makes the plate the object and the logo its contents, which is the opposite
+ * of what a lockup wants. This is a stopgap — a light-background export of the
+ * wordmark would remove the plate entirely. */
 :root[data-theme="light"] .logo {
   display: inline-flex;
+  align-items: center;
   background: #14171c;
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 5px 9px;
+  /* The same dark surface the rest of the dark theme uses, so the chip reads
+     as a piece of the brand rather than an arbitrary black rectangle. */
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.12);
 }
 
 .logo-icon {
@@ -1382,10 +1391,12 @@ button.row:hover {
   color: var(--accent);
 }
 
-/* Only the sync rows turn, and only while they are working. Spinning on hover
-   would be decoration; spinning on click is a progress indicator. */
-.menu button:disabled .menu-icon {
+/* Only the row actually working turns. Keying this off `:disabled` spun both
+   sync rows at once, because both are disabled while either runs — the icon
+   was reporting "input blocked" when it meant "this is in progress". */
+.menu button.is-working .menu-icon {
   animation: spin 1.1s linear infinite;
+  color: var(--accent);
 }
 
 @keyframes spin {
