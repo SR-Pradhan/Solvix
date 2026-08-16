@@ -3,6 +3,32 @@ import { useEffect, useRef, useState } from "react";
 import type { Platform, User } from "../api/types";
 import { Avatar } from "./Avatar";
 
+/* Small UI glyphs, inline rather than from a package: four shapes do not
+   justify a dependency, and drawing them with `currentColor` means they take
+   the menu's hover and danger colours for free. */
+function Icon({ path }: { path: string }) {
+  return (
+    <svg
+      className="menu-icon"
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={path} />
+    </svg>
+  );
+}
+
+const SYNC = "M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3";
+const PERSON = "M13 13.5c0-2.2-2.2-3.5-5-3.5s-5 1.3-5 3.5M8 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5";
+const EXIT = "M6 14H3.5A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H6M10.5 11 14 8l-3.5-3M14 8H6";
+
 /** The avatar, and everything that used to crowd the header.
  *
  * Syncing was two top-level buttons until the morning job started importing on
@@ -52,7 +78,7 @@ export function AccountMenu({
     <div className="account" ref={container}>
       <button
         type="button"
-        className="avatar-btn"
+        className={`avatar-btn${open ? " on" : ""}`}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account and sync"
@@ -74,6 +100,7 @@ export function AccountMenu({
             disabled={syncing}
             onClick={() => onSync("codeforces")}
           >
+            <Icon path={SYNC} />
             {syncingPlatform === "codeforces" ? "Syncing…" : "Sync Codeforces"}
           </button>
 
@@ -86,6 +113,7 @@ export function AccountMenu({
               disabled={syncing}
               onClick={() => onSync("leetcode")}
             >
+              <Icon path={SYNC} />
               {syncingPlatform === "leetcode" ? "Syncing…" : "Sync LeetCode"}
             </button>
           )}
@@ -98,6 +126,7 @@ export function AccountMenu({
               onProfile();
             }}
           >
+            <Icon path={PERSON} />
             Profile
           </button>
 
@@ -109,6 +138,7 @@ export function AccountMenu({
             className="menu-danger"
             onClick={onLogout}
           >
+            <Icon path={EXIT} />
             Log out
           </button>
         </div>
