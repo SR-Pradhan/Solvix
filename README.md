@@ -8,7 +8,7 @@ The constraint that shapes everything: **no manual logging.** Every figure is
 derived from data the platforms already hold, and several otherwise-obvious
 features are deliberately absent for that reason.
 
-**Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app) ·
+**Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app) 
 API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 
 > The API runs on a free instance that sleeps when idle, so the first request
