@@ -85,9 +85,9 @@ function PhotoCard({
             {busy ? "Uploading…" : user.has_avatar ? "Change photo" : "Upload photo"}
           </button>
 
+          {/* A button, not underlined text: it sits beside "Change photo" and
+              does the same kind of thing, so it should look like it. */}
           {user.has_avatar && (
-            {/* A button, not underlined text: it sits beside "Change photo"
-                and does the same kind of thing, so it should look like it. */}
             <button
               type="button"
               className="pill-btn"
