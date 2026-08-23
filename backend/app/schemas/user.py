@@ -41,6 +41,12 @@ class SetLeetcodeUsername(BaseModel):
     leetcode_username: str = Field(min_length=1, max_length=100)
 
 
+class DeleteAccount(BaseModel):
+    """Deletion asks for the password: it is the one action with no undo."""
+
+    password: str
+
+
 class UpdateProfile(BaseModel):
     """A partial update: an omitted field is left alone.
 
@@ -52,6 +58,9 @@ class UpdateProfile(BaseModel):
     display_name: str | None = None
     codeforces_handle: str | None = None
     leetcode_username: str | None = None
+    # Editable here, not only on the dashboard's connect card: that card only
+    # appears while the repo is unset, so a typo in it was unfixable.
+    leetcode_repo: str | None = None
 
 
 class RequestEmailChange(BaseModel):

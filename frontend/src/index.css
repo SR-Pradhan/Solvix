@@ -1520,6 +1520,46 @@ button.row:hover {
 
 /* Capped rather than full width: a name field stretched across 1100px looks
    like a mistake, and long inputs read as "paste a lot of text here". */
+/* Security sits apart from the editing cards, and inside it the destructive
+   action sits apart again — behind a divider, so nobody meets "Delete account"
+   while reaching for a text field. */
+.security-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  flex-wrap: wrap;
+}
+
+.security-row p {
+  margin: var(--s1) 0 0;
+  max-width: 52ch;
+}
+
+.danger-zone {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+
+/* Red is not decoration here: it is the only irreversible control in the app,
+   and it uses the colour that already means "needs work" everywhere else. */
+button.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+button.ghost.danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+button.ghost.danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+}
+
 .profile-form {
   display: flex;
   flex-direction: column;

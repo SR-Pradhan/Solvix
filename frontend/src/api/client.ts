@@ -214,6 +214,17 @@ export const api = {
       }),
     }),
 
+  // Signs out every other session and returns a replacement token, so the tab
+  // this was pressed in stays signed in.
+  revokeSessions: (token: string) =>
+    request<Token>("/users/me/sessions/revoke", token, { method: "POST" }),
+
+  deleteAccount: (token: string, password: string) =>
+    requestEmpty("/users/me", token, {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    }),
+
   uploadAvatar: (token: string, file: File) => {
     const body = new FormData();
     body.append("file", file);

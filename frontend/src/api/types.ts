@@ -22,6 +22,7 @@ export interface ProfileChanges {
   display_name?: string | null;
   codeforces_handle?: string;
   leetcode_username?: string | null;
+  leetcode_repo?: string | null;
 }
 
 export interface Token {

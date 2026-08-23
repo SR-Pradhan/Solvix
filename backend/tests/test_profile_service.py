@@ -152,3 +152,40 @@ class TestNormaliseAvatar:
         data, _ = normalise_avatar(encode(Image.new("RGB", (3000, 2000), "red")))
 
         assert len(data) < 100 * 1024
+
+
+# --- the LeetCode repository reference ---
+
+from app.services.profile_service import clean_repo
+
+
+def test_a_plain_owner_repo_is_kept():
+    assert clean_repo("SR-Pradhan/LeetCode-Problems") == "SR-Pradhan/LeetCode-Problems"
+
+
+def test_a_pasted_github_url_is_reduced_to_owner_repo():
+    # What people actually paste, rather than what the field asks for.
+    assert (
+        clean_repo("https://github.com/SR-Pradhan/LeetCode-Problems")
+        == "SR-Pradhan/LeetCode-Problems"
+    )
+
+
+def test_a_git_suffix_and_trailing_slash_come_off():
+    assert clean_repo("github.com/owner/repo.git") == "owner/repo"
+    assert clean_repo("owner/repo/") == "owner/repo"
+
+
+def test_clearing_the_repo_is_allowed():
+    # Unlike the Codeforces handle, disconnecting LeetCode is legitimate: the
+    # dashboard treats a missing handle as "not set up", but a missing repo
+    # simply means no LeetCode.
+    assert clean_repo("") is None
+    assert clean_repo("   ") is None
+    assert clean_repo(None) is None
+
+
+def test_something_that_is_not_a_repository_is_refused():
+    for bad in ("nope", "owner", "owner/repo/extra", "owner repo"):
+        with pytest.raises(ProfileError):
+            clean_repo(bad)

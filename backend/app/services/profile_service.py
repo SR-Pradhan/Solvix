@@ -9,6 +9,7 @@ database or a real upload.
 from __future__ import annotations
 
 import io
+import re
 
 from PIL import Image, UnidentifiedImageError
 
@@ -46,6 +47,36 @@ def clean_display_name(value: str | None) -> str | None:
     if len(cleaned) > MAX_DISPLAY_NAME:
         raise ProfileError(f"Name cannot be longer than {MAX_DISPLAY_NAME} characters")
     return cleaned
+
+
+# "owner/repo", the only shape GitHub's API accepts. Anything else is a typo
+# that would otherwise be stored and only surface as a failed import later.
+REPO_PATTERN = re.compile(r"^[\w.-]+/[\w.-]+$")
+
+
+def clean_repo(value: str | None) -> str | None:
+    """Normalise a GitHub repository reference, or refuse it.
+
+    Accepts what people actually paste — a full URL, a trailing `.git` — and
+    stores the canonical `owner/repo`. Clearing it is allowed: disconnecting
+    LeetCode is a legitimate thing to want, unlike clearing the Codeforces
+    handle, which the dashboard treats as "not set up yet".
+    """
+    if value is None:
+        return None
+
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+
+    # The scheme is optional because browsers hide it, so what people copy out
+    # of the address bar is "github.com/owner/repo".
+    trimmed = re.sub(r"^(https?://)?(www\.)?github\.com/", "", trimmed, flags=re.I)
+    trimmed = re.sub(r"\.git$", "", trimmed).strip("/")
+
+    if not REPO_PATTERN.match(trimmed):
+        raise ProfileError("Use the owner/repo form, e.g. your-name/LeetCode-Problems")
+    return trimmed
 
 
 def validate_new_password(new_password: str, current_password: str) -> str:

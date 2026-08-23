@@ -2,16 +2,33 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.codeforces_client import (
+    CodeforcesError,
+    CodeforcesHandleError,
+    fetch_user_submissions,
+)
 from app.clients.email_client import MailError, send_mail
 from app.core.deps import get_current_user
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.database import get_db
-from app.db.models import EmailChangeRequest, User
+from app.db.models import (
+    DailyPlan,
+    EmailChangeRequest,
+    Interview,
+    LeetCodeProfile,
+    Reminder,
+    Revision,
+    Submission,
+    SyncState,
+    User,
+    WeeklyReport,
+)
 from app.schemas.user import (
     ChangePassword,
+    DeleteAccount,
     PendingEmailChange,
     RequestEmailChange,
     SetCodeforcesHandle,
@@ -41,6 +58,26 @@ async def read_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
+async def _check_handle_exists(handle: str) -> None:
+    """Refuse a handle Codeforces does not know.
+
+    A typo used to save happily and then surface days later as a failed
+    morning sync, which reads as the app being broken rather than as a wrong
+    handle. One request, asking for a single submission, turns that into an
+    immediate answer.
+
+    An outage is not a wrong handle, so only an explicit rejection blocks the
+    save: refusing to let somebody rename themselves because Codeforces is
+    down would be worse than the problem being solved.
+    """
+    try:
+        await fetch_user_submissions(handle, count=1)
+    except CodeforcesHandleError as exc:
+        raise ProfileError(f"Codeforces does not know the handle '{handle}'") from exc
+    except CodeforcesError:
+        log.warning("could not verify handle %s; accepting it", handle)
+
+
 @router.patch("/me", response_model=UserOut)
 async def update_profile(
     payload: UpdateProfile,
@@ -65,10 +102,16 @@ async def update_profile(
             # missing handle as "this account has not been set up yet".
             if not handle:
                 raise ProfileError("A Codeforces handle is required")
+            if handle != current_user.codeforces_handle:
+                await _check_handle_exists(handle)
             current_user.codeforces_handle = handle
         if "leetcode_username" in sent:
             username = (payload.leetcode_username or "").strip()
             current_user.leetcode_username = username or None
+        if "leetcode_repo" in sent:
+            current_user.leetcode_repo = profile_service.clean_repo(
+                payload.leetcode_repo
+            )
     except ProfileError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 
@@ -113,6 +156,84 @@ async def change_password(
             subject=str(current_user.id), token_version=current_user.token_version
         )
     )
+
+
+# Everything an account owns. A test asserts this matches the models, so
+# adding a table with a `user_id` fails the suite until it is listed here —
+# the one protection an explicit list needs.
+OWNED_BY_USER = (
+    Submission,
+    DailyPlan,
+    WeeklyReport,
+    Reminder,
+    Revision,
+    SyncState,
+    Interview,
+    LeetCodeProfile,
+    EmailChangeRequest,
+)
+
+
+@router.post("/me/sessions/revoke", response_model=Token)
+async def revoke_sessions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Sign out everywhere else, keeping the tab this was pressed in.
+
+    The same `token_version` bump a password change performs, exposed on its
+    own: the mechanism already existed, it simply had no way to be used
+    deliberately. Worth having because the realistic case is a college machine
+    you walked away from, where you know the password is fine and it is the
+    session you want gone.
+
+    A replacement token is issued so the caller stays signed in. Logging
+    somebody out of the device they are holding, to protect them from a device
+    they are not, would be a strange bargain.
+    """
+    current_user.token_version = (current_user.token_version or 0) + 1
+    await db.commit()
+    await db.refresh(current_user)
+    return Token(
+        access_token=create_access_token(
+            subject=str(current_user.id), token_version=current_user.token_version
+        )
+    )
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    payload: DeleteAccount,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete the account and everything belonging to it.
+
+    Gated on the current password. A borrowed session must not be able to
+    destroy an account — this is the one action with no undo, so it asks for
+    the one thing a borrowed session does not have.
+
+    The child rows are removed explicitly rather than left to the database.
+    Half these tables were created without `ON DELETE CASCADE`, so a plain
+    delete fails on a foreign key; and being explicit means the list of what
+    an account *is* can be read here rather than inferred from eight schema
+    definitions. The cost is that a new table must be added to this list — so
+    it deletes by user id in one transaction, and a missed table would leave
+    rows that reference nobody rather than silently surviving in a live board.
+    """
+    if not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Password is not correct"
+        )
+
+    user_id = current_user.id
+    for table in OWNED_BY_USER:
+        await db.execute(delete(table).where(table.user_id == user_id))
+
+    await db.delete(current_user)
+    await db.commit()
+    log.info("account %s deleted at its owner's request", user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 async def _live_request(

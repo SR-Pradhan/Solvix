@@ -31,6 +31,7 @@ export function ProfilePage({ onBack }: { onBack: () => void }) {
       <DetailsCard user={user} token={token} onSaved={refreshUser} />
       <EmailChange user={user} token={token} onChanged={refreshUser} />
       <PasswordCard token={token} />
+      <SecurityCard token={token} />
     </div>
   );
 }
@@ -132,6 +133,7 @@ function DetailsCard({
   const [displayName, setDisplayName] = useState(user.display_name ?? "");
   const [handle, setHandle] = useState(user.codeforces_handle ?? "");
   const [leetcode, setLeetcode] = useState(user.leetcode_username ?? "");
+  const [repo, setRepo] = useState(user.leetcode_repo ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -139,7 +141,8 @@ function DetailsCard({
   const changed =
     displayName !== (user.display_name ?? "") ||
     handle !== (user.codeforces_handle ?? "") ||
-    leetcode !== (user.leetcode_username ?? "");
+    leetcode !== (user.leetcode_username ?? "") ||
+    repo !== (user.leetcode_repo ?? "");
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -159,6 +162,7 @@ function DetailsCard({
         ...(leetcode !== (user.leetcode_username ?? "")
           ? { leetcode_username: leetcode }
           : {}),
+        ...(repo !== (user.leetcode_repo ?? "") ? { leetcode_repo: repo } : {}),
       });
       await onSaved();
       setSaved(true);
@@ -199,6 +203,18 @@ function DetailsCard({
           />
         </label>
 
+        {/* Editable here at last. It used to be settable only from the
+            dashboard's connect card, which disappears once it is set — so a
+            typo in it could never be corrected. */}
+        <label>
+          LeetCode solutions repo
+          <input
+            value={repo}
+            onChange={(e) => setRepo(e.target.value)}
+            placeholder="owner/LeetCode-Problems"
+          />
+        </label>
+
         {/* Email is not here: it needs a verification round trip, so it has
             a card of its own rather than a field that saves with the rest. */}
 
@@ -211,6 +227,139 @@ function DetailsCard({
           </button>
         </div>
       </form>
+    </section>
+  );
+}
+
+/** Sessions, and the one action with no undo.
+ *
+ * Kept apart from the rest of the profile rather than mixed in with editing a
+ * display name: these change who can reach the account, and one of them ends
+ * it. Grouping them means nobody meets "Delete account" while looking for a
+ * text field.
+ */
+function SecurityCard({ token }: { token: string }) {
+  const { login, logout } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [password, setPassword] = useState("");
+
+  async function signOutEverywhere() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      // A replacement token, so this tab survives. Logging you out of the
+      // device in your hand to protect you from one that is not is a strange
+      // bargain.
+      const { access_token } = await api.revokeSessions(token);
+      login(access_token);
+      setNotice("Signed out everywhere else.");
+    } catch (err) {
+      setError(message(err, "Could not sign out the other sessions"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAccount() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.deleteAccount(token, password);
+      // No confirmation screen: the account it would belong to is gone.
+      logout();
+    } catch (err) {
+      setError(message(err, "Could not delete your account"));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card">
+      <header className="card-head">
+        <h2>Security</h2>
+      </header>
+
+      <div className="security-row">
+        <div>
+          <span className="row-title">Sign out everywhere else</span>
+          <p className="muted small">
+            Ends every other session and keeps this one. Useful if you signed in
+            on a machine you no longer have.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="ghost"
+          disabled={busy}
+          onClick={signOutEverywhere}
+        >
+          Sign out others
+        </button>
+      </div>
+
+      {notice && <p className="notice small">{notice}</p>}
+
+      <div className="security-row danger-zone">
+        <div>
+          <span className="row-title">Delete account</span>
+          <p className="muted small">
+            Removes your account and everything in it — submissions, plans,
+            reminders, interviews. This cannot be undone.
+          </p>
+        </div>
+        {!confirming && (
+          <button
+            type="button"
+            className="ghost danger"
+            disabled={busy}
+            onClick={() => setConfirming(true)}
+          >
+            Delete account
+          </button>
+        )}
+      </div>
+
+      {confirming && (
+        <div className="profile-form">
+          {/* The password is the point: a borrowed session must not be able to
+              destroy an account, and it is the one thing a borrowed session
+              does not have. */}
+          <PasswordInput
+            label="Confirm with your password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+          />
+          <div className="form-actions">
+            <button
+              type="button"
+              className="danger"
+              disabled={busy || !password}
+              onClick={deleteAccount}
+            >
+              {busy ? "Deleting…" : "Delete my account permanently"}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              disabled={busy}
+              onClick={() => {
+                setConfirming(false);
+                setPassword("");
+                setError(null);
+              }}
+            >
+              Keep my account
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <p className="error small">{error}</p>}
     </section>
   );
 }
