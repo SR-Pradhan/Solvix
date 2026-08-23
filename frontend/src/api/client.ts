@@ -12,6 +12,7 @@ import type {
   Stats,
   TagBreakdown,
   Timeline,
+  Patterns,
   PendingEmailChange,
   Platform,
   ProfileChanges,
@@ -181,6 +182,9 @@ export const api = {
 
   cancelEmailChange: (token: string) =>
     requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
+
+  patterns: (token: string, limit = 6) =>
+    request<Patterns>(`/dashboard/patterns?limit=${limit}`, token),
 
   leaderboard: (token: string) =>
     request<Leaderboard>("/dashboard/leaderboard", token),

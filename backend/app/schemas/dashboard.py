@@ -78,6 +78,31 @@ class LeaderboardOut(BaseModel):
     total_ranked: int = 0
 
 
+class PatternPart(BaseModel):
+    tag: str
+    accuracy: float
+
+
+class PatternOut(BaseModel):
+    tags: list[str]
+    attempts: int
+    solved: int
+    accuracy: float
+    # What the weaker of the two techniques alone would have predicted.
+    expected: float
+    drop: float
+    severity: str
+    parts: list[PatternPart] = []
+
+
+class PatternsOut(BaseModel):
+    patterns: list[PatternOut] = []
+    total_found: int = 0
+    pairs_considered: int = 0
+    min_attempts: int = 0
+    platform: str = "codeforces"
+
+
 class TopicHighlight(BaseModel):
     tag: str
     accuracy: float | None = None

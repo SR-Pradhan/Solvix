@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type {
   DailyPlan as DailyPlanData,
   Leaderboard as LeaderboardData,
+  Patterns as PatternsData,
   LeetCodeProfile as LeetCodeProfileData,
   RatingDistribution,
   Recommendations as RecommendationsData,
@@ -21,6 +22,7 @@ import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
 import { Leaderboard } from "../components/Leaderboard";
+import { Patterns } from "../components/Patterns";
 import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
@@ -60,6 +62,7 @@ export function DashboardPage() {
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
   const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
   const [board, setBoard] = useState<LeaderboardData | null>(null);
+  const [patterns, setPatterns] = useState<PatternsData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
@@ -143,6 +146,14 @@ export function DashboardPage() {
         .leaderboard(token)
         .then((next) => current() && setBoard(next))
         .catch(() => current() && setBoard(null));
+
+      // Not filtered by platform like the cards above: the measurement needs
+      // recorded failures, so the service fixes the platform itself and the
+      // filter has nothing to say about it.
+      api
+        .patterns(token, 6)
+        .then((next) => current() && setPatterns(next))
+        .catch(() => current() && setPatterns(null));
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
@@ -364,6 +375,10 @@ export function DashboardPage() {
                 <WeakTopics data={data.weakTopics} platform={platform} />
                 <TagChart data={data.tags} />
               </div>
+              {/* Directly under "What to work on", because it answers the
+                  follow-up that card provokes: those are the weak topics, but
+                  which of them only fall apart in company. */}
+              {patterns && <Patterns data={patterns} />}
               {/* The standalone difficulty card is a stand-in for the rating
                   histogram when there are no numeric ratings to plot. Once a
                   LeetCode profile exists it is a second Easy/Medium/Hard

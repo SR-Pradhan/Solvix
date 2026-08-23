@@ -123,6 +123,31 @@ export interface WeakTopics {
   stale_topics: string[];
 }
 
+export interface PatternPart {
+  tag: string;
+  accuracy: number;
+}
+
+export interface Pattern {
+  tags: string[];
+  attempts: number;
+  solved: number;
+  accuracy: number;
+  // What the weaker of the two techniques alone would have predicted.
+  expected: number;
+  drop: number;
+  severity: string;
+  parts: PatternPart[];
+}
+
+export interface Patterns {
+  patterns: Pattern[];
+  total_found: number;
+  pairs_considered: number;
+  min_attempts: number;
+  platform: string;
+}
+
 export interface PlanTask {
   title: string;
   detail: string;

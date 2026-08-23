@@ -17,6 +17,7 @@ from app.schemas.dashboard import (
     RatingDistributionOut,
     LeaderboardOut,
     LeetCodeProfileOut,
+    PatternsOut,
     RecommendationsOut,
     RemindersOut,
     SolvedInTopicOut,
@@ -32,6 +33,7 @@ from app.clients.leetcode_client import LeetCodeError, LeetCodeUserNotFound
 from app.services import (
     leaderboard_service,
     leetcode_profile_service,
+    pattern_service,
     plan_service,
     problem_service,
     reminder_service,
@@ -280,6 +282,21 @@ async def read_weekly_report(
     return await report_service.get_weekly_report(
         db, current_user.id, week_start=week_start, platform=_validated(platform)
     )
+
+
+@router.get("/patterns", response_model=PatternsOut)
+async def read_patterns(
+    limit: int | None = Query(default=None, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Technique combinations that underperform both techniques alone.
+
+    Deliberately not filtered by platform the way the topic endpoints are: the
+    measurement only means anything where failed attempts are recorded, so the
+    service fixes the platform rather than accepting one that cannot work.
+    """
+    return await pattern_service.get_patterns(db, current_user.id, limit=limit)
 
 
 @router.get("/weak-topics", response_model=WeakTopicsOut)
