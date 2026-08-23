@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients import leethub_client
+from app.clients import leetcode_client, leethub_client
 from app.core.config import settings
 from app.db.models import Submission
 
@@ -14,6 +14,28 @@ BATCH_SIZE = 500
 # Each new problem costs two GitHub calls, so a handful at a time keeps the
 # import quick without hammering the API.
 CONCURRENCY = 5
+
+
+def not_yet_imported(folder_names: list[str], stored_ids: set[str]) -> list[str]:
+    """Which repo folders are genuinely new, compared on the canonical slug.
+
+    The two LeetCode import paths name the same problem differently: the repo
+    calls it `0190-reverse-bits`, the profile's recent-solves list calls it
+    `reverse-bits`. Comparing the raw strings meant a problem the profile had
+    already imported looked new to the repo import, so it was stored a second
+    time under the other name — inflating the solved count and giving one
+    problem two revision schedules, which showed up as the same title twice in
+    a day's reminders.
+
+    `slug_from_folder` already existed to reconcile the two shapes; it was only
+    ever applied in one direction. Both sides are normalised here.
+    """
+    known = {leetcode_client.slug_from_folder(stored) for stored in stored_ids}
+    return [
+        folder
+        for folder in folder_names
+        if leetcode_client.slug_from_folder(folder) not in known
+    ]
 
 
 async def ingest_leetcode_submissions(db: AsyncSession, user_id: int, repo: str) -> int:
@@ -31,7 +53,7 @@ async def ingest_leetcode_submissions(db: AsyncSession, user_id: int, repo: str)
 
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         slugs = await leethub_client.fetch_solved_slugs(client, repo, token)
-        new_slugs = [s for s in slugs if s not in known]
+        new_slugs = not_yet_imported(slugs, known)
         if not new_slugs:
             return 0
 

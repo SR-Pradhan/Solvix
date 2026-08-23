@@ -62,3 +62,35 @@ def test_missing_difficulty_is_none_rather_than_a_crash():
 
 def test_unparseable_readme_yields_nones():
     assert parse_problem_readme("just some text") == (None, None)
+
+
+# --- reconciling the two id shapes ---
+
+from app.services.leetcode_ingestion_service import not_yet_imported
+
+
+def test_a_problem_the_profile_already_imported_is_not_imported_again():
+    # The bug this exists for: the profile stores "reverse-bits", the repo
+    # offers "0190-reverse-bits", and comparing the raw strings made the second
+    # look new — so one problem was stored twice, inflating the solved count
+    # and producing two revision schedules for it.
+    assert not_yet_imported(["0190-reverse-bits"], {"reverse-bits"}) == []
+
+
+def test_the_reverse_direction_still_works():
+    assert not_yet_imported(["0190-reverse-bits"], {"0190-reverse-bits"}) == []
+
+
+def test_a_genuinely_new_problem_is_kept():
+    assert not_yet_imported(["0001-two-sum"], {"reverse-bits"}) == ["0001-two-sum"]
+
+
+def test_the_folder_name_is_what_gets_returned():
+    # The caller imports from the repo, so it needs the folder name back, not
+    # the slug it was compared on.
+    assert not_yet_imported(["0001-two-sum"], set()) == ["0001-two-sum"]
+
+
+def test_nothing_stored_means_everything_is_new():
+    folders = ["0001-two-sum", "0190-reverse-bits"]
+    assert not_yet_imported(folders, set()) == folders
