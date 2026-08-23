@@ -62,6 +62,22 @@ class DailyPlanOut(BaseModel):
     unavailable: str | None = None
 
 
+class LeaderboardEntry(BaseModel):
+    name: str
+    solved: int
+    active_days: int
+    place: int
+    is_you: bool = False
+
+
+class LeaderboardOut(BaseModel):
+    week_start: date
+    entries: list[LeaderboardEntry] = []
+    # Set even when the caller is outside the visible top ten.
+    your_place: int | None = None
+    total_ranked: int = 0
+
+
 class TopicHighlight(BaseModel):
     tag: str
     accuracy: float | None = None

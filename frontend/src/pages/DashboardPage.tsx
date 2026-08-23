@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import type {
   DailyPlan as DailyPlanData,
+  Leaderboard as LeaderboardData,
   LeetCodeProfile as LeetCodeProfileData,
   RatingDistribution,
   Recommendations as RecommendationsData,
@@ -19,6 +20,7 @@ import { AccountMenu } from "../components/AccountMenu";
 import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
+import { Leaderboard } from "../components/Leaderboard";
 import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
@@ -57,6 +59,7 @@ export function DashboardPage() {
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
   const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
+  const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
@@ -124,6 +127,13 @@ export function DashboardPage() {
         )
         .then(setLcProfile)
         .catch(() => setLcProfile(null));
+
+      // Everyone's week, not just this account's, so it loads alongside the
+      // rest rather than blocking it — and a failure costs one card.
+      api
+        .leaderboard(token)
+        .then(setBoard)
+        .catch(() => setBoard(null));
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
@@ -325,6 +335,9 @@ export function DashboardPage() {
                 platform={platform}
               />
               <WeeklyReport data={data.weekly} />
+              {/* Under your own week, because it answers the same question
+                  from the outside: how did this week go. */}
+              {board && <Leaderboard data={board} />}
               {/* The filter has to reach every card or it means nothing: a
                   LeetCode profile on a screen narrowed to Codeforces makes the
                   reader doubt whether anything else respected the filter

@@ -15,6 +15,7 @@ from app.db.models import User
 from app.schemas.dashboard import (
     DailyPlanOut,
     RatingDistributionOut,
+    LeaderboardOut,
     LeetCodeProfileOut,
     RecommendationsOut,
     RemindersOut,
@@ -29,6 +30,7 @@ from app.schemas.dashboard import (
 from app.clients.groq_client import GroqError, GroqNotConfigured
 from app.clients.leetcode_client import LeetCodeError, LeetCodeUserNotFound
 from app.services import (
+    leaderboard_service,
     leetcode_profile_service,
     plan_service,
     problem_service,
@@ -192,6 +194,20 @@ async def sync_leetcode_profile(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except LeetCodeError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/leaderboard", response_model=LeaderboardOut)
+async def read_leaderboard(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """This week's standings across every account.
+
+    The one endpoint that shows one user's figures to another, so what it
+    returns is deliberately narrow: a display name and the numbers being
+    ranked, never an email.
+    """
+    return await leaderboard_service.weekly(db, current_user.id)
 
 
 @router.get("/leetcode-profile", response_model=LeetCodeProfileOut | None)

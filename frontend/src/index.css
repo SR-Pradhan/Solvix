@@ -1131,6 +1131,29 @@ button.link.inline {
  * the chevron landed at a different x on every line — a column of items that
  * never formed a column. Fixed tracks give each part the same lane in every
  * row, which is the whole reason a list reads faster than a paragraph. */
+/* Place, name, figures. The place sits in a fixed lane so the numbers line up
+   down the column — a board whose ranks wander is harder to read than a plain
+   list. */
+.board-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.board-place {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Your own row is already accented on the edge; brightening the number too
+   makes it findable at a glance in a long board. */
+.row-todo .board-place {
+  color: var(--accent);
+}
+
 .row-head-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr) 16px;

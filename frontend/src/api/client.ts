@@ -3,6 +3,7 @@ import type {
   Health,
   Interview,
   Interviews,
+  Leaderboard,
   LeetCodeProfile,
   RatingDistribution,
   Recommendations,
@@ -180,6 +181,9 @@ export const api = {
 
   cancelEmailChange: (token: string) =>
     requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
+
+  leaderboard: (token: string) =>
+    request<Leaderboard>("/dashboard/leaderboard", token),
 
   startInterview: (token: string) =>
     request<Interview>("/interviews", token, { method: "POST" }),

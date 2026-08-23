@@ -255,3 +255,18 @@ export interface Interview {
 export interface Interviews {
   interviews: Interview[];
 }
+
+export interface LeaderboardEntry {
+  name: string;
+  solved: number;
+  active_days: number;
+  place: number;
+  is_you: boolean;
+}
+
+export interface Leaderboard {
+  week_start: string;
+  entries: LeaderboardEntry[];
+  your_place: number | null;
+  total_ranked: number;
+}
