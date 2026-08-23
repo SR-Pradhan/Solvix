@@ -22,7 +22,13 @@ def compute_streaks(active_days: list[date], today: date) -> tuple[int, int]:
     if not active_days:
         return 0, 0
 
-    days = sorted(set(active_days))
+    # Dates after today are clock skew, not practice: `today - days[-1]` goes
+    # negative for them, which satisfies the "today or yesterday" test and
+    # counts a day that has not happened. `score_topic` already guarded the
+    # same case; this one did not.
+    days = sorted({day for day in set(active_days) if day <= today})
+    if not days:
+        return 0, 0
 
     longest = run = 1
     for prev, cur in zip(days, days[1:]):

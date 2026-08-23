@@ -109,7 +109,10 @@ function LeetCodeLabels({ data }: { data: RatingDistribution }) {
           <div className="label-bar">
             <div
               style={{
-                width: `${(l.solved_count / total) * 100}%`,
+                // Guarded: a set of labels that are all zero divides by zero
+                // and hands the browser `width: NaN%`, which it ignores — so
+                // the bar renders at full width, the opposite of the truth.
+                width: total ? `${(l.solved_count / total) * 100}%` : 0,
                 background: labelColour(t, l.label),
               }}
             />

@@ -105,3 +105,14 @@ def test_a_snapshot_past_the_window_is_stale():
 
 def test_the_boundary_counts_as_stale():
     assert profile_service.is_stale(NOW - profile_service.SNAPSHOT_MAX_AGE, NOW)
+
+
+def test_coverage_cannot_exceed_the_whole():
+    # The profile total is up to twelve hours stale, so the repo import can be
+    # ahead of it. "120% of your total" undermines every other number shown.
+    assert coverage(100, 120)["percent"] == 100
+    assert coverage(100, 120)["missing"] == 0
+
+
+def test_coverage_with_nothing_recorded():
+    assert coverage(0, 0) == {"tracked": 0, "missing": 0, "percent": 0}

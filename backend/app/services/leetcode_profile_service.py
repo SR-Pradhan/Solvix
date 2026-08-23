@@ -46,9 +46,15 @@ def is_stale(synced_at: datetime | None, now: datetime, max_age: timedelta = SNA
 
 
 def coverage(profile_total: int, tracked: int) -> dict:
-    """How much of the real history Solvix can actually see."""
+    """How much of the real history Solvix can actually see.
+
+    Capped at 100%. The two numbers come from different places and the profile
+    one is up to twelve hours old, so the repo import can legitimately be ahead
+    of it — which produced "120% of your total", a figure that undermines every
+    other number on the card. Ahead of the total means we can see all of it.
+    """
     missing = max(0, profile_total - tracked)
-    percent = round(tracked / profile_total * 100) if profile_total else 0
+    percent = min(100, round(tracked / profile_total * 100)) if profile_total else 0
     return {"tracked": tracked, "missing": missing, "percent": percent}
 
 

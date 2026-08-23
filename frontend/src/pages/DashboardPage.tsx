@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../api/client";
 import type {
@@ -74,6 +74,11 @@ export function DashboardPage() {
   // Only true once loading has taken long enough to be worth explaining. A
   // fast load should say nothing at all.
   const [slowLoad, setSlowLoad] = useState(false);
+  // Which load is the current one. Switching platform starts a second set of
+  // requests while the first is still in flight, and on a cold instance the
+  // earlier one can land last — writing Codeforces figures onto a screen
+  // labelled LeetCode. Every write checks it is still the newest request.
+  const loadId = useRef(0);
 
   // Whether the profile card is on screen, which decides two things at once:
   // that card respects the filter, and the difficulty fallback only stands in
@@ -86,6 +91,9 @@ export function DashboardPage() {
 
   const load = useCallback(async () => {
     if (!token) return;
+    const id = ++loadId.current;
+    const current = () => loadId.current === id;
+
     setError(null);
     try {
       const [stats, tags, ratings, timeline, weakTopics, weekly, reminders] =
@@ -98,6 +106,7 @@ export function DashboardPage() {
           api.weeklyReport(token, platform),
           api.reminders(token, platform),
         ]);
+      if (!current()) return;
       setData({
         stats,
         tags,
@@ -113,8 +122,8 @@ export function DashboardPage() {
       // is allowed to fail without taking the dashboard down with it.
       api
         .dailyPlan(token)
-        .then(setPlan)
-        .catch(() => setPlan(null));
+        .then((next) => current() && setPlan(next))
+        .catch(() => current() && setPlan(null));
 
       // The card that offers "Refresh from LeetCode" only renders once a
       // profile exists, so an account that has never synced one had no way to
@@ -125,26 +134,32 @@ export function DashboardPage() {
         .then((profile) =>
           profile ?? (user?.leetcode_username ? api.syncLeetcodeProfile(token) : null),
         )
-        .then(setLcProfile)
-        .catch(() => setLcProfile(null));
+        .then((next) => current() && setLcProfile(next))
+        .catch(() => current() && setLcProfile(null));
 
       // Everyone's week, not just this account's, so it loads alongside the
       // rest rather than blocking it — and a failure costs one card.
       api
         .leaderboard(token)
-        .then(setBoard)
-        .catch(() => setBoard(null));
+        .then((next) => current() && setBoard(next))
+        .catch(() => current() && setBoard(null));
 
       // Recommendations pull the whole Codeforces problemset on a cold cache,
       // so they arrive after the charts rather than holding them up.
       try {
         const recommendations = await api.recommendations(token, 10);
-        setData((prev) => (prev ? { ...prev, recommendations } : prev));
+        if (current()) {
+          setData((prev) => (prev ? { ...prev, recommendations } : prev));
+        }
       } catch {
         /* the rest of the dashboard is still worth showing */
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      // A superseded request failing is not worth reporting: the screen has
+      // moved on and the newer load owns the error state.
+      if (current()) {
+        setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      }
     }
     // The username rather than the whole user object: `refreshUser` hands back
     // a new object each time, which would reload the entire dashboard for a
