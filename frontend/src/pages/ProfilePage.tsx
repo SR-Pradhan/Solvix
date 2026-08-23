@@ -86,9 +86,11 @@ function PhotoCard({
           </button>
 
           {user.has_avatar && (
+            {/* A button, not underlined text: it sits beside "Change photo"
+                and does the same kind of thing, so it should look like it. */}
             <button
               type="button"
-              className="link"
+              className="pill-btn"
               disabled={busy}
               onClick={() => void run(() => api.deleteAvatar(token))}
             >
