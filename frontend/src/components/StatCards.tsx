@@ -25,18 +25,26 @@ function Card({
   );
 }
 
-function streakWord(current: number, longest: number): string {
-  if (current === 0) return longest ? `best run was ${longest} days` : "";
-  if (current >= longest) return "your best run yet";
-  return `best run ${longest} days`;
+/** "1 day", not "1 days". A number is only ever plural above one, and a stat
+ *  card that gets its own grammar wrong undercuts every figure beside it. */
+function days(n: number): string {
+  return `${n} ${n === 1 ? "day" : "days"}`;
 }
 
-function windowLabel(days: number): string {
-  if (days % 7 === 0) {
-    const weeks = days / 7;
+function streakWord(current: number, longest: number): string {
+  if (current === 0) return longest ? `best run was ${days(longest)}` : "";
+  if (current >= longest) return "your best run yet";
+  return `best run ${days(longest)}`;
+}
+
+// The parameter is not called `days`: that would shadow the helper above and
+// quietly reintroduce the plural bug the day this is called with 1.
+function windowLabel(span: number): string {
+  if (span % 7 === 0) {
+    const weeks = span / 7;
     return weeks === 1 ? "a week" : `${weeks} weeks`;
   }
-  return `${days} days`;
+  return days(span);
 }
 
 // Two, because the grid stretches every stat card to the tallest one: five
@@ -168,9 +176,7 @@ export function StatCards({
       <Card
         label="Current streak"
         value={
-          stats.current_streak_days === 0
-            ? "None"
-            : `${stats.current_streak_days} days`
+          stats.current_streak_days === 0 ? "None" : days(stats.current_streak_days)
         }
         sub={streakWord(stats.current_streak_days, stats.longest_streak_days)}
       />
