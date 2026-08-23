@@ -16,7 +16,8 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
-![stack](https://img.shields.io/badge/PostgreSQL-15-336791)
+![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
+![tests](https://img.shields.io/badge/tests-306-3ecf8e)
 
 ## What it does
 
@@ -28,7 +29,9 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 - **Scores** each topic by accuracy and recency, so a tag you brute-forced
   through or last touched months ago ranks as weak. The two platforms are
   scored separately, because only one of them records failures
-- **Plans** your day with an LLM, from those scores, cached once per day
+- **Plans** your day with an agent, not a prompt: it calls tools to read your
+  weak topics, what is due, what you have never solved, and shows what it
+  checked before deciding. Cached once per day
 - **Reminds** you to revisit solved problems on a widening ladder — 3, 7, 14,
   30, 60 days — adjusted by how the revisit went where the platform records
   enough to tell
@@ -36,8 +39,12 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
   opening the app
 - **Recommends** unsolved problems from the tags you practise least, at a
   difficulty just above your current level
+- **Interviews** you about a problem you have never solved, from a topic you
+  are weak on — probing the approach and the complexity, then writing an honest
+  assessment. Kept apart from the topic scores, because a pass rate and an
+  interviewer's impression are different kinds of claim
 - **Reports** each finished week, frozen as it was rather than recomputed by
-  today's rules
+  today's rules, and ranks everyone practising that week
 
 ## Stack
 
@@ -149,14 +156,22 @@ automatically.
 | GET    | `/dashboard/timeline`             | Solves per day                   |
 | GET    | `/dashboard/weak-topics`          | Tags scored by accuracy + recency|
 | GET    | `/dashboard/recommendations`      | Problems picked from weak tags   |
+| GET    | `/dashboard/daily-plan`           | Today's plan, with the agent's reasoning |
+| GET    | `/dashboard/leaderboard`          | This week's standings            |
+| POST   | `/interviews`                     | Start a mock interview           |
+| POST   | `/interviews/{id}/reply`          | Answer, and get the next question |
+| POST   | `/jobs/daily-reminders`           | Scheduled: import, decide, email |
 
 All `/users` and `/dashboard` routes need `Authorization: Bearer <token>`.
 
 Auth details worth knowing: login allows five failed attempts per caller in
 five minutes before a fifteen-minute pause, and a password change bumps a
 `token_version` on the user row, which retires every token issued before it —
-a stateless JWT made revocable without a session store. `/health` reports the
-running version, which the UI footer displays.
+a stateless JWT made revocable without a session store. The same bump is
+exposed as "sign out everywhere else". Deleting an account removes every row
+belonging to it, and a test asserts that list covers every table carrying a
+`user_id`. `/health` reports the running version, which the UI footer
+displays.
 
 The table above is the core of the API, not all of it. The full, always-current
 list is generated from the code and browsable at
@@ -166,9 +181,17 @@ list is generated from the code and browsable at
 
 ```
 backend/    FastAPI app, Alembic migrations, tests
+  app/api/        HTTP only — no business rules, no third-party calls
+  app/services/   the actual thinking, including both agents
+  app/clients/    Codeforces, GitHub, LeetCode, Groq, SMTP
+  app/db/         models and the session factory
 frontend/   React client
 .github/    the daily reminder schedule
 ```
+
+`api/` never calls a client directly and `services/` never raises an
+`HTTPException`, which is why the same service answers a web request and a
+scheduled job with nothing adapted between them.
 
 Scheduled work is kept outside the API: the free instance sleeps when idle, so
 an in-process timer would only fire while somebody happened to be using the
@@ -201,9 +224,14 @@ not just a restart.
 cd backend && ../.venv/bin/python -m pytest
 ```
 
-241 tests, under two seconds, with no database and no network — the logic worth
+306 tests, under a second, with no database and no network — the logic worth
 testing is written as pure functions over values, and third-party calls are
 stubbed at the HTTP layer. They aim at boundaries rather than coverage: exactly
 at the staleness threshold, when a platform records no failures, when the model
-returns nonsense, when a problem index is `E2` rather than `E`.
+returns nonsense, when a problem index is `E2` rather than `E`, when a date is
+in the future, when a total is zero.
+
+That shape is what made a deliberate bug sweep productive late on: four defects
+fell out of feeding edge cases to those functions, and three were a hazard
+already handled elsewhere in the codebase and forgotten in one place.
 
