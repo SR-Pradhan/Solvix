@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-357-3ecf8e)
+![tests](https://img.shields.io/badge/tests-372-3ecf8e)
 
 ## What it does
 
@@ -37,6 +37,10 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
   enough to tell
 - **Emails** that list each morning, with links, so it can be acted on without
   opening the app
+- **Checks whether you are still improving**, which volume and streaks cannot
+  see: it finds the hardest level you have solved enough of to count, then asks
+  whether recent practice is above it, at it, or below it. Solving easy problems
+  every day looks identical to diligence on every other measure
 - **Clusters** techniques into pairs and reports only the ones you handle worse
   *together* than either technique alone — 69% on bitmasks and 79% on
   implementation, but 34% where both are needed. Ranking pairs by raw accuracy
@@ -170,6 +174,7 @@ automatically.
 | GET    | `/dashboard/rating-distribution`  | Solves per difficulty            |
 | GET    | `/dashboard/timeline`             | Solves per day                   |
 | GET    | `/dashboard/weak-topics`          | Tags scored by accuracy + recency|
+| GET    | `/dashboard/plateau`              | Whether difficulty is still climbing |
 | GET    | `/dashboard/patterns`             | Tag pairs worse than both their parts |
 | GET    | `/dashboard/recommendations`      | Problems picked from weak tags   |
 | GET    | `/dashboard/daily-plan`           | Today's plan, with the agent's reasoning |

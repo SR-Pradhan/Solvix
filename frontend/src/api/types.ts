@@ -123,6 +123,24 @@ export interface WeakTopics {
   stale_topics: string[];
 }
 
+export interface PlatformPlateau {
+  platform: string;
+  status: string;
+  working_level: string;
+  // Null when already at the top of that platform's ladder.
+  next_level: string | null;
+  recent_solved: number;
+  above: number;
+  at: number;
+  below: number;
+  window_days: number;
+}
+
+export interface Plateau {
+  platforms: PlatformPlateau[];
+  window_days: number;
+}
+
 export interface PatternPart {
   tag: string;
   accuracy: number;

@@ -18,6 +18,7 @@ from app.schemas.dashboard import (
     LeaderboardOut,
     LeetCodeProfileOut,
     PatternsOut,
+    PlateauOut,
     RecommendationsOut,
     RemindersOut,
     SolvedInTopicOut,
@@ -34,6 +35,7 @@ from app.services import (
     leaderboard_service,
     leetcode_profile_service,
     pattern_service,
+    plateau_service,
     plan_service,
     problem_service,
     reminder_service,
@@ -282,6 +284,20 @@ async def read_weekly_report(
     return await report_service.get_weekly_report(
         db, current_user.id, week_start=week_start, platform=_validated(platform)
     )
+
+
+@router.get("/plateau", response_model=PlateauOut)
+async def read_plateau(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Whether recent practice is still getting harder.
+
+    Not filtered by platform: each platform is judged on its own difficulty
+    ladder and they are never compared, so there is nothing for a filter to
+    choose between.
+    """
+    return await plateau_service.get_plateau(db, current_user.id)
 
 
 @router.get("/patterns", response_model=PatternsOut)

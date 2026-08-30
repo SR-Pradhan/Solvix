@@ -78,6 +78,24 @@ class LeaderboardOut(BaseModel):
     total_ranked: int = 0
 
 
+class PlatformPlateau(BaseModel):
+    platform: str
+    status: str
+    working_level: str
+    # None when already at the top of that platform's ladder.
+    next_level: str | None = None
+    recent_solved: int
+    above: int
+    at: int
+    below: int
+    window_days: int
+
+
+class PlateauOut(BaseModel):
+    platforms: list[PlatformPlateau] = []
+    window_days: int = 0
+
+
 class PatternPart(BaseModel):
     tag: str
     accuracy: float

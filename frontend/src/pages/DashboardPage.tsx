@@ -5,6 +5,7 @@ import type {
   DailyPlan as DailyPlanData,
   Leaderboard as LeaderboardData,
   Patterns as PatternsData,
+  Plateau as PlateauData,
   LeetCodeProfile as LeetCodeProfileData,
   RatingDistribution,
   Recommendations as RecommendationsData,
@@ -23,6 +24,7 @@ import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
 import { Leaderboard } from "../components/Leaderboard";
 import { Patterns } from "../components/Patterns";
+import { Plateau } from "../components/Plateau";
 import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
@@ -63,6 +65,7 @@ export function DashboardPage() {
   const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
   const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [patterns, setPatterns] = useState<PatternsData | null>(null);
+  const [plateau, setPlateau] = useState<PlateauData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
@@ -146,6 +149,13 @@ export function DashboardPage() {
         .leaderboard(token)
         .then((next) => current() && setBoard(next))
         .catch(() => current() && setBoard(null));
+
+      // Judged per platform on each platform's own ladder, so the filter has
+      // nothing to choose between — and a failure costs one card.
+      api
+        .plateau(token)
+        .then((next) => current() && setPlateau(next))
+        .catch(() => current() && setPlateau(null));
 
       // Not filtered by platform like the cards above: the measurement needs
       // recorded failures, so the service fixes the platform itself and the
@@ -378,6 +388,10 @@ export function DashboardPage() {
               {/* Directly under "What to work on", because it answers the
                   follow-up that card provokes: those are the weak topics, but
                   which of them only fall apart in company. */}
+              {/* Above the technique breakdown: "is the difficulty going
+                  anywhere" is the blunter question, and a plateau is worth
+                  knowing before which tag pairs are shaky. */}
+              {plateau && <Plateau data={plateau} />}
               {patterns && <Patterns data={patterns} />}
               {/* The standalone difficulty card is a stand-in for the rating
                   histogram when there are no numeric ratings to plot. Once a
