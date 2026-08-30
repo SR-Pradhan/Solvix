@@ -1,3 +1,5 @@
+from app.clients.leetcode_client import LeetCodeError
+from app.services import reminder_service
 from app.services.reminder_service import (
     MAX_PER_RUN,
     TOPIC_SLOTS,
@@ -169,3 +171,142 @@ def test_topic_reminders_have_no_link():
 
 def test_a_subject_without_an_id_has_no_link():
     assert _reminder_url("problem", "leetcode", "leetcode:") is None
+
+
+# --- suggestions attached to stale-topic reminders -------------------------
+#
+# These cover the *producer*. The renderer in test_reminder_mail.py builds its
+# own topic dict with suggestions already on it, so it stayed green for weeks
+# while nothing in the app ever set the key and the email's "try:" lines could
+# never appear.
+
+
+class FakeProblems:
+    """Stands in for the catalogue lookup, which is a third-party call."""
+
+    def __init__(self, problems=None, error=None):
+        self.problems = problems or []
+        self.error = error
+        self.calls = []
+
+    async def unsolved_in_topic(self, db, user_id, tag, platform, limit):
+        self.calls.append((tag, platform, limit))
+        if self.error:
+            raise self.error
+        return {"tag": tag, "platform": platform, "problems": self.problems[:limit]}
+
+
+def a_problem(name="Sliding Window Maximum"):
+    return {"id": "239", "name": name, "difficulty": "Hard", "rating": None, "url": "u"}
+
+
+async def attach(selected, fake, monkeypatch):
+    monkeypatch.setattr(
+        reminder_service.problem_service, "unsolved_in_topic", fake.unsolved_in_topic
+    )
+    await reminder_service._attach_suggestions(None, 1, selected)
+    return selected
+
+
+async def test_a_stale_topic_is_given_problems_to_try(monkeypatch):
+    selected = [item(kind="topic")]
+    fake = FakeProblems([a_problem(), a_problem("Minimum Window Substring")])
+    await attach(selected, fake, monkeypatch)
+    assert len(selected[0]["suggestions"]) == 2
+
+
+async def test_problem_reminders_are_left_alone(monkeypatch):
+    selected = [item(kind="problem")]
+    fake = FakeProblems([a_problem()])
+    await attach(selected, fake, monkeypatch)
+    assert "suggestions" not in selected[0]
+    # A problem reminder already links to itself, so looking anything up for it
+    # would be a wasted third-party call.
+    assert fake.calls == []
+
+
+async def test_the_lookup_asks_for_the_topic_and_its_own_platform(monkeypatch):
+    selected = [item(kind="topic", platform="leetcode")]
+    fake = FakeProblems([a_problem()])
+    await attach(selected, fake, monkeypatch)
+    tag, platform, limit = fake.calls[0]
+    # LeetCode topics get LeetCode problems: suggesting a Codeforces problem
+    # for a LeetCode tag sends the reader to the wrong site.
+    assert platform == "leetcode"
+    assert limit == reminder_service.SUGGESTIONS_PER_TOPIC
+
+
+async def test_a_failed_catalogue_still_sends_the_reminder(monkeypatch):
+    selected = [item(kind="topic")]
+    fake = FakeProblems(error=LeetCodeError("down"))
+    await attach(selected, fake, monkeypatch)
+    # The topic is still worth naming without them.
+    assert "suggestions" not in selected[0]
+    assert len(selected) == 1
+
+
+async def test_a_topic_with_nothing_unsolved_gets_no_empty_list(monkeypatch):
+    selected = [item(kind="topic")]
+    await attach(selected, FakeProblems([]), monkeypatch)
+    # Absent rather than empty, so the email renders nothing instead of a
+    # heading with no problems under it.
+    assert "suggestions" not in selected[0]
+
+
+async def test_only_the_selected_topic_costs_a_lookup(monkeypatch):
+    selected = [item(kind="problem"), item(kind="problem", n=1), item(kind="topic")]
+    fake = FakeProblems([a_problem()])
+    await attach(selected, fake, monkeypatch)
+    assert len(fake.calls) == 1
+
+
+class FakeSession:
+    """Just enough session for run_reminders' writes."""
+
+    def __init__(self):
+        self.committed = False
+
+    async def execute(self, *_):
+        return None
+
+    async def commit(self):
+        self.committed = True
+
+
+async def test_run_reminders_actually_attaches_suggestions(monkeypatch):
+    """The wiring, not the function.
+
+    The original bug was not a broken `_attach_suggestions` — it was that
+    nothing called one. Testing the helper in isolation would have stayed green
+    through the entire outage, so this asserts the suggestions survive all the
+    way to what `run_reminders` returns.
+    """
+    monkeypatch.setattr(
+        reminder_service, "_problems_to_revisit", lambda db, uid, today: _none()
+    )
+    monkeypatch.setattr(
+        reminder_service.topic_service,
+        "get_weak_topics",
+        lambda db, uid, platform=None: _weak(platform),
+    )
+    fake = FakeProblems([a_problem()])
+    monkeypatch.setattr(
+        reminder_service.problem_service, "unsolved_in_topic", fake.unsolved_in_topic
+    )
+
+    result = await reminder_service.run_reminders(FakeSession(), 1)
+
+    topics = [r for r in result["reminders"] if r["kind"] == "topic"]
+    assert topics, "a stale topic should have been selected"
+    assert topics[0]["suggestions"], "the email's 'try:' lines need this key"
+
+
+async def _none():
+    return [], []
+
+
+async def _weak(platform):
+    # Stale enough to be due, on whichever platform is being scored.
+    if platform != "leetcode":
+        return {"topics": []}
+    return {"topics": [topic(days=42, accuracy=None)]}

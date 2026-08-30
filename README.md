@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-321-3ecf8e)
+![tests](https://img.shields.io/badge/tests-328-3ecf8e)
 
 ## What it does
 

@@ -18,6 +18,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.codeforces_client import CodeforcesError
+from app.clients.leetcode_client import LeetCodeError
 from app.db.models import Reminder, Revision, Submission
 from app.services import problem_service, revision_schedule, topic_service
 
@@ -44,6 +46,11 @@ MAX_PER_RUN = 3
 # cannot crowd them out entirely. One, because a stale tag is equally stale
 # tomorrow — one a day still surfaces every one of them within a week.
 TOPIC_SLOTS = 1
+
+# Problems offered under a stale topic. Two, because each one costs the email
+# two lines — a name and a link — and the point is to remove the excuse not to
+# start, not to hand over a reading list.
+SUGGESTIONS_PER_TOPIC = 2
 
 
 def describe_problem(name: str, days: int) -> str:
@@ -225,6 +232,40 @@ async def _problems_to_revisit(
     return items, list(due)
 
 
+async def _attach_suggestions(
+    db: AsyncSession, user_id: int, selected: list[dict]
+) -> None:
+    """Give each stale-topic reminder something to actually click.
+
+    Naming a gap without offering a way in leaves the reader to go hunting,
+    which is friction at exactly the moment they were already reluctant.
+
+    Attached after the cap rather than before it, so this costs one catalogue
+    lookup for the topic that is being sent rather than one for every topic
+    that happened to be due.
+
+    Only the returned list is enriched, not the stored rows: a suggestion is
+    the freshest thing in the message and there is no reason to freeze today's
+    catalogue into the database. And it is best-effort — the catalogue is a
+    third-party call, and a stale topic is still worth naming without it.
+    """
+    for item in selected:
+        if item["kind"] != "topic":
+            continue
+        try:
+            found = await problem_service.unsolved_in_topic(
+                db,
+                user_id,
+                item["subject"],
+                item["platform"],
+                limit=SUGGESTIONS_PER_TOPIC,
+            )
+        except (CodeforcesError, LeetCodeError):
+            continue
+        if found["problems"]:
+            item["suggestions"] = found["problems"]
+
+
 async def run_reminders(db: AsyncSession, user_id: int) -> dict:
     """Generate today's reminders and persist them."""
     today = date.today()
@@ -252,6 +293,7 @@ async def run_reminders(db: AsyncSession, user_id: int) -> dict:
         )
 
     selected = select_reminders(problems, topics)
+    await _attach_suggestions(db, user_id, selected)
 
     for item in selected:
         stmt = insert(Reminder).values(
