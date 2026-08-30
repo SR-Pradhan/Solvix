@@ -1603,3 +1603,80 @@ button.ghost.danger:hover:not(:disabled) {
 .actions .logout:hover {
   color: var(--text);
 }
+
+/* ---------------------------------------------------------------------------
+   Touch screens.
+
+   Found by measuring the built app in a phone viewport rather than by reading
+   the CSS — the layout turned out to be sound at every width from 320px up,
+   and the real problems were the two things a desktop browser cannot show you.
+   --------------------------------------------------------------------------- */
+
+/* Four stat cards stacked one per row cost about a thousand pixels of scroll
+   before any actual content — more than a phone screen and a half of preamble.
+   Two by two halves that and reads as a deliberate block rather than a queue.
+
+   The reserved two lines under each value go with it. That min-height exists so
+   four cards side by side end at the same depth; in a single column there is no
+   row to line up with, so it is purely dead space. Kept in the two-column case
+   for the same reason it exists. */
+@media (max-width: 560px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  /* Two columns of about 130px start breaking the longer labels across three
+     lines, so the narrowest phones keep the single column. */
+  .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stat > .small {
+    min-height: 0;
+  }
+}
+
+/* iOS Safari zooms the whole page in when a focused field's text is under
+   16px, and does not zoom back out afterwards. Every input here was 14px, so
+   tapping the email box on the login screen — the first thing anyone does on a
+   phone — threw the page out of shape. 16px is not a design choice; it is the
+   threshold that stops the zoom. */
+@media (max-width: 560px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Comfortable touch targets. A mouse pointer is one pixel and a fingertip is
+   about forty, so controls that are fine to click are easy to miss by thumb:
+   the password "Show" toggle was 22px tall and "Create one" was 15px.
+
+   `pointer: coarse` rather than a width breakpoint, because this is about the
+   input device and not the screen: it should apply to a touchscreen laptop and
+   not to a narrow desktop window. */
+@media (pointer: coarse) {
+  button,
+  .ghost,
+  a.ghost {
+    min-height: 44px;
+  }
+
+  /* Text-styled buttons keep their looks — growing the box would put a slab
+     mid-sentence — so they gain hit area with padding that overlaps the line
+     around them instead. */
+  button.link,
+  .show-more,
+  .pill-btn {
+    min-height: 44px;
+    padding-block: 11px;
+  }
+
+  button.link.inline {
+    min-height: 0;
+    padding-block: 0;
+  }
+}
