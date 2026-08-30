@@ -21,6 +21,7 @@ from datetime import date, datetime, timezone
 from sqlalchemy import distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.db.models import Submission
 
 ACCEPTED = "OK"
@@ -51,7 +52,11 @@ STALE_STATUS_BANDS = ((42, "Needs work"), (14, "Rusty"), (0, "Solid"))
 
 
 def utc_today() -> date:
-    return datetime.now(timezone.utc).date()
+    """Deprecated name kept for callers; the day is local, not UTC.
+
+    See `app.core.clock` for why measuring a practice day in UTC was wrong.
+    """
+    return clock.today()
 
 
 def status_for(

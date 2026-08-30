@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     groq_model: str = "llama-3.3-70b-versatile"
 
+    # The timezone every calendar day in the app is measured in — streaks,
+    # "this week", which revisions are due. Not a display setting: it decides
+    # which day a submission belongs to, so changing it moves history.
+    #
+    # One zone for the whole app rather than one per user. Solvix is built for
+    # one person's placement prep, and a per-user zone would add a column and a
+    # settings screen to make no difference to anybody currently using it.
+    timezone: str = "Asia/Kolkata"
+
     # Mail. With no host configured, messages are printed to the server log
     # instead of sent, so email verification works in development without an
     # SMTP account. Set these to send for real.

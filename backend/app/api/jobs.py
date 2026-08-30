@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.clients.email_client import MailError, send_mail
 from app.core.config import settings
 from app.db.database import get_db
@@ -111,7 +112,7 @@ async def daily_reminders(
     otherwise silently cancel everybody else's reminders — so each is caught
     and counted.
     """
-    today = date.today()
+    today = clock.today()
     users = (await db.execute(select(User).order_by(User.id))).scalars().all()
 
     processed = 0

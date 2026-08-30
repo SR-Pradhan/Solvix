@@ -11,6 +11,7 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.clients import leetcode_client
 from app.db.models import Submission
 from app.services.recommendation_service import _problemset as codeforces_problemset
@@ -66,7 +67,7 @@ async def solved_in_topic(
         )
     ).all()
 
-    today = date.today()
+    today = clock.today()
     problems = []
     for pid, platform, name, last_solved in rows:
         days = (today - last_solved.date()).days

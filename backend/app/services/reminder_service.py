@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.clients.codeforces_client import CodeforcesError
 from app.clients.leetcode_client import LeetCodeError
 from app.db.models import Reminder, Revision, Submission
@@ -268,7 +269,7 @@ async def _attach_suggestions(
 
 async def run_reminders(db: AsyncSession, user_id: int) -> dict:
     """Generate today's reminders and persist them."""
-    today = date.today()
+    today = clock.today()
 
     problems, due_revisions = await _problems_to_revisit(db, user_id, today)
 
@@ -349,7 +350,7 @@ async def list_reminders(
     db: AsyncSession, user_id: int, platform: str | None = None
 ) -> dict:
     """Today's stored reminders, generating them on first read of the day."""
-    today = date.today()
+    today = clock.today()
 
     stored = (
         await db.execute(

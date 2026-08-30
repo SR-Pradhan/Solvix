@@ -3,13 +3,15 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.db.models import Submission
 
 ACCEPTED = "OK"
 
 
 def utc_today() -> date:
-    return datetime.now(timezone.utc).date()
+    """Deprecated name kept for callers; the day is local, not UTC."""
+    return clock.today()
 
 
 def compute_streaks(active_days: list[date], today: date) -> tuple[int, int]:
@@ -103,7 +105,7 @@ async def get_stats(db: AsyncSession, user_id: int, platform: str | None = None)
     active_days = (
         (
             await db.execute(
-                select(func.date(Submission.solved_at))
+                select(clock.local_day(Submission.solved_at))
                 .where(
                     Submission.user_id == user_id,
                     Submission.verdict == ACCEPTED,
@@ -216,7 +218,7 @@ async def get_timeline(
     activity heatmap, not the unique-solved total.
     """
     since = datetime.combine(utc_today() - timedelta(days=days - 1), datetime.min.time())
-    day_col = func.date(Submission.solved_at).label("day")
+    day_col = clock.local_day(Submission.solved_at).label("day")
 
     rows = (
         await db.execute(

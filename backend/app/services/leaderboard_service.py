@@ -24,6 +24,7 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.db.models import Submission, User
 from app.services.report_service import week_start_for
 
@@ -76,7 +77,7 @@ def rank(entries: list[dict]) -> list[dict]:
 
 async def weekly(db: AsyncSession, user_id: int, today: date | None = None) -> dict:
     """This week's standings, with the caller marked."""
-    today = today or date.today()
+    today = today or clock.today()
     start = week_start_for(today)
 
     rows = (
@@ -84,13 +85,13 @@ async def weekly(db: AsyncSession, user_id: int, today: date | None = None) -> d
             select(
                 User,
                 func.count(func.distinct(Submission.external_problem_id)).label("solved"),
-                func.count(func.distinct(func.date(Submission.solved_at))).label("days"),
+                func.count(func.distinct(clock.local_day(Submission.solved_at))).label("days"),
             )
             .join(
                 Submission,
                 (Submission.user_id == User.id)
                 & (Submission.verdict == ACCEPTED)
-                & (func.date(Submission.solved_at) >= start),
+                & (clock.local_day(Submission.solved_at) >= start),
             )
             # An outer join would list everybody with a zero, which reads as a
             # roll-call of people who did nothing. A week you sat out is not a

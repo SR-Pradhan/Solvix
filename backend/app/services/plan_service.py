@@ -25,6 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.clients.groq_client import GroqError, complete_json
 from app.core.config import settings
 from app.db.models import DailyPlan
@@ -119,7 +120,7 @@ def parse_plan(raw: dict) -> dict:
 async def get_daily_plan(
     db: AsyncSession, user_id: int, regenerate: bool = False
 ) -> dict:
-    today = date.today()
+    today = clock.today()
 
     if not regenerate:
         stored = await db.scalar(

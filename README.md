@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-328-3ecf8e)
+![tests](https://img.shields.io/badge/tests-336-3ecf8e)
 
 ## What it does
 
@@ -96,6 +96,11 @@ MAIL_FROM=Solvix <no-reply@solvix.local>
 # calls once a day. Unset means that endpoint refuses every request.
 CRON_KEY=
 APP_URL=http://localhost:5173
+
+# The timezone every calendar day is measured in — streaks, "this week", which
+# revisions fall due. Not a display setting: it decides which day a submission
+# belongs to, so changing it moves history.
+TIMEZONE=Asia/Kolkata
 ```
 
 ### Scheduled reminders

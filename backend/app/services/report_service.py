@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import clock
 from app.db.models import Submission, WeeklyReport
 from app.services import topic_service
 
@@ -90,7 +91,7 @@ async def _week_activity(
 
     active_days = (
         await db.execute(
-            select(func.count(func.distinct(func.date(Submission.solved_at)))).where(
+            select(func.count(func.distinct(clock.local_day(Submission.solved_at)))).where(
                 Submission.user_id == user_id,
                 Submission.verdict == ACCEPTED,
                 Submission.solved_at >= window_start,
@@ -132,7 +133,7 @@ async def get_weekly_report(
     week_start: date | None = None,
     platform: str | None = None,
 ) -> dict:
-    today = date.today()
+    today = clock.today()
     current_week = week_start_for(today)
     start = week_start or current_week
     finished = start < current_week
