@@ -447,10 +447,14 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    raw = await file.read()
-
     try:
-        profile_service.validate_upload(file.content_type, len(raw))
+        # The declared type costs nothing to refuse and is judged first, then
+        # the body is read with a cap. Reading it whole and checking the length
+        # afterwards let a client decide how much memory to occupy before being
+        # told no — on a 512MB host that is the whole host.
+        profile_service.validate_type(file.content_type)
+        raw = await file.read(profile_service.MAX_UPLOAD_BYTES + 1)
+        profile_service.validate_size(len(raw))
         image, mime = profile_service.normalise_avatar(raw)
     except ProfileError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc

@@ -163,7 +163,7 @@ async def get_weak_topics(
         if row.attempts < MIN_ATTEMPTS:
             skipped += 1
             continue
-        last_solved = row.last_solved.date() if row.last_solved else None
+        last_solved = clock.day_of(row.last_solved) if row.last_solved else None
         weakness, accuracy, days_since = score_topic(
             row.rated_attempts, row.rated_accepted, last_solved, today
         )

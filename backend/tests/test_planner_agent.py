@@ -196,3 +196,8 @@ def test_the_problem_limit_is_small_enough_to_read():
     # The plan names problems; a tool that returns fifty makes the model choose
     # badly and the prompt expensive.
     assert MAX_PROBLEMS <= 5
+
+
+def test_an_infinite_limit_falls_back_to_the_default():
+    """Same overflow as the plan parser: json accepts a bare `Infinity`."""
+    assert clamp_limit(float("inf"), default=5, maximum=20) == 5

@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     # settings screen to make no difference to anybody currently using it.
     timezone: str = "Asia/Kolkata"
 
+    # How many proxies sit in front of the app. Render terminates TLS and adds
+    # one hop; put a CDN in front as well and this becomes 2. It decides which
+    # X-Forwarded-For entry is believed, so getting it too high trusts an
+    # address the client wrote, and too low lumps every caller together.
+    trusted_proxy_hops: int = 1
+
     # Mail. With no host configured, messages are printed to the server log
     # instead of sent, so email verification works in development without an
     # SMTP account. Set these to send for real.

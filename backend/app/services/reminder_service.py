@@ -146,7 +146,7 @@ async def _record_new_solves(db: AsyncSession, user_id: int, today: date) -> Non
         if (row.platform, row.pid) in known_pairs or row.first_solved_at is None:
             continue
         placed = revision_schedule.schedule_for_existing(
-            row.first_solved_at.date(), today
+            clock.day_of(row.first_solved_at), today
         )
         step, due = placed if placed else (len(revision_schedule.INTERVALS) - 1, None)
         db.add(
@@ -175,7 +175,7 @@ async def _revisit_outcome(
     if revision.platform not in topic_service.PLATFORMS_WITH_FAILURES:
         return revision_schedule.CLEAN
 
-    since = revision.last_reminded_on or revision.first_solved_at.date()
+    since = revision.last_reminded_on or clock.day_of(revision.first_solved_at)
     attempts = (
         await db.execute(
             select(Submission.verdict)
@@ -183,7 +183,7 @@ async def _revisit_outcome(
                 Submission.user_id == user_id,
                 Submission.platform == revision.platform,
                 Submission.external_problem_id == revision.external_problem_id,
-                Submission.solved_at >= datetime.combine(since, datetime.min.time()),
+                Submission.solved_at >= clock.utc_start_of(since),
             )
             .order_by(Submission.solved_at)
         )
@@ -221,7 +221,7 @@ async def _problems_to_revisit(
             "title": r.problem_name or r.external_problem_id,
             "reason": describe_problem(
                 r.problem_name or r.external_problem_id,
-                (today - r.first_solved_at.date()).days,
+                (today - clock.day_of(r.first_solved_at)).days,
             ),
             # Telling someone to revisit a problem without linking to it leaves
             # them to go and find it themselves, which is the moment a reminder

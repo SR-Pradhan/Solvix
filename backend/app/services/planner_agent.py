@@ -135,7 +135,9 @@ def clamp_limit(raw, default: int, maximum: int) -> int:
     """
     try:
         value = int(raw)
-    except (TypeError, ValueError):
+    # OverflowError included: `json.loads` accepts a bare `Infinity`, and
+    # int(inf) raises neither of the other two.
+    except (TypeError, ValueError, OverflowError):
         return default
     return max(1, min(value, maximum))
 

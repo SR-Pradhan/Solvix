@@ -95,7 +95,11 @@ def parse_plan(raw: dict) -> dict:
             continue
         try:
             minutes = int(item.get("minutes") or 30)
-        except (TypeError, ValueError):
+        # OverflowError as well as the obvious two: Python's json module parses
+        # a bare `Infinity` happily, and int() of it raises neither TypeError
+        # nor ValueError. Without it a single odd token turns the whole plan
+        # into a 500, which is the failure this function exists to prevent.
+        except (TypeError, ValueError, OverflowError):
             minutes = 30
         tasks.append(
             {

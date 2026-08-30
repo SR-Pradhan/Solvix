@@ -58,6 +58,20 @@ def now() -> datetime:
     return datetime.now(ZONE).replace(tzinfo=None)
 
 
+def utc_start_of(day: date) -> datetime:
+    """The instant a local calendar day begins, as naive UTC.
+
+    The mirror of `day_of`, and needed wherever a local date is compared
+    against a stored timestamp. `datetime.combine(day, min.time())` looks like
+    the obvious thing and is wrong: it produces midnight *UTC*, which in this
+    zone is 05:30 in the morning, so a window meant to start at midnight
+    silently skips the first five and a half hours of the day — exactly the
+    late-night practice the timezone fix was about.
+    """
+    local_midnight = datetime.combine(day, datetime.min.time(), tzinfo=ZONE)
+    return local_midnight.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def local_day(column):
     """SQL for the calendar day a stored timestamp falls on, locally.
 

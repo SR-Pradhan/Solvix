@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.core.clock import ZONE, day_of, local_day, today
 
@@ -63,3 +63,26 @@ def test_the_sql_labels_the_column_utc_before_reading_it_locally():
         )
     )
     assert rendered == "date(timezone('Asia/Kolkata', timezone('UTC', solved_at)))"
+
+
+def test_a_local_day_starts_before_midnight_utc():
+    """The mirror of day_of, and the one that is easy to get wrong.
+
+    `datetime.combine(day, min.time())` gives midnight UTC, which is 05:30 in
+    the morning locally — a window meant to cover the whole day would skip its
+    first five and a half hours.
+    """
+    from app.core.clock import utc_start_of
+
+    # Midnight on the 25th, IST, is 18:30 UTC on the 24th.
+    assert utc_start_of(date(2026, 8, 25)) == datetime(2026, 8, 24, 18, 30)
+
+
+def test_the_two_conversions_are_inverses():
+    from app.core.clock import utc_start_of
+
+    for day in (date(2026, 1, 1), date(2026, 8, 25), date(2026, 12, 31)):
+        # The first instant of a local day must read back as that same day.
+        assert day_of(utc_start_of(day)) == day
+        # And the instant before it must belong to the day before.
+        assert day_of(utc_start_of(day) - timedelta(seconds=1)) == day - timedelta(days=1)

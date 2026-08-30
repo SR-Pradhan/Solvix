@@ -217,7 +217,7 @@ async def get_timeline(
     A problem re-solved on a later day counts again for that day: this feeds an
     activity heatmap, not the unique-solved total.
     """
-    since = datetime.combine(utc_today() - timedelta(days=days - 1), datetime.min.time())
+    since = clock.utc_start_of(utc_today() - timedelta(days=days - 1))
     day_col = clock.local_day(Submission.solved_at).label("day")
 
     rows = (

@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-336-3ecf8e)
+![tests](https://img.shields.io/badge/tests-357-3ecf8e)
 
 ## What it does
 
@@ -101,6 +101,11 @@ APP_URL=http://localhost:5173
 # revisions fall due. Not a display setting: it decides which day a submission
 # belongs to, so changing it moves history.
 TIMEZONE=Asia/Kolkata
+
+# How many proxies sit in front of the API. Render adds one; put a CDN in front
+# as well and this becomes 2. It decides which X-Forwarded-For entry the rate
+# limiter believes, so too high trusts an address the caller wrote.
+TRUSTED_PROXY_HOPS=1
 ```
 
 ### Scheduled reminders

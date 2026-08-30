@@ -56,8 +56,8 @@ async def _week_activity(
     db: AsyncSession, user_id: int, start: date, end: date, platform: str | None = None
 ) -> dict:
     """Counts for problems first solved inside [start, end]."""
-    window_start = datetime.combine(start, datetime.min.time())
-    window_end = datetime.combine(end + timedelta(days=1), datetime.min.time())
+    window_start = clock.utc_start_of(start)
+    window_end = clock.utc_start_of(end + timedelta(days=1))
 
     # First accepted solve per problem, so re-solving an old problem does not
     # count as new progress this week.

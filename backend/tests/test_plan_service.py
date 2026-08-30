@@ -95,3 +95,18 @@ def test_parse_truncates_runaway_text():
     task = parse_plan(raw)["tasks"][0]
     assert len(task["title"]) <= 120
     assert len(task["detail"]) <= 400
+
+
+def test_an_infinite_duration_falls_back_to_the_default():
+    """`json.loads` parses a bare `Infinity`, and int() of it overflows.
+
+    Caught alongside the other two, because the whole point of this function
+    is that a bad generation costs detail rather than the whole response.
+    """
+    plan = parse_plan({"tasks": [{"title": "Practise dp", "minutes": float("inf")}]})
+    assert plan["tasks"][0]["minutes"] == 30
+
+
+def test_a_not_a_number_duration_falls_back_too():
+    plan = parse_plan({"tasks": [{"title": "Practise dp", "minutes": float("nan")}]})
+    assert plan["tasks"][0]["minutes"] == 30

@@ -9,6 +9,8 @@ here, so swapping the scheduler changes nothing about what a reminder is.
 import logging
 from datetime import date
 
+import secrets
+
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +44,13 @@ async def require_cron_key(x_cron_key: str | None = Header(default=None)) -> Non
     Refusing when unset is deliberate: a misconfigured deploy should fail
     closed, not quietly expose a job that sends mail to every account.
     """
-    if not settings.cron_key or x_cron_key != settings.cron_key:
+    # compare_digest rather than ==, which returns as soon as two characters
+    # differ and so leaks the key's prefix through timing. The endpoint is
+    # unauthenticated and reachable by anyone, which is exactly the setting
+    # where that is worth caring about.
+    if not settings.cron_key or not secrets.compare_digest(
+        x_cron_key or "", settings.cron_key
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid job key"
         )

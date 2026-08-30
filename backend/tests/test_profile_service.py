@@ -11,6 +11,8 @@ from app.services.profile_service import (
     clean_display_name,
     normalise_avatar,
     validate_new_password,
+    validate_size,
+    validate_type,
     validate_upload,
 )
 
@@ -189,3 +191,59 @@ def test_something_that_is_not_a_repository_is_refused():
     for bad in ("nope", "owner", "owner/repo/extra", "owner repo"):
         with pytest.raises(ProfileError):
             clean_repo(bad)
+
+
+# --- decompression bombs ---------------------------------------------------
+#
+# The size limit says how big the *file* is, not what it expands to. A valid
+# 138-byte PNG can declare 60000x60000 and cost gigabytes to decode. Pillow
+# raises DecompressionBombError for the worst of them, but that inherits from
+# Exception rather than OSError, so it escaped the handler and became a 500.
+
+
+def _png_declaring(width: int, height: int) -> bytes:
+    """A structurally valid greyscale PNG header claiming huge dimensions."""
+    import struct
+    import zlib
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        body = tag + data
+        return (
+            struct.pack(">I", len(data))
+            + body
+            + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
+        )
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(b"\x00" + b"\x00" * width, 9))
+        + chunk(b"IEND", b"")
+    )
+
+
+def test_a_tiny_file_declaring_a_huge_image_is_refused():
+    bomb = _png_declaring(60000, 60000)
+    # It is small enough to pass every envelope check, which is the point.
+    validate_upload("image/png", len(bomb))
+    with pytest.raises(ProfileError):
+        normalise_avatar(bomb)
+
+
+def test_an_image_over_the_pixel_limit_is_refused():
+    with pytest.raises(ProfileError):
+        normalise_avatar(_png_declaring(9000, 9000))
+
+
+def test_the_envelope_halves_can_be_checked_separately():
+    """The upload route judges the declared type before reading any bytes."""
+    with pytest.raises(ProfileError):
+        validate_type("application/pdf")
+    assert validate_type("image/png") is None
+
+    with pytest.raises(ProfileError):
+        validate_size(MAX_UPLOAD_BYTES + 1)
+    with pytest.raises(ProfileError):
+        validate_size(0)
+    assert validate_size(1000) is None

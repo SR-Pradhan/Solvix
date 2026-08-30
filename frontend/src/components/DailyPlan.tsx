@@ -15,6 +15,12 @@ export function DailyPlan({
   onRegenerate: () => void;
   busy: boolean;
 }) {
+  // Declared before any early return: hooks must run in the same order on
+  // every render, and this card starts life unavailable and becomes a real
+  // plan once one is generated. Returning early above the hook changed the
+  // hook count between those two renders, which crashes the card.
+  const [showSteps, setShowSteps] = useState(false);
+
   if (data.unavailable) {
     return (
       <section className="card">
@@ -27,7 +33,6 @@ export function DailyPlan({
   }
 
   const minutes = totalMinutes(data);
-  const [showSteps, setShowSteps] = useState(false);
 
   return (
     <section className="card">

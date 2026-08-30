@@ -12,6 +12,7 @@ import io
 import re
 
 from PIL import Image, UnidentifiedImageError
+from PIL.Image import DecompressionBombError
 
 MAX_DISPLAY_NAME = 100
 MIN_PASSWORD_LENGTH = 8
@@ -20,6 +21,12 @@ MIN_PASSWORD_LENGTH = 8
 # decoded. Generous: phone cameras produce 3-8MB photos routinely.
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 ACCEPTED_UPLOAD_TYPES = ("image/png", "image/jpeg", "image/webp")
+
+# Checked against the header before anything is decoded. A valid 138-byte PNG
+# can declare 60000x60000 and cost gigabytes of memory to expand — the file
+# size limit above says nothing about what the file expands *to*. Generous
+# next to a phone camera, which tops out around 50MP.
+MAX_IMAGE_PIXELS = 50_000_000
 
 # Displayed at 40px in the topbar and 96px on the profile page. 256 covers
 # both on a retina screen with nothing spare.
@@ -90,15 +97,24 @@ def validate_new_password(new_password: str, current_password: str) -> str:
     return new_password
 
 
-def validate_upload(content_type: str | None, size: int) -> None:
-    """Reject an upload on its envelope, before the bytes are decoded."""
+def validate_type(content_type: str | None) -> None:
+    """The half of the envelope that can be judged before reading a byte."""
     if content_type not in ACCEPTED_UPLOAD_TYPES:
         raise ProfileError("Photo must be a PNG, JPEG or WebP image")
+
+
+def validate_size(size: int) -> None:
     if size > MAX_UPLOAD_BYTES:
         mb = MAX_UPLOAD_BYTES // (1024 * 1024)
         raise ProfileError(f"Photo must be smaller than {mb}MB")
     if size == 0:
         raise ProfileError("That file is empty")
+
+
+def validate_upload(content_type: str | None, size: int) -> None:
+    """Reject an upload on its envelope, before the bytes are decoded."""
+    validate_type(content_type)
+    validate_size(size)
 
 
 def normalise_avatar(raw: bytes) -> tuple[bytes, str]:
@@ -111,8 +127,14 @@ def normalise_avatar(raw: bytes) -> tuple[bytes, str]:
     """
     try:
         image = Image.open(io.BytesIO(raw))
+        # On the header, before load() decodes anything. Pillow raises
+        # DecompressionBombError for the truly absurd, but it inherits from
+        # Exception rather than OSError, so it escaped the handler below and
+        # became a 500 instead of a refusal.
+        if image.width * image.height > MAX_IMAGE_PIXELS:
+            raise ProfileError("That image is too large for Solvix to process")
         image.load()
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, DecompressionBombError) as exc:
         raise ProfileError("That file is not an image Solvix can read") from exc
 
     # Flattened onto white: a transparent PNG saved as JPEG would otherwise

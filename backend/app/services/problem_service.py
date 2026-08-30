@@ -70,13 +70,13 @@ async def solved_in_topic(
     today = clock.today()
     problems = []
     for pid, platform, name, last_solved in rows:
-        days = (today - last_solved.date()).days
+        days = (today - clock.day_of(last_solved)).days
         problems.append(
             {
                 "id": pid,
                 "name": name or pid,
                 "platform": platform,
-                "last_solved_at": last_solved.date(),
+                "last_solved_at": clock.day_of(last_solved),
                 "days_ago": max(0, days),
                 "url": problem_url(platform, pid),
             }
