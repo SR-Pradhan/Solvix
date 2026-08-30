@@ -72,11 +72,15 @@ STRETCH_MIN = 0.10
 # "not reaching high enough".
 COAST_MAX = 0.50
 
+# Short on purpose: these are rendered as badges in a fixed-width lane beside
+# the platform name. "Not enough recent practice" was the first version and it
+# overflowed its column and printed over the sentence next to it. The detail
+# belongs in that sentence, not in the label.
 STRETCHING, PLATEAUED, COASTING, UNKNOWN = (
     "Stretching",
     "Plateaued",
     "Coasting",
-    "Not enough recent practice",
+    "Too early",
 )
 
 

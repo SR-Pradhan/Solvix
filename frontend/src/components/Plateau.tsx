@@ -75,9 +75,9 @@ export function Plateau({ data }: { data: Data }) {
       </ul>
 
       <p className="muted small skipped">
-        Measured against the hardest level you have solved enough of to count.
-        Each platform is judged on its own scale — a LeetCode Medium and a
-        Codeforces 1600 are not the same claim.
+        Your level is the hardest difficulty you have solved enough problems at
+        for it to count. Each platform is judged on its own scale — a LeetCode
+        Medium and a Codeforces 1600 are not the same claim.
       </p>
     </section>
   );

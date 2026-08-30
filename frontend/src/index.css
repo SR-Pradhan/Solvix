@@ -1163,6 +1163,12 @@ button.link.inline {
 
 .row-head-cols .badge {
   justify-self: start;
+  /* The lane is a fixed 92px, so a label longer than it used to overflow and
+     print across the text in the next column rather than being clipped. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Below this the four lanes stop fitting and the grid starts hyphenating tag

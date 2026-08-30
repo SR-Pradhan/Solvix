@@ -28,7 +28,7 @@ function comparison(pattern: Pattern): string {
   const alone = pattern.parts
     .map((part) => `${part.tag} ${percent(part.accuracy)}`)
     .join(", ");
-  return `${percent(pattern.accuracy)} together — alone, ${alone}`;
+  return `${percent(pattern.accuracy)} together over ${pattern.attempts} attempts — alone, ${alone}`;
 }
 
 export function Patterns({ data }: { data: Data }) {
@@ -83,7 +83,6 @@ export function Patterns({ data }: { data: Data }) {
                 {pattern.severity}
               </span>
               <span className="muted small">{comparison(pattern)}</span>
-              <span className="muted small">{pattern.attempts} attempts</span>
             </div>
           </li>
         ))}
