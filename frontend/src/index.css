@@ -2290,3 +2290,60 @@ a.cta:hover {
 .import-failed { border-left-color: var(--danger); }
 .import-name { font-weight: 600; }
 .import-status { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Charts: tooltip, tier legend, stacked difficulty bar. ---------------------- */
+.chart-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 11px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.chart-tip-value {
+  font-size: 14px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.tier-legend {
+  list-style: none;
+  margin: var(--s2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s4);
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.tier-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tier-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.split-stack {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-bottom: var(--s3);
+  gap: 2px;
+}
+
+.split-stack > span {
+  height: 100%;
+  min-width: 0;
+}

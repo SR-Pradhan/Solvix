@@ -77,6 +77,18 @@ export function LeetCodeProfile({
       </div>
 
       <div className="labels" style={{ marginTop: 14 }}>
+        {/* The three rows compare each level to the whole; one stacked bar
+            shows the mix at a glance — mostly green means mostly Easy. */}
+        {data.total_solved > 0 && (
+          <div className="split-stack" role="img" aria-label={`${data.easy} easy, ${data.medium} medium, ${data.hard} hard`}>
+            {(["easy", "medium", "hard"] as const).map((k) => (
+              <span
+                key={k}
+                style={{ width: `${(data[k] / data.total_solved) * 100}%`, background: BAR_COLOURS[k] }}
+              />
+            ))}
+          </div>
+        )}
         <Split label="Easy" value={data.easy} total={data.total_solved} />
         <Split label="Medium" value={data.medium} total={data.total_solved} />
         <Split label="Hard" value={data.hard} total={data.total_solved} />

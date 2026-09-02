@@ -1,4 +1,6 @@
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -43,15 +45,46 @@ function hover(t: ChartTokens) {
   return { fill: t["surface-2"], radius: 4 };
 }
 
-function tooltip(t: ChartTokens) {
-  return {
-    background: t.surface,
-    border: `1px solid ${t["border-strong"]}`,
-    borderRadius: 8,
-    color: t.text,
-    fontSize: 12,
-    padding: "6px 10px",
-  };
+/* Recharts' default tooltip prints "solved : 12" under a raw label. This one
+   says "12 solved" with the label the reader would use — a date as "24 Aug",
+   a rating band as "1600–1699" — in the card's own type and colours. */
+function ChartTip({
+  active,
+  payload,
+  label,
+  labelOf,
+  t,
+}: {
+  active?: boolean;
+  payload?: { value?: number | string; payload?: Record<string, unknown> }[];
+  label?: string | number;
+  labelOf: (label: string | number, row?: Record<string, unknown>) => string;
+  t: ChartTokens;
+}) {
+  if (!active || !payload?.length) return null;
+  const value = Number(payload[0].value ?? 0);
+  return (
+    <div
+      className="chart-tip"
+      style={{ background: t.surface, borderColor: t["border-strong"], color: t.text }}
+    >
+      <span className="chart-tip-value">
+        {value.toLocaleString()} <span style={{ color: t.faint }}>solved</span>
+      </span>
+      <span className="chart-tip-label" style={{ color: t.faint }}>
+        {labelOf(label ?? "", payload[0].payload)}
+      </span>
+    </div>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/* "2026-08-24" -> "24 Aug"; with the year only when asked. */
+function shortDay(iso: string, withYear = false): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d} ${MONTHS[m - 1]}${withYear ? ` ${y}` : ""}`;
 }
 
 export function TagChart({ data }: { data: TagBreakdown }) {
@@ -77,7 +110,10 @@ export function TagChart({ data }: { data: TagBreakdown }) {
         <CartesianGrid {...grid(t)} horizontal={false} />
         <XAxis type="number" allowDecimals={false} {...axis(t)} />
         <YAxis type="category" dataKey="tag" width={labelWidth} {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
+        <Tooltip
+          cursor={hover(t)}
+          content={<ChartTip t={t} labelOf={(l) => String(l)} />}
+        />
         <Bar
           dataKey="solved_count"
           name="solved"
@@ -154,17 +190,39 @@ export function RatingChart({ data }: { data: RatingDistribution }) {
           ? t.accent
           : t.ok;
 
+  // The same bands Codeforces colours by, named so the legend reads to
+  // someone who does not have the site's palette memorised.
+  const tiers = [
+    { name: "up to 1599", colour: t.ok },
+    { name: "1600–1899", colour: t.accent },
+    { name: "1900–2399", colour: t.violet },
+    { name: "2400+", colour: t.danger },
+  ];
+
   return (
     <ChartCard
       title="Difficulty distribution"
       note={data.unrated_count ? `${data.unrated_count} unrated` : undefined}
       height={280}
+      footer={
+        <ul className="tier-legend" aria-label="Rating bands">
+          {tiers.map((tier) => (
+            <li key={tier.name}>
+              <span className="tier-swatch" style={{ background: tier.colour }} />
+              {tier.name}
+            </li>
+          ))}
+        </ul>
+      }
     >
       <BarChart data={data.buckets} margin={{ left: 0, right: 8 }}>
         <CartesianGrid {...grid(t)} vertical={false} />
         <XAxis dataKey="rating" {...axis(t)} />
         <YAxis allowDecimals={false} width={32} {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
+        <Tooltip
+          cursor={hover(t)}
+          content={<ChartTip t={t} labelOf={(l) => `rated ${l}–${Number(l) + 99}`} />}
+        />
         <Bar dataKey="solved_count" name="solved" radius={[4, 4, 0, 0]} {...BAR}>
           {data.buckets.map((b) => (
             <Cell key={b.rating} fill={colourFor(b.rating)} />
@@ -182,19 +240,37 @@ export function ActivityChart({ data }: { data: Timeline }) {
 
   return (
     <ChartCard title="Activity" note={`last ${data.days} days`} height={240}>
-      <BarChart data={data.points} margin={{ left: 0, right: 8 }}>
+      <AreaChart data={data.points} margin={{ left: 0, right: 8, top: 6 }}>
+        <defs>
+          <linearGradient id="activity-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={t.ok} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={t.ok} stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
         <CartesianGrid {...grid(t)} vertical={false} />
-        <XAxis dataKey="day" {...axis(t)} minTickGap={40} />
+        <XAxis
+          dataKey="day"
+          {...axis(t)}
+          minTickGap={48}
+          tickFormatter={(d: string) => shortDay(d)}
+        />
         <YAxis allowDecimals={false} width={32} {...axis(t)} />
-        <Tooltip contentStyle={tooltip(t)} cursor={hover(t)} />
-        <Bar
+        <Tooltip
+          cursor={{ stroke: t["border-strong"], strokeDasharray: "3 3" }}
+          content={<ChartTip t={t} labelOf={(l) => shortDay(String(l), true)} />}
+        />
+        <Area
+          type="monotone"
           dataKey="solved_count"
           name="solved"
-          fill={t.ok}
-          radius={[3, 3, 0, 0]}
-          {...BAR}
+          stroke={t.ok}
+          strokeWidth={1.75}
+          fill="url(#activity-fill)"
+          dot={false}
+          activeDot={{ r: 4, strokeWidth: 0 }}
+          isAnimationActive={false}
         />
-      </BarChart>
+      </AreaChart>
     </ChartCard>
   );
 }
@@ -203,11 +279,13 @@ function ChartCard({
   title,
   note,
   height,
+  footer,
   children,
 }: {
   title: string;
   note?: string;
   height: number;
+  footer?: React.ReactNode;
   children: React.ReactElement;
 }) {
   return (
@@ -225,6 +303,7 @@ function ChartCard({
           {children}
         </ResponsiveContainer>
       </div>
+      {footer}
     </section>
   );
 }
