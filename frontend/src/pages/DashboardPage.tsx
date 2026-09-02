@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, matchPath, useLocation, useNavigate } from "react-router-dom";
+import { Reveal } from "../components/Reveal";
+import { Summary } from "../components/Summary";
+import { useToast } from "../toast";
 
 import { api } from "../api/client";
 import type {
@@ -65,6 +68,8 @@ export function DashboardPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [plan, setPlan] = useState<DailyPlanData | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const toast = useToast();
   const [lcProfile, setLcProfile] = useState<LeetCodeProfileData | null>(null);
   const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [patterns, setPatterns] = useState<PatternsData | null>(null);
@@ -136,8 +141,18 @@ export function DashboardPage() {
       // is allowed to fail without taking the dashboard down with it.
       api
         .dailyPlan(token)
-        .then((next) => current() && setPlan(next))
-        .catch(() => current() && setPlan(null));
+        .then((next) => {
+          if (!current()) return;
+          setPlan(next);
+          setPlanError(null);
+        })
+        .catch((err) => {
+          if (!current()) return;
+          setPlan(null);
+          // Kept, and shown. This card vanishing quietly is how a retired
+          // model went unnoticed for over two weeks.
+          setPlanError(err instanceof Error ? err.message : "the planner did not respond");
+        });
 
       // The card that offers "Refresh from LeetCode" only renders once a
       // profile exists, so an account that has never synced one had no way to
@@ -248,12 +263,31 @@ export function DashboardPage() {
     setPlanBusy(true);
     try {
       setPlan(await api.dailyPlan(token, true));
+      setPlanError(null);
+      toast("Plan rebuilt", "ok");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not rebuild the plan");
+      const why = err instanceof Error ? err.message : "Could not rebuild the plan";
+      setPlanError(why);
+      toast(why, "error");
     } finally {
       setPlanBusy(false);
     }
   }
+
+  // Whatever a sync or a failed load has to say is said in the corner, not
+  // wherever this component happened to put a paragraph.
+  useEffect(() => {
+    if (notice) {
+      toast(notice, "ok");
+      setNotice(null);
+    }
+  }, [notice, toast]);
+  useEffect(() => {
+    if (error) {
+      toast(error, "error");
+      setError(null);
+    }
+  }, [error, toast]);
 
   if (!user) return null;
 
@@ -348,8 +382,6 @@ export function DashboardPage() {
         />
       </div>
 
-      {notice && <p className="notice">{notice}</p>}
-      {error && <p className="error">{error}</p>}
 
       {!data ? (
         <DashboardSkeleton waking={slowLoad} />
@@ -371,58 +403,101 @@ export function DashboardPage() {
         <>
           {view === "today" ? (
             <>
-              {/* Only what today asks of you. Everything here is an action. */}
-              {plan && (
+              <Reveal index={0}>
+                <Summary user={user} stats={data.stats} reminders={data.reminders} plan={plan} />
+              </Reveal>
+              {/* Only what today asks of you. Everything here is an action.
+                  The plan card is always present: when it failed it says so. */}
+              <Reveal index={1}>
                 <DailyPlan
                   data={plan}
+                  error={planError}
                   onRegenerate={regeneratePlan}
                   busy={planBusy}
                 />
-              )}
-              <Reminders data={data.reminders} />
+              </Reveal>
+              <Reveal index={2}>
+                <Reminders data={data.reminders} />
+              </Reveal>
               {/* Recommendations come from the Codeforces problemset only, so
                   they are not an answer to "show me LeetCode". */}
               {data.recommendations && platform !== "leetcode" && (
-                <Recommendations data={data.recommendations} />
+                <Reveal index={3}>
+                  <Recommendations data={data.recommendations} />
+                </Reveal>
               )}
-              {!user.leetcode_repo && <ConnectLeetCode onDone={refreshUser} />}
+              {!user.leetcode_repo && (
+                <Reveal index={4}>
+                  <ConnectLeetCode onDone={refreshUser} />
+                </Reveal>
+              )}
             </>
           ) : (
             <>
               {/* Everything that answers "how am I doing", which is a
                   different question and a different mood. */}
-              <StatCards
-                stats={data.stats}
-                topics={data.weakTopics}
-                profile={lcProfile}
-                platform={platform}
-              />
-              <WeeklyReport data={data.weekly} />
+              <Reveal index={0}>
+                <StatCards
+                  stats={data.stats}
+                  topics={data.weakTopics}
+                  profile={lcProfile}
+                  platform={platform}
+                />
+              </Reveal>
+              {/* Grouped by the question each answers, with a heading, so the
+                  page reads as sections rather than a queue of equal cards. */}
+              <h2 className="section-title">Momentum</h2>
+              <Reveal index={1}>
+                <WeeklyReport data={data.weekly} />
+              </Reveal>
               {/* Under your own week, because it answers the same question
                   from the outside: how did this week go. */}
-              {board && <Leaderboard data={board} />}
+              {board && (
+                <Reveal index={2}>
+                  <Leaderboard data={board} />
+                </Reveal>
+              )}
               {/* The filter has to reach every card or it means nothing: a
                   LeetCode profile on a screen narrowed to Codeforces makes the
                   reader doubt whether anything else respected the filter
                   either. */}
               {profileVisible && lcProfile && (
-                <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
+                <Reveal index={3}>
+                  <LeetCodeProfile data={lcProfile} onSynced={setLcProfile} />
+                </Reveal>
               )}
-              <div className="grid-2">
-                <WeakTopics data={data.weakTopics} platform={platform} />
-                <TagChart data={data.tags} />
-              </div>
+              <h2 className="section-title">Where to focus</h2>
+              <Reveal index={4}>
+                <div className="grid-2">
+                  <WeakTopics data={data.weakTopics} platform={platform} />
+                  <TagChart data={data.tags} />
+                </div>
+              </Reveal>
+              <h2 className="section-title">Is it working?</h2>
               {/* Directly under "What to work on", because it answers the
                   follow-up that card provokes: those are the weak topics, but
                   which of them only fall apart in company. */}
               {/* Above the technique breakdown: "is the difficulty going
                   anywhere" is the blunter question, and a plateau is worth
                   knowing before which tag pairs are shaky. */}
-              {plateau && <Plateau data={plateau} />}
+              {plateau && (
+                <Reveal index={5}>
+                  <Plateau data={plateau} />
+                </Reveal>
+              )}
               {/* After the plateau card: both ask "is the practice working?",
                   and this is the sharper version of the question. */}
-              {approach && <Approach data={approach} onSynced={setApproach} />}
-              {patterns && <Patterns data={patterns} />}
+              {approach && (
+                <Reveal index={6}>
+                  <Approach data={approach} onSynced={setApproach} />
+                </Reveal>
+              )}
+              {patterns && (
+                <Reveal index={7}>
+                  <Patterns data={patterns} />
+                </Reveal>
+              )}
+              <h2 className="section-title">Over time</h2>
               {/* The standalone difficulty card is a stand-in for the rating
                   histogram when there are no numeric ratings to plot. Once a
                   LeetCode profile exists it is a second Easy/Medium/Hard
@@ -432,9 +507,13 @@ export function DashboardPage() {
                   thing teaches the reader to trust neither, so the
                   authoritative one wins and this only appears without it. */}
               {(data.ratings.buckets.length > 0 || !profileVisible) && (
-                <RatingChart data={data.ratings} />
+                <Reveal index={8}>
+                  <RatingChart data={data.ratings} />
+                </Reveal>
               )}
-              <ActivityChart data={data.timeline} />
+              <Reveal index={8}>
+                <ActivityChart data={data.timeline} />
+              </Reveal>
             </>
           )}
         </>

@@ -2,9 +2,13 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./auth";
 import { Logo } from "./components/Logo";
+import { MotionConfig } from "framer-motion";
+
 import { DashboardPage } from "./pages/DashboardPage";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ThemeProvider } from "./theme";
+import { ToastProvider } from "./toast";
 
 /** The screens, as URLs.
  *
@@ -39,9 +43,12 @@ function Router() {
         path="/login"
         element={signedIn ? <Navigate to="/" replace /> : <LoginPage />}
       />
+      {/* Signed out, the root is the pitch; signed in, it is the dashboard.
+          Any other signed-out path goes to the pitch too, not the form. */}
+      <Route path="/" element={signedIn ? <DashboardPage /> : <LandingPage />} />
       <Route
         path="/*"
-        element={signedIn ? <DashboardPage /> : <Navigate to="/login" replace />}
+        element={signedIn ? <DashboardPage /> : <Navigate to="/" replace />}
       />
     </Routes>
   );
@@ -52,7 +59,11 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Router />
+          <MotionConfig reducedMotion="user">
+            <ToastProvider>
+              <Router />
+            </ToastProvider>
+          </MotionConfig>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

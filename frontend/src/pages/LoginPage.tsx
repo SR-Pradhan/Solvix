@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 
 import { api } from "../api/client";
@@ -9,7 +10,13 @@ import { ThemeToggle } from "../components/ThemeToggle";
 
 export function LoginPage() {
   const { login } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  // The landing page links here with ?mode=register, so "Create an account"
+  // opens on the form it promised rather than one click away from it.
+  const [mode, setMode] = useState<"login" | "register">(
+    new URLSearchParams(window.location.search).get("mode") === "register"
+      ? "register"
+      : "login",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -43,6 +50,9 @@ export function LoginPage() {
           <ThemeToggle />
         </div>
         <p className="muted">Your competitive programming progress, measured.</p>
+        <Link className="muted small back-link" to="/">
+          ← What is Solvix?
+        </Link>
 
         {mode === "register" && (
           <label>
