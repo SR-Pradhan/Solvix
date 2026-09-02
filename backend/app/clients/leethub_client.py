@@ -112,6 +112,34 @@ async def fetch_solved_slugs(
     return sorted(slug for slug in shas if slug not in NON_PROBLEM_PATHS)
 
 
+async def fetch_solution_source(
+    client: httpx.AsyncClient, repo: str, slug: str, token: str | None
+) -> tuple[str, str] | None:
+    """The solution file for one problem, as (filename, source).
+
+    LeetHub names the file after the folder, so the path is predictable and no
+    directory listing is needed — one request per problem instead of two. Older
+    commits sometimes drop the numeric prefix, so that spelling is tried too.
+
+    Returns None when nothing matches rather than raising: a repo with a
+    missing or unsupported file is an ordinary gap, not a broken sync.
+    """
+    names = [slug]
+    if "-" in slug and slug.split("-", 1)[0].isdigit():
+        names.append(slug.split("-", 1)[1])
+
+    for name in names:
+        for extension in (".java", ".py"):
+            url = f"{GITHUB_RAW}/{repo}/HEAD/{slug}/{name}{extension}"
+            try:
+                response = await client.get(url, headers=_headers(token))
+            except httpx.HTTPError:
+                continue
+            if response.status_code == 200:
+                return name + extension, response.text
+    return None
+
+
 async def fetch_tag_map(
     client: httpx.AsyncClient, repo: str, token: str | None
 ) -> dict[str, list[str]]:

@@ -77,6 +77,38 @@ class Revision(Base):
     last_reminded_on = Column(Date)
 
 
+class SolutionReview(Base):
+    """What one solved problem's source code shows about how it was solved.
+
+    Stored rather than computed on demand because the answer needs the solution
+    file from GitHub, and a hundred problems is a hundred HTTP requests. The
+    review only changes when the solution does, so it is a sync like the others
+    rather than something the dashboard recalculates on every load.
+    """
+
+    __tablename__ = "solution_reviews"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "platform", "external_problem_id", name="uq_review_problem"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    platform = Column(String(20), nullable=False)
+    external_problem_id = Column(String(100), nullable=False)
+    problem_name = Column(String(255))
+    language = Column(String(20))
+    # "Brute forced", "As intended", or "Not judged".
+    verdict = Column(String(20), nullable=False)
+    # The tagged techniques that can be recognised in source at all, and the
+    # ones the code actually used. Kept so the card can explain itself rather
+    # than just asserting a verdict.
+    expected = Column(ARRAY(String), nullable=False, server_default="{}")
+    used = Column(ARRAY(String), nullable=False, server_default="{}")
+    checked_at = Column(DateTime, server_default=func.now())
+
+
 class SyncState(Base):
     """Whether a platform's history has ever been imported in full.
 

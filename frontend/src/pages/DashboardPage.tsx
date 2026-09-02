@@ -6,6 +6,7 @@ import type {
   Leaderboard as LeaderboardData,
   Patterns as PatternsData,
   Plateau as PlateauData,
+  Approach as ApproachData,
   LeetCodeProfile as LeetCodeProfileData,
   RatingDistribution,
   Recommendations as RecommendationsData,
@@ -25,6 +26,7 @@ import { DailyPlan } from "../components/DailyPlan";
 import { Leaderboard } from "../components/Leaderboard";
 import { Patterns } from "../components/Patterns";
 import { Plateau } from "../components/Plateau";
+import { Approach } from "../components/Approach";
 import { LeetCodeProfile } from "../components/LeetCodeProfile";
 import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
@@ -66,6 +68,7 @@ export function DashboardPage() {
   const [board, setBoard] = useState<LeaderboardData | null>(null);
   const [patterns, setPatterns] = useState<PatternsData | null>(null);
   const [plateau, setPlateau] = useState<PlateauData | null>(null);
+  const [approach, setApproach] = useState<ApproachData | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
@@ -149,6 +152,13 @@ export function DashboardPage() {
         .leaderboard(token)
         .then((next) => current() && setBoard(next))
         .catch(() => current() && setBoard(null));
+
+      // Stored verdicts only — the reading of the solution files happens on
+      // its own sync, because it costs one GitHub request per problem.
+      api
+        .approach(token)
+        .then((next) => current() && setApproach(next))
+        .catch(() => current() && setApproach(null));
 
       // Judged per platform on each platform's own ladder, so the filter has
       // nothing to choose between — and a failure costs one card.
@@ -392,6 +402,9 @@ export function DashboardPage() {
                   anywhere" is the blunter question, and a plateau is worth
                   knowing before which tag pairs are shaky. */}
               {plateau && <Plateau data={plateau} />}
+              {/* After the plateau card: both ask "is the practice working?",
+                  and this is the sharper version of the question. */}
+              {approach && <Approach data={approach} onSynced={setApproach} />}
               {patterns && <Patterns data={patterns} />}
               {/* The standalone difficulty card is a stand-in for the rating
                   histogram when there are no numeric ratings to plot. Once a

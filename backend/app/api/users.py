@@ -15,6 +15,7 @@ from app.core.deps import get_current_user
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.database import get_db
 from app.db.models import (
+    SolutionReview,
     DailyPlan,
     EmailChangeRequest,
     Interview,
@@ -171,6 +172,7 @@ OWNED_BY_USER = (
     Interview,
     LeetCodeProfile,
     EmailChangeRequest,
+    SolutionReview,
 )
 
 

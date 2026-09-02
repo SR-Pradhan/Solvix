@@ -123,6 +123,22 @@ export interface WeakTopics {
   stale_topics: string[];
 }
 
+export interface ApproachProblem {
+  problem_id: string;
+  name: string;
+  language: string | null;
+  expected: string[];
+  used: string[];
+  url: string;
+}
+
+export interface Approach {
+  problems: ApproachProblem[];
+  total_flagged: number;
+  reviewed: number;
+  checked: number;
+}
+
 export interface PlatformPlateau {
   platform: string;
   status: string;

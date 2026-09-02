@@ -12,6 +12,7 @@ import type {
   Stats,
   TagBreakdown,
   Timeline,
+  Approach,
   Patterns,
   Plateau,
   PendingEmailChange,
@@ -183,6 +184,11 @@ export const api = {
 
   cancelEmailChange: (token: string) =>
     requestEmpty("/users/me/email/pending", token, { method: "DELETE" }),
+
+  approach: (token: string) => request<Approach>("/dashboard/approach", token),
+
+  syncApproach: (token: string) =>
+    request<Approach>("/dashboard/sync/approach", token, { method: "POST" }),
 
   plateau: (token: string) => request<Plateau>("/dashboard/plateau", token),
 

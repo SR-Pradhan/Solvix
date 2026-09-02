@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-372-3ecf8e)
+![tests](https://img.shields.io/badge/tests-390-3ecf8e)
 
 ## What it does
 
@@ -37,6 +37,10 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
   enough to tell
 - **Emails** that list each morning, with links, so it can be acted on without
   opening the app
+- **Reads your actual solution code** and tells you which problems you passed
+  without using the technique they were teaching. A brute force that squeaks
+  under the time limit is a problem you will fail again the moment someone says
+  "now do it in O(n)" — and no platform will ever tell you that
 - **Checks whether you are still improving**, which volume and streaks cannot
   see: it finds the hardest level you have solved enough of to count, then asks
   whether recent practice is above it, at it, or below it. Solving easy problems
@@ -175,6 +179,8 @@ automatically.
 | GET    | `/dashboard/timeline`             | Solves per day                   |
 | GET    | `/dashboard/weak-topics`          | Tags scored by accuracy + recency|
 | GET    | `/dashboard/plateau`              | Whether difficulty is still climbing |
+| GET    | `/dashboard/approach`             | Problems solved the wrong way        |
+| POST   | `/dashboard/sync/approach`        | Re-read solution code and judge it   |
 | GET    | `/dashboard/patterns`             | Tag pairs worse than both their parts |
 | GET    | `/dashboard/recommendations`      | Problems picked from weak tags   |
 | GET    | `/dashboard/daily-plan`           | Today's plan, with the agent's reasoning |

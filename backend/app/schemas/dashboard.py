@@ -78,6 +78,24 @@ class LeaderboardOut(BaseModel):
     total_ranked: int = 0
 
 
+class ApproachProblem(BaseModel):
+    problem_id: str
+    name: str
+    language: str | None = None
+    # The tagged techniques that can be recognised in source, and what the code
+    # actually used — so the card can show its working.
+    expected: list[str] = []
+    used: list[str] = []
+    url: str
+
+
+class ApproachOut(BaseModel):
+    problems: list[ApproachProblem] = []
+    total_flagged: int = 0
+    reviewed: int = 0
+    checked: int = 0
+
+
 class PlatformPlateau(BaseModel):
     platform: str
     status: str

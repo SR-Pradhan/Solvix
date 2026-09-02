@@ -17,6 +17,7 @@ from app.schemas.dashboard import (
     RatingDistributionOut,
     LeaderboardOut,
     LeetCodeProfileOut,
+    ApproachOut,
     PatternsOut,
     PlateauOut,
     RecommendationsOut,
@@ -34,6 +35,7 @@ from app.clients.leetcode_client import LeetCodeError, LeetCodeUserNotFound
 from app.services import (
     leaderboard_service,
     leetcode_profile_service,
+    approach_service,
     pattern_service,
     plateau_service,
     plan_service,
@@ -284,6 +286,40 @@ async def read_weekly_report(
     return await report_service.get_weekly_report(
         db, current_user.id, week_start=week_start, platform=_validated(platform)
     )
+
+
+@router.get("/approach", response_model=ApproachOut)
+async def read_approach(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Problems that were accepted without using the technique they teach.
+
+    Reads stored verdicts only. The analysis needs one GitHub request per
+    solved problem, so it happens on the sync below rather than on every load.
+    """
+    return await approach_service.get_reviews(db, current_user.id)
+
+
+@router.post("/sync/approach", response_model=ApproachOut)
+async def sync_approach(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Re-read every solution file and judge how each problem was solved."""
+    if not current_user.leetcode_repo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Connect a LeetHub solutions repo first",
+        )
+    try:
+        return await approach_service.sync_reviews(
+            db, current_user.id, current_user.leetcode_repo
+        )
+    except LeetHubRateLimited as e:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(e)) from e
+    except LeetHubError as e:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(e)) from e
 
 
 @router.get("/plateau", response_model=PlateauOut)
