@@ -94,3 +94,67 @@ def test_the_folder_name_is_what_gets_returned():
 def test_nothing_stored_means_everything_is_new():
     folders = ["0001-two-sum", "0190-reverse-bits"]
     assert not_yet_imported(folders, set()) == folders
+
+
+# --- repeat solves ------------------------------------------------------------
+#
+# Written after a 12-day streak that should have been 15. The repo held solution
+# commits on 19 and 21 Aug that Solvix had never seen, because every one was a
+# *modified* file — a problem solved again — and the import kept only each
+# folder's first commit.
+
+from datetime import datetime
+
+from app.clients.leethub_client import (
+    is_solution_commit,
+    slug_from_path,
+    solve_events,
+)
+
+
+def commit(sha, message, when="2026-08-19T06:23:00Z"):
+    return {"sha": sha, "commit": {"message": message, "author": {"date": when}}}
+
+
+def test_only_the_runtime_commit_is_a_solve():
+    # LeetHub writes two commits per accepted answer; the README one is not it.
+    assert is_solution_commit("Time: 0 ms (100%), Space: 43.7 MB (6.92%) - LeetHub")
+    assert not is_solution_commit("Create README - LeetHub")
+    assert not is_solution_commit("Update README - Topic Tags")
+    assert not is_solution_commit("Updated stats")
+
+
+def test_the_folder_is_the_problem():
+    assert slug_from_path("0876-middle-of-the-linked-list/0876-middle-of-the-linked-list.java") == "0876-middle-of-the-linked-list"
+    assert slug_from_path("0584-find-customer-referee/0584-find-customer-referee.sql") == "0584-find-customer-referee"
+
+
+def test_repo_level_files_are_not_problems():
+    assert slug_from_path("README.md") is None
+    assert slug_from_path("stats.json") is None
+
+
+def test_a_solution_commit_becomes_one_event_per_folder():
+    commits = [commit("a", "Time: 1 ms - LeetHub"), commit("b", "Update README - Topic Tags")]
+    files = {"a": ["0876-middle-of-the-linked-list/0876-middle-of-the-linked-list.java"],
+             "b": ["README.md"]}
+    assert solve_events(commits, files) == [
+        ("0876-middle-of-the-linked-list", datetime(2026, 8, 19, 6, 23)),
+    ]
+
+
+def test_solving_the_same_problem_twice_is_two_events():
+    """The whole point: a repeat is practice, and it used to be invisible."""
+    commits = [
+        commit("a", "Time: 1 ms - LeetHub", "2026-08-10T10:00:00Z"),
+        commit("b", "Time: 1 ms - LeetHub", "2026-08-19T06:23:00Z"),
+    ]
+    path = "0876-middle-of-the-linked-list/0876-middle-of-the-linked-list.java"
+    events = solve_events(commits, {"a": [path], "b": [path]})
+    assert [at.date().isoformat() for _, at in events] == ["2026-08-10", "2026-08-19"]
+
+
+def test_a_commit_touching_a_folder_twice_counts_once():
+    commits = [commit("a", "Time: 1 ms - LeetHub")]
+    files = {"a": ["0001-two-sum/0001-two-sum.java", "0001-two-sum/README.md"]}
+    assert len(solve_events(commits, files)) == 1

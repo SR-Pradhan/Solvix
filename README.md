@@ -17,7 +17,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/FastAPI-backend-009485)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
-![tests](https://img.shields.io/badge/tests-390-3ecf8e)
+![tests](https://img.shields.io/badge/tests-399-3ecf8e)
 
 ## What it does
 
@@ -172,7 +172,7 @@ automatically.
 | PUT    | `/users/me/codeforces-handle`     | Set the handle to sync           |
 | PUT    | `/users/me/leetcode-repo`         | Set the LeetHub repo to sync     |
 | POST   | `/dashboard/ingest/codeforces`    | Import or sync Codeforces        |
-| POST   | `/dashboard/ingest/leetcode`      | Import or sync LeetCode          |
+| POST   | `/dashboard/ingest/leetcode`      | Import or sync LeetCode (`?full=true` rescans for repeat solves) |
 | GET    | `/dashboard/stats`                | Totals, streaks, acceptance rate |
 | GET    | `/dashboard/tags`                 | Solves per tag                   |
 | GET    | `/dashboard/rating-distribution`  | Solves per difficulty            |

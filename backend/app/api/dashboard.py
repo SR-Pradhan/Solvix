@@ -93,6 +93,9 @@ async def ingest_codeforces(
 
 @router.post("/ingest/leetcode")
 async def ingest_leetcode(
+    # Rescans the whole commit log for repeat solves. Needed once for a repo
+    # imported before repeats were recorded; harmless to repeat.
+    full: bool = Query(default=False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -104,7 +107,7 @@ async def ingest_leetcode(
 
     try:
         inserted = await ingest_leetcode_submissions(
-            db, user_id=current_user.id, repo=current_user.leetcode_repo
+            db, user_id=current_user.id, repo=current_user.leetcode_repo, full=full
         )
     except LeetHubRepoError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

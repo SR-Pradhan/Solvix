@@ -154,17 +154,94 @@ async def fetch_problem_details(
     return parse_problem_readme(response.text)
 
 
-async def fetch_first_commit_date(
+# LeetHub writes two commits per accepted submission: one for the README and
+# one for the solution file, whose message reports the runtime. Only the second
+# is a solve; counting both would double every day.
+SOLUTION_COMMIT_PREFIX = "Time:"
+
+
+def is_solution_commit(message: str) -> bool:
+    return message.lstrip().startswith(SOLUTION_COMMIT_PREFIX)
+
+
+def slug_from_path(path: str) -> str | None:
+    """The problem folder a changed file belongs to, or None for repo files."""
+    folder = path.split("/", 1)[0]
+    if not folder or folder in NON_PROBLEM_PATHS or "/" not in path:
+        return None
+    return folder
+
+
+def _stamp(commit: dict) -> datetime:
+    return datetime.strptime(commit["commit"]["author"]["date"], "%Y-%m-%dT%H:%M:%SZ")
+
+
+def solve_events(commits: list[dict], files_of: dict[str, list[str]]) -> list[tuple[str, datetime]]:
+    """(folder, solved_at) for every solution commit, given each commit's files.
+
+    Pure, so the rule can be tested without GitHub: a commit counts once per
+    problem folder it touched, and only if its message is a LeetHub solution
+    message. README-only commits and the stats file are ignored.
+    """
+    events: list[tuple[str, datetime]] = []
+    for commit in commits:
+        if not is_solution_commit(commit["commit"]["message"]):
+            continue
+        seen: set[str] = set()
+        for path in files_of.get(commit["sha"], []):
+            slug = slug_from_path(path)
+            if slug and slug not in seen:
+                seen.add(slug)
+                events.append((slug, _stamp(commit)))
+    return events
+
+
+async def fetch_solve_dates(
     client: httpx.AsyncClient, repo: str, slug: str, token: str | None
-) -> datetime | None:
-    """When the problem folder first appeared — i.e. when it was solved."""
+) -> list[datetime]:
+    """Every time the problem was solved, oldest first.
+
+    The same request the old import always made — it fetched the whole
+    history of the folder and kept only the oldest entry, so a problem
+    solved again a week later left no trace. Revisiting a problem is exactly
+    what the revision reminders ask for, and it was the one kind of practice
+    the app could not see.
+    """
     response = await _get(
         client, f"{GITHUB_API}/repos/{repo}/commits?path={slug}&per_page=100", token
     )
-    commits = response.json()
-    if not commits:
-        return None
+    dates = [
+        _stamp(c) for c in response.json() if is_solution_commit(c["commit"]["message"])
+    ]
+    return sorted(dates)
 
-    # GitHub returns newest first, so the oldest commit is the original solve.
-    stamp = commits[-1]["commit"]["author"]["date"]
-    return datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")
+
+async def fetch_solution_commits(
+    client: httpx.AsyncClient, repo: str, token: str | None, since: datetime | None
+) -> list[tuple[str, datetime]]:
+    """Every solve in the repo after `since`, as (folder, solved_at).
+
+    One request per page of history plus one per solution commit, instead of
+    one per problem folder — so a daily sync that finds three new solves costs
+    about four requests rather than a hundred and twenty.
+    """
+    commits: list[dict] = []
+    page = 1
+    while True:
+        url = f"{GITHUB_API}/repos/{repo}/commits?per_page=100&page={page}"
+        if since is not None:
+            url += "&since=" + since.strftime("%Y-%m-%dT%H:%M:%SZ")
+        batch = (await _get(client, url, token)).json()
+        commits.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+
+    files_of: dict[str, list[str]] = {}
+    for commit in commits:
+        if not is_solution_commit(commit["commit"]["message"]):
+            continue
+        detail = (await _get(client, commit["url"], token)).json()
+        files_of[commit["sha"]] = [f["filename"] for f in detail.get("files", [])]
+
+    return solve_events(commits, files_of)

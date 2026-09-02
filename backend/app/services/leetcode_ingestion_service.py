@@ -1,7 +1,8 @@
 import asyncio
+from datetime import datetime, timedelta
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,54 +39,129 @@ def not_yet_imported(folder_names: list[str], stored_ids: set[str]) -> list[str]
     ]
 
 
-async def ingest_leetcode_submissions(db: AsyncSession, user_id: int, repo: str) -> int:
+def rows_for_resolves(
+    events: list[tuple[str, datetime]], known: dict[str, dict]
+) -> list[dict]:
+    """Submission rows for solves of problems already on record.
+
+    `known` maps a canonical slug to a stored row; the new row copies its
+    name, tags and difficulty rather than re-fetching them, and keeps the
+    stored id so both solves of one problem share a single identity. Folders
+    that are not known are left to the new-problem path.
+    """
+    rows = []
+    for folder, solved_at in events:
+        existing = known.get(leetcode_client.slug_from_folder(folder))
+        if existing is None:
+            continue
+        rows.append({**existing, "solved_at": solved_at})
+    return rows
+
+
+async def ingest_leetcode_submissions(
+    db: AsyncSession, user_id: int, repo: str, full: bool = False
+) -> int:
+    """Import solves from the repo: new problems, and repeats of known ones.
+
+    `full` rescans the whole commit history for repeats rather than only what
+    is newer than the latest stored solve. Needed once after a repo was first
+    imported under the old rule, which recorded only each problem's first
+    solve; safe to repeat, since duplicates are refused by the unique index.
+    """
     token = settings.github_token
 
-    known = set(
-        (
-            await db.scalars(
-                select(Submission.external_problem_id).where(
-                    Submission.user_id == user_id, Submission.platform == PLATFORM
-                )
+    stored = (
+        await db.execute(
+            select(
+                Submission.external_problem_id,
+                Submission.problem_name,
+                Submission.tags,
+                Submission.difficulty_label,
+                func.max(Submission.solved_at).label("latest"),
             )
-        ).all()
-    )
+            .where(Submission.user_id == user_id, Submission.platform == PLATFORM)
+            .group_by(
+                Submission.external_problem_id,
+                Submission.problem_name,
+                Submission.tags,
+                Submission.difficulty_label,
+            )
+        )
+    ).all()
+    known = {row.external_problem_id for row in stored}
+    by_slug = {
+        leetcode_client.slug_from_folder(row.external_problem_id): {
+            "user_id": user_id,
+            "platform": PLATFORM,
+            "external_problem_id": row.external_problem_id,
+            "problem_name": row.problem_name,
+            "tags": list(row.tags or []),
+            "difficulty_rating": None,
+            "difficulty_label": row.difficulty_label,
+            "verdict": "OK",
+        }
+        for row in stored
+    }
+    newest = max((row.latest for row in stored if row.latest), default=None)
 
+    rows: list[dict] = []
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         slugs = await leethub_client.fetch_solved_slugs(client, repo, token)
         new_slugs = not_yet_imported(slugs, known)
-        if not new_slugs:
+
+        # Repeats of problems already on record. Scanned from the repo's
+        # commit log rather than per folder, so a quiet day costs a couple of
+        # requests. A second past the newest stored solve, so that solve is
+        # not re-read every time — the unique index would refuse it anyway.
+        if by_slug:
+            since = None if full or newest is None else newest + timedelta(seconds=1)
+            events = await leethub_client.fetch_solution_commits(client, repo, token, since)
+            fresh = {leetcode_client.slug_from_folder(f) for f in new_slugs}
+            rows.extend(
+                rows_for_resolves(
+                    [(f, at) for f, at in events
+                     if leetcode_client.slug_from_folder(f) not in fresh],
+                    by_slug,
+                )
+            )
+
+        if not new_slugs and not rows:
             return 0
 
         # Only fetched when there is something new — it covers every problem,
         # so re-reading it for a no-op sync would be wasted.
-        tag_map = await leethub_client.fetch_tag_map(client, repo, token)
+        tag_map = (
+            await leethub_client.fetch_tag_map(client, repo, token) if new_slugs else {}
+        )
 
         semaphore = asyncio.Semaphore(CONCURRENCY)
 
-        async def load(slug: str) -> dict | None:
+        async def load(slug: str) -> list[dict]:
             async with semaphore:
                 title, difficulty = await leethub_client.fetch_problem_details(
                     client, repo, slug, token
                 )
-                solved_at = await leethub_client.fetch_first_commit_date(
-                    client, repo, slug, token
-                )
-            if solved_at is None:
-                return None
-            return {
-                "user_id": user_id,
-                "platform": PLATFORM,
-                "external_problem_id": slug,
-                "problem_name": title or slug,
-                "tags": tag_map.get(slug, []),
-                "difficulty_rating": None,
-                "difficulty_label": difficulty,
-                "verdict": "OK",  # LeetHub only pushes accepted solutions.
-                "solved_at": solved_at,
-            }
+                dates = await leethub_client.fetch_solve_dates(client, repo, slug, token)
+            # One row per solve, not one per problem: the folder's history is
+            # the full record of every time it was done.
+            return [
+                {
+                    "user_id": user_id,
+                    "platform": PLATFORM,
+                    "external_problem_id": slug,
+                    "problem_name": title or slug,
+                    "tags": tag_map.get(slug, []),
+                    "difficulty_rating": None,
+                    "difficulty_label": difficulty,
+                    "verdict": "OK",  # LeetHub only pushes accepted solutions.
+                    "solved_at": solved_at,
+                }
+                for solved_at in dates
+            ]
 
-        rows = [r for r in await asyncio.gather(*(load(s) for s in new_slugs)) if r]
+        if new_slugs:
+            for batch in await asyncio.gather(*(load(s) for s in new_slugs)):
+                rows.extend(batch)
 
     if not rows:
         return 0
