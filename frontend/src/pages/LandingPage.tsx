@@ -22,7 +22,7 @@ function Preview() {
       <div className="preview-frame">
         <section className="summary preview-summary">
           <div>
-            <h2 className="summary-greeting">Good morning, Asha.</h2>
+            <h2 className="summary-greeting">Good morning, SR.</h2>
             <p className="summary-line muted">
               9-day streak. 2 things to revise. Focus:{" "}
               <strong>Two Pointers</strong>.
