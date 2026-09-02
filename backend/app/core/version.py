@@ -4,4 +4,4 @@ Both `/health` and the footer in the UI read this, so what an interviewer sees
 in the browser is provably the same build as the tag on GitHub.
 """
 
-APP_VERSION = "1.26.2"
+APP_VERSION = "1.26.3"

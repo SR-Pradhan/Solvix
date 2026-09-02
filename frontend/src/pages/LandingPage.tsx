@@ -15,22 +15,26 @@ function Preview() {
   return (
     <div className="preview" aria-hidden="true">
       <div className="preview-glow" />
+      {/* Fictional figures. The first version quoted the author's own account,
+          which read as a live dashboard shown to strangers — and was the
+          author's personal data on a public page. */}
+      <span className="preview-tag">Example dashboard</span>
       <div className="preview-frame">
         <section className="summary preview-summary">
           <div>
-            <h2 className="summary-greeting">Good morning, Sruti.</h2>
+            <h2 className="summary-greeting">Good morning, Asha.</h2>
             <p className="summary-line muted">
-              15-day streak — your best. 3 things to revise. Focus:{" "}
-              <strong>Sliding Window</strong>.
+              9-day streak. 2 things to revise. Focus:{" "}
+              <strong>Two Pointers</strong>.
             </p>
           </div>
           <div className="summary-figures">
             <div className="summary-figure">
-              <span className="summary-number">15</span>
+              <span className="summary-number">9</span>
               <span className="summary-label">day streak</span>
             </div>
             <div className="summary-figure">
-              <span className="summary-number">175</span>
+              <span className="summary-number">132</span>
               <span className="summary-label">solved</span>
             </div>
           </div>
@@ -49,7 +53,7 @@ function Preview() {
                   Coasting
                 </span>
                 <span className="muted small">
-                  28 of your last 52 solves were below Medium.
+                  19 of your last 30 solves were below Medium.
                 </span>
               </div>
             </li>
@@ -63,7 +67,7 @@ function Preview() {
           <ul className="rows">
             <li className="row row-alert">
               <div className="row-head row-head-cols">
-                <span className="row-title">Next Greater Element I</span>
+                <span className="row-title">Daily Temperatures</span>
                 <span className="badge">Brute forced</span>
                 <span className="muted small">
                   Teaches Monotonic Stack — your solution uses none of it, with nested loops.
@@ -125,10 +129,11 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      <section className="proof-grid" aria-label="What Solvix has found">
+      <p className="muted small proof-caption">The kinds of things it says — illustrative figures.</p>
+      <section className="proof-grid" aria-label="The kinds of findings Solvix makes">
         <Reveal index={3}>
           <div className="card proof-tile">
-            <span className="proof-number">28<span className="proof-of">/52</span></span>
+            <span className="proof-number">19<span className="proof-of">/30</span></span>
             <span className="proof-label">recent solves below a level already mastered</span>
             <span className="badge badge-warn badge-sentence">Coasting</span>
           </div>

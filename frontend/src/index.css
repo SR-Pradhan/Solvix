@@ -2054,3 +2054,24 @@ a.cta:hover {
     gap: 48px;
   }
 }
+
+/* The preview is a sample, and says so in the corner. */
+.preview-tag {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  z-index: 2;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.proof-caption {
+  margin: 0 0 calc(-1 * var(--s4));
+}
