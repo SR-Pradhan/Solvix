@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 import { ApiError, api } from "../api/client";
 import type { Interview } from "../api/types";
@@ -21,6 +22,53 @@ function complexityRate(history: Interview[]): string | null {
   if (judged.length < 2) return null;
   const covered = judged.filter((i) => i.findings?.complexity_handled).length;
   return `Complexity covered in ${covered} of your last ${judged.length}`;
+}
+
+/** `**bold**` rendered as bold, nothing else.
+ *
+ * The interviewer names the problem in markdown bold and the bubble was
+ * printing the asterisks. A full markdown renderer would be a dependency and
+ * an attack surface for one construct; this handles the one construct.
+ */
+function withBold(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    ),
+  );
+}
+
+/** A timestamp from the API, read as the UTC it is.
+ *
+ * The backend stores and returns naive UTC — no trailing `Z`. A browser given
+ * "2026-09-03T04:10:00" assumes *local* time, which in IST put a fresh
+ * interview's clock at 330 minutes: the offset, exactly, the same way the
+ * server's day boundary was off by 5:30 before it was pinned to a zone.
+ */
+function parseUtc(stamp: string): Date {
+  return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(stamp) ? stamp : stamp + "Z");
+}
+
+/** Time on the clock since the interview began. Ticks only while it is open. */
+function Elapsed({ since, running }: { since: string | null; running: boolean }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [running]);
+  if (!since) return null;
+  const secs = Math.max(0, Math.floor((now - parseUtc(since).getTime()) / 1000));
+  const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return (
+    <span className="elapsed" aria-label="Time elapsed">
+      <span className={running ? "elapsed-dot on" : "elapsed-dot"} aria-hidden="true" />
+      {mm}:{ss}
+    </span>
+  );
 }
 
 function PastInterviews({
@@ -61,7 +109,7 @@ function PastInterviews({
                 <span className="muted small">
                   {item.topic}
                   {item.created_at
-                    ? ` · ${new Date(item.created_at).toLocaleDateString(undefined, {
+                    ? ` · ${parseUtc(item.created_at).toLocaleDateString(undefined, {
                         day: "numeric",
                         month: "short",
                       })}`
@@ -204,40 +252,65 @@ export function InterviewPage({
         <div>
           <h1 className="brand">Mock interview</h1>
           <span className="muted small">
-            {interview.topic}
-            {interview.problem_name ? ` · ${interview.problem_name}` : ""}
+            {finished ? "Finished — feedback below" : "In progress"}
           </span>
         </div>
-        <div className="actions">
-          {interview.problem_url && (
-            <a
-              className="ghost"
-              href={interview.problem_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open the problem
-            </a>
-          )}
-          <button className="ghost" onClick={onBack}>
-            Back to dashboard
-          </button>
-        </div>
+        <button className="ghost" onClick={onBack}>
+          Back to dashboard
+        </button>
       </header>
 
-      <section className="card">
+      <section className="card interview">
+        {/* The problem stays pinned above the conversation, with the clock: what
+            you are being asked, and how long you have been at it, without
+            scrolling back up through the transcript to find out. */}
+        <div className="problem-bar">
+          <div className="problem-bar-what">
+            {interview.topic && <span className="chip">{interview.topic}</span>}
+            <span className="problem-bar-name">{interview.problem_name ?? "Untitled problem"}</span>
+          </div>
+          <div className="problem-bar-side">
+            <Elapsed since={interview.created_at} running={!finished} />
+            {interview.problem_url && (
+              <a className="row-action" href={interview.problem_url} target="_blank" rel="noreferrer">
+                Open problem <span aria-hidden="true">↗</span>
+              </a>
+            )}
+          </div>
+        </div>
+
         <div className="interview-turns">
-          {interview.turns.map((turn, i) => (
-            <div
-              key={i}
-              className={turn.role === "user" ? "turn turn-you" : "turn turn-them"}
-            >
-              <span className="muted small turn-who">
-                {turn.role === "user" ? "You" : "Interviewer"}
-              </span>
-              <p>{turn.content}</p>
+          {interview.turns.map((turn, i) => {
+            const you = turn.role === "user";
+            return (
+              /* Only a newly added bubble animates: React keeps the earlier
+                 nodes, so their `initial` never re-runs. */
+              <motion.div
+                key={i}
+                className={you ? "turn turn-you" : "turn turn-them"}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {!you && <span className="turn-avatar" aria-hidden="true">AI</span>}
+                <div className="turn-body">
+                  <span className="muted small turn-who">{you ? "You" : "Interviewer"}</span>
+                  <p>{withBold(turn.content)}</p>
+                </div>
+              </motion.div>
+            );
+          })}
+          {/* While the interviewer is composing. The question has been sent
+              and nothing is on screen to say so; three dots is the
+              convention every chat app has taught. */}
+          {busy && !finished && (
+            <div className="turn turn-them turn-thinking" role="status" aria-label="Interviewer is thinking">
+              <span className="turn-avatar" aria-hidden="true">AI</span>
+              <div className="turn-body">
+                <span className="thinking"><i /><i /><i /></span>
+              </div>
             </div>
-          ))}
+          )}
           <div ref={endOfTurns} />
         </div>
 
@@ -248,7 +321,7 @@ export function InterviewPage({
             <textarea
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Talk through your thinking…"
+              placeholder="Talk through your thinking… (Enter to send, Shift+Enter for a new line)"
               rows={3}
               disabled={busy}
               onKeyDown={(e) => {
