@@ -1,6 +1,14 @@
+import { useState } from "react";
+
 import type { Recommendations as Data } from "../api/types";
 
+// Ten identical rows is a wall; five is a shortlist you might actually pick from.
+const SHOWN = 5;
+
 export function Recommendations({ data }: { data: Data }) {
+  // Before the early return: hooks must run in the same order every render.
+  const [expanded, setExpanded] = useState(false);
+
   if (data.note) {
     return (
       <section className="card">
@@ -35,7 +43,7 @@ export function Recommendations({ data }: { data: Data }) {
         </p>
       ) : (
         <ul className="rows">
-          {data.problems.map((p) => (
+          {(expanded ? data.problems : data.problems.slice(0, SHOWN)).map((p) => (
             /* Unsolved and suggested, so the same accent as a planned task:
                something to go and do. */
             <li key={p.problem_id} className="row row-todo">
@@ -49,13 +57,23 @@ export function Recommendations({ data }: { data: Data }) {
                   {p.name}
                 </a>
                 <span className="rating-pill">{p.rating}</span>
+                <a className="row-action" href={p.url} target="_blank" rel="noreferrer">
+                  Open <span aria-hidden="true">↗</span>
+                </a>
               </div>
-              <p className="muted small row-detail">
-                {p.matched_tags.join(", ")}
-              </p>
+              <div className="tag-chips">
+                {p.matched_tags.map((t) => (
+                  <span key={t} className="tag-chip">{t}</span>
+                ))}
+              </div>
             </li>
           ))}
         </ul>
+      )}
+      {data.problems.length > SHOWN && (
+        <button type="button" className="show-more" onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Show fewer" : `Show ${data.problems.length - SHOWN} more`}
+        </button>
       )}
     </section>
   );

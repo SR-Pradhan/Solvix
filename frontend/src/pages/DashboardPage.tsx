@@ -404,7 +404,7 @@ export function DashboardPage() {
           {view === "today" ? (
             <>
               <Reveal index={0}>
-                <Summary user={user} stats={data.stats} reminders={data.reminders} plan={plan} />
+                <Summary user={user} stats={data.stats} reminders={data.reminders} plan={plan} timeline={data.timeline} />
               </Reveal>
               {/* Only what today asks of you. Everything here is an action.
                   The plan card is always present: when it failed it says so. */}
@@ -442,6 +442,7 @@ export function DashboardPage() {
                   topics={data.weakTopics}
                   profile={lcProfile}
                   platform={platform}
+                  weekly={data.weekly}
                 />
               </Reveal>
               {/* Grouped by the question each answers, with a heading, so the

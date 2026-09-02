@@ -56,6 +56,13 @@ export function Reminders({ data }: { data: Data }) {
                 <span className="row-title">{r.title}</span>
               )}
               <span className="muted small">{r.reason}</span>
+              {/* The title is a link, but a link that looks like a title is a
+                  guess. The arrow says "this opens somewhere" without words. */}
+              {r.url && (
+                <a className="row-action" href={r.url} target="_blank" rel="noreferrer">
+                  Open <span aria-hidden="true">↗</span>
+                </a>
+              )}
               {r.kind === "topic" && (
                 <ProblemsToggle
                   open={openTag === r.subject}

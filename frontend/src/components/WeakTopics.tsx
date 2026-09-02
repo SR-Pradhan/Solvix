@@ -108,6 +108,24 @@ export function WeakTopics({
                 onClick={() => setOpenTag(openTag === t.tag ? null : t.tag)}
               />
             </div>
+            {/* The words say "37% pass"; the bar lets you compare eight rows
+                without reading eight numbers. Only where a pass rate exists —
+                a recency-only topic has nothing to draw. */}
+            {t.accuracy !== null && (
+              <div
+                className="meter"
+                role="img"
+                aria-label={`${Math.round(t.accuracy * 100)}% of attempts pass`}
+              >
+                <div
+                  className="meter-fill"
+                  style={{
+                    width: `${Math.round(t.accuracy * 100)}%`,
+                    background: STATUS_COLOUR[t.status],
+                  }}
+                />
+              </div>
+            )}
             {openTag === t.tag && (
               <TopicProblems
                 tag={t.tag}

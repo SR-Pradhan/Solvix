@@ -11,15 +11,22 @@ function Card({
   label,
   value,
   sub,
+  delta,
 }: {
   label: string;
   value: string;
   sub?: ReactNode;
+  // Movement, shown beside the figure: a total on its own says where you are,
+  // not which way you are going.
+  delta?: string;
 }) {
   return (
     <div className="card stat">
       <span className="stat-label">{label}</span>
-      <span className="stat-value">{value}</span>
+      <span className="stat-value">
+        {value}
+        {delta && <span className="stat-delta">{delta}</span>}
+      </span>
       {sub && <span className="muted small">{sub}</span>}
     </div>
   );
@@ -132,11 +139,13 @@ export function StatCards({
   topics,
   profile = null,
   platform = null,
+  weekly = null,
 }: {
   stats: Stats;
   topics?: WeakTopics;
   profile?: LeetCodeProfile | null;
   platform?: Platform | null;
+  weekly?: { problems_solved: number } | null;
 }) {
   const solved = solvedTotal(stats, profile, platform);
   // Every submission accepted means the source only records solutions that
@@ -148,6 +157,7 @@ export function StatCards({
       <Card
         label="Problems solved"
         value={solved.value.toLocaleString()}
+        delta={weekly && weekly.problems_solved > 0 ? `+${weekly.problems_solved} this week` : undefined}
         sub={
           solved.untracked > 0
             ? `${solved.untracked} solved before tracking began`

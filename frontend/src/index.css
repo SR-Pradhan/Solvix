@@ -2075,3 +2075,83 @@ a.cta:hover {
 .proof-caption {
   margin: 0 0 calc(-1 * var(--s4));
 }
+
+/* Rows that show data, not just describe it. -------------------------------- */
+
+/* An explicit way in, at the row's right edge. */
+.row-action {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.row-action:hover {
+  background: var(--accent-soft);
+}
+
+/* A pass-rate bar under a weak-topic row. Two pixels: a comparison aid, not a
+   chart, so it must not compete with the words above it. */
+.meter {
+  height: 3px;
+  margin-top: var(--s2);
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Matched tags as small chips instead of a comma-separated line. */
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.tag-chip {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--surface);
+}
+
+/* Movement beside a total. */
+.stat-delta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ok);
+  margin-left: 8px;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+/* Fourteen days, one square each. */
+.streak-strip {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--s3);
+}
+
+.streak-day {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.streak-day.on {
+  background: var(--ok);
+}

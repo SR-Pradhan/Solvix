@@ -1,4 +1,30 @@
-import type { DailyPlan, Reminders, Stats, User } from "../api/types";
+import type { DailyPlan, Reminders, Stats, Timeline, User } from "../api/types";
+
+const STRIP_DAYS = 14;
+
+/** One square per day, filled where something was solved. */
+function StreakStrip({ timeline }: { timeline: Timeline }) {
+  const solved = new Map(timeline.points.map((p) => [p.day, p.solved_count]));
+  const days: { key: string; count: number }[] = [];
+  const today = new Date();
+  for (let i = STRIP_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    days.push({ key, count: solved.get(key) ?? 0 });
+  }
+  return (
+    <div className="streak-strip" role="img" aria-label={`Last ${STRIP_DAYS} days of practice`}>
+      {days.map((d) => (
+        <span
+          key={d.key}
+          className={d.count > 0 ? "streak-day on" : "streak-day"}
+          title={`${d.key}: ${d.count} solved`}
+        />
+      ))}
+    </div>
+  );
+}
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -20,11 +46,13 @@ export function Summary({
   stats,
   reminders,
   plan,
+  timeline,
 }: {
   user: User;
   stats: Stats;
   reminders: Reminders;
   plan: DailyPlan | null;
+  timeline?: Timeline;
 }) {
   const name = (user.display_name ?? user.email).split(/[\s@]/)[0];
   const focus = plan?.focus?.[0] ?? reminders.reminders[0]?.title ?? null;
@@ -48,6 +76,7 @@ export function Summary({
             </>
           ) : null}
         </p>
+        {timeline && <StreakStrip timeline={timeline} />}
       </div>
       <div className="summary-figures">
         <div className="summary-figure">
