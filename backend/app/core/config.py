@@ -25,7 +25,13 @@ class Settings(BaseSettings):
     github_token: str | None = None
     # Optional: enables the AI daily plan. Free key from console.groq.com/keys.
     groq_api_key: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    # Groq retired llama-3.3-70b-versatile in late August 2026 and the daily plan
+    # and mock interview failed silently for over two weeks. gpt-oss-120b was
+    # chosen because it was verified on both things the agents need — tool
+    # calling for the planner, JSON mode for the plan fallback and the interview
+    # findings. If it goes too, qwen/qwen3.8-27b passed the same checks. Set
+    # GROQ_MODEL in the environment to switch without a deploy.
+    groq_model: str = "openai/gpt-oss-120b"
 
     # The timezone every calendar day in the app is measured in — streaks,
     # "this week", which revisions are due. Not a display setting: it decides
