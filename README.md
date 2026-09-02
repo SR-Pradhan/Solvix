@@ -65,7 +65,7 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 | --------- | ------------------------------------------------------- |
 | Backend   | FastAPI, async SQLAlchemy, Alembic, JWT auth            |
 | Database  | PostgreSQL (Docker locally, Neon in production)         |
-| Frontend  | React, TypeScript, Vite, Recharts                       |
+| Frontend  | React, TypeScript, Vite, Recharts, React Router         |
 | LLM       | Groq (`llama-3.3-70b-versatile`), JSON mode             |
 | Scheduled | GitHub Actions — the API sleeps when idle, so the clock lives outside it |
 

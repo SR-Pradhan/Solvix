@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate, matchPath, useLocation, useNavigate } from "react-router-dom";
 
 import { api } from "../api/client";
 import type {
@@ -72,14 +73,18 @@ export function DashboardPage() {
   const [planBusy, setPlanBusy] = useState(false);
   // No router in the app yet, so the profile is a view swap rather than a
   // route. Worth revisiting if a third screen appears.
-  const [showProfile, setShowProfile] = useState(false);
-  const [showInterview, setShowInterview] = useState(false);
+  // Which screen is showing is read from the address bar, not kept here, so
+  // refresh, back and a shared link all land where they should. The data
+  // loaded below stays put across those screens because this component does.
+  const location = useLocation();
+  const navigate = useNavigate();
   // Nine cards on one screen is a wall, not a dashboard. The split is by
   // purpose rather than by density: Today is what to act on now, Progress is
   // what to review. A two-column layout was tried first and reverted — it
   // packed the same nine cards tighter, which is not the same as showing
   // fewer.
-  const [view, setView] = useState<"today" | "progress">("today");
+  const view: "today" | "progress" =
+    location.pathname === "/progress" ? "progress" : "today";
   // Only true once loading has taken long enough to be worth explaining. A
   // fast load should say nothing at all.
   const [slowLoad, setSlowLoad] = useState(false);
@@ -256,12 +261,24 @@ export function DashboardPage() {
     return <HandleSetup onDone={refreshUser} />;
   }
 
-  if (showInterview) {
-    return <InterviewPage onBack={() => setShowInterview(false)} />;
+  const interviewMatch = matchPath("/interview/:id", location.pathname);
+  if (location.pathname === "/interview" || interviewMatch) {
+    const id = interviewMatch?.params.id;
+    return (
+      <InterviewPage
+        interviewId={id ? Number(id) : undefined}
+        onBack={() => navigate("/")}
+      />
+    );
   }
 
-  if (showProfile) {
-    return <ProfilePage onBack={() => setShowProfile(false)} />;
+  if (location.pathname === "/profile") {
+    return <ProfilePage onBack={() => navigate("/")} />;
+  }
+
+  // Anything else is not a screen. Sent home rather than shown a blank page.
+  if (location.pathname !== "/" && location.pathname !== "/progress") {
+    return <Navigate to="/" replace />;
   }
 
   return (
@@ -285,7 +302,7 @@ export function DashboardPage() {
           {/* One primary action, then the account. Sync used to live here as
               two buttons; the morning job imports on its own now, so keeping
               them in the header would claim the app still needs driving. */}
-          <button className="ghost" onClick={() => setShowInterview(true)}>
+          <button className="ghost" onClick={() => navigate("/interview")}>
             Mock interview
           </button>
           <ThemeToggle />
@@ -293,7 +310,7 @@ export function DashboardPage() {
             user={user}
             syncingPlatform={syncingPlatform}
             onSync={sync}
-            onProfile={() => setShowProfile(true)}
+            onProfile={() => navigate("/profile")}
             onLogout={logout}
           />
         </div>
@@ -309,7 +326,7 @@ export function DashboardPage() {
           role="tab"
           aria-selected={view === "today"}
           className={view === "today" ? "chip-btn on" : "chip-btn"}
-          onClick={() => setView("today")}
+          onClick={() => navigate("/")}
         >
           Today
         </button>
@@ -318,7 +335,7 @@ export function DashboardPage() {
           role="tab"
           aria-selected={view === "progress"}
           className={view === "progress" ? "chip-btn on" : "chip-btn"}
-          onClick={() => setView("progress")}
+          onClick={() => navigate("/progress")}
         >
           Progress
         </button>

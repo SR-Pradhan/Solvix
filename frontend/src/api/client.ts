@@ -204,6 +204,11 @@ export const api = {
   listInterviews: (token: string) =>
     request<Interviews>("/interviews", token),
 
+  // For a deep link: the history list only carries finished interviews, so an
+  // in-progress one has to be fetched on its own.
+  getInterview: (token: string, id: number) =>
+    request<Interview>(`/interviews/${id}`, token),
+
   replyToInterview: (token: string, id: number, answer: string) =>
     request<Interview>(`/interviews/${id}/reply`, token, {
       method: "POST",

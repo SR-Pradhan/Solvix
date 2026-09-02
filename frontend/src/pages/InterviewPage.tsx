@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { ApiError, api } from "../api/client";
 import type { Interview } from "../api/types";
@@ -78,9 +79,36 @@ function PastInterviews({
   );
 }
 
-export function InterviewPage({ onBack }: { onBack: () => void }) {
+export function InterviewPage({
+  interviewId,
+  onBack,
+}: {
+  // From the URL. Set when somebody arrived at /interview/:id directly.
+  interviewId?: number;
+  onBack: () => void;
+}) {
   const { token } = useAuth();
-  const [interview, setInterview] = useState<Interview | null>(null);
+  const navigate = useNavigate();
+  const [interview, setInterviewState] = useState<Interview | null>(null);
+
+  // Every change of interview is also a change of address, so the one on
+  // screen is always the one in the bar — that is what makes it linkable.
+  function setInterview(next: Interview | null) {
+    setInterviewState(next);
+    navigate(next ? `/interview/${next.id}` : "/interview", { replace: true });
+  }
+
+  // Arriving by link: load that interview rather than the list. Fetched on its
+  // own because the history only holds finished ones. A bad id falls back to
+  // the list instead of a blank page.
+  useEffect(() => {
+    if (!token || interviewId === undefined || interview?.id === interviewId) return;
+    api
+      .getInterview(token, interviewId)
+      .then(setInterviewState)
+      .catch(() => navigate("/interview", { replace: true }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, interviewId]);
   const [history, setHistory] = useState<Interview[]>([]);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
