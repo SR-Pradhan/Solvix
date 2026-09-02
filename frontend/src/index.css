@@ -1891,33 +1891,9 @@ a.cta:hover {
   filter: brightness(1.08);
 }
 
-.landing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: var(--s3);
-}
 
-.feature h3,
-.proof h3 {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 6px;
-  letter-spacing: -0.01em;
-}
 
-.feature p {
-  margin: 0;
-  line-height: 1.5;
-}
 
-.proof-list {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  line-height: 1.5;
-}
 
 .back-link {
   text-decoration: none;
@@ -1926,4 +1902,155 @@ a.cta:hover {
 
 .back-link:hover {
   color: var(--text);
+}
+
+/* Landing, second attempt: the product leads. -------------------------------- */
+.landing {
+  gap: 72px;
+  overflow-x: clip;
+}
+
+.hero-split {
+  padding: 40px 0 0;
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--s6);
+  align-items: center;
+}
+
+.hero-copy {
+  max-width: 44ch;
+}
+
+/* The preview: the real cards, slightly small, tilted a touch so it reads as an
+   object on a desk rather than a second page. A soft glow behind it gives the
+   dark theme the depth its flat surfaces lack. */
+.preview {
+  position: relative;
+  isolation: isolate;
+}
+
+.preview-glow {
+  position: absolute;
+  inset: -12% -8%;
+  background: radial-gradient(ellipse at 40% 40%, var(--accent-soft), transparent 60%);
+  filter: blur(24px);
+  z-index: -1;
+}
+
+.preview-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  transform: perspective(1400px) rotateY(-6deg) rotateX(2deg);
+  transform-origin: left center;
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.preview-frame .card,
+.preview-frame .summary {
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.5), var(--shadow);
+}
+
+.preview-frame .summary-greeting {
+  font-size: 18px;
+}
+
+.preview-frame .summary-number {
+  font-size: 22px;
+}
+
+.preview-frame .card-head h2 {
+  font-size: 14px;
+}
+
+/* Proof: three figures, each with its verdict. Numbers do what the bullet list
+   could not — they can be read from across the room. */
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--s3);
+}
+
+.proof-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--s5);
+}
+
+.proof-number {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.proof-of {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--faint);
+  letter-spacing: -0.01em;
+}
+
+.proof-label {
+  color: var(--muted);
+  line-height: 1.4;
+  min-height: 2.8em;
+}
+
+.proof-tile .badge {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* Features as a two-column list with a coloured mark, not four boxes of prose. */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: var(--s5) var(--s6);
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: 4px 1fr;
+  gap: var(--s4);
+  align-items: start;
+}
+
+.feature-mark {
+  width: 4px;
+  height: 100%;
+  min-height: 44px;
+  border-radius: 2px;
+  margin-top: 3px;
+}
+
+.feature-row h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  margin: 0 0 4px;
+}
+
+.feature-row p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 860px) {
+  .hero-split {
+    grid-template-columns: 1fr;
+    gap: var(--s5);
+  }
+  .preview-frame {
+    transform: none;
+  }
+  .landing {
+    gap: 48px;
+  }
 }
