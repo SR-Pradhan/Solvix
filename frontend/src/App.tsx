@@ -1,13 +1,25 @@
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./auth";
 import { Logo } from "./components/Logo";
 import { MotionConfig } from "framer-motion";
 
-import { DashboardPage } from "./pages/DashboardPage";
-import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
-import { SetupPage } from "./pages/SetupPage";
+
+/* Everything except the login form arrives when it is asked for. The login
+   page is what an unknown visitor sees first and what a returning one sees on
+   an expired session, so it stays in the first download; the dashboard and
+   its chart library do not need to be there for either. */
+const DashboardPage = lazy(() =>
+  import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+);
+const LandingPage = lazy(() =>
+  import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })),
+);
+const SetupPage = lazy(() =>
+  import("./pages/SetupPage").then((m) => ({ default: m.SetupPage })),
+);
 import { ThemeProvider } from "./theme";
 import { ToastProvider } from "./toast";
 
@@ -19,6 +31,17 @@ import { ToastProvider } from "./toast";
  * three at once. The dashboard keeps ownership of its loaded data and reads
  * the URL to decide what to show, so moving between screens does not refetch.
  */
+function Boot() {
+  return (
+    <div className="centered">
+      <div className="boot" role="status" aria-label="Loading Solvix">
+        <Logo />
+        <span className="boot-bar" />
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   const { token, user, loading } = useAuth();
 
@@ -68,7 +91,9 @@ export default function App() {
         <BrowserRouter>
           <MotionConfig reducedMotion="user">
             <ToastProvider>
-              <Router />
+              <Suspense fallback={<Boot />}>
+                <Router />
+              </Suspense>
             </ToastProvider>
           </MotionConfig>
         </BrowserRouter>

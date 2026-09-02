@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, matchPath, useLocation, useNavigate } from "react-router-dom";
 import { Reveal } from "../components/Reveal";
 import { Summary } from "../components/Summary";
@@ -24,7 +24,9 @@ import type {
 } from "../api/types";
 import { useAuth } from "../auth";
 import { AccountMenu } from "../components/AccountMenu";
-import { ActivityChart, RatingChart, TagChart } from "../components/Charts";
+const ActivityChart = lazy(() => import("../components/Charts").then((m) => ({ default: m.ActivityChart })));
+const RatingChart = lazy(() => import("../components/Charts").then((m) => ({ default: m.RatingChart })));
+const TagChart = lazy(() => import("../components/Charts").then((m) => ({ default: m.TagChart })));
 import { ConnectLeetCode } from "../components/ConnectLeetCode";
 import { DailyPlan } from "../components/DailyPlan";
 import { Leaderboard } from "../components/Leaderboard";
@@ -36,14 +38,14 @@ import { PlatformFilter } from "../components/PlatformFilter";
 import { Recommendations } from "../components/Recommendations";
 import { Reminders } from "../components/Reminders";
 import { Logo } from "../components/Logo";
-import { DashboardSkeleton } from "../components/Skeleton";
+import { DashboardSkeleton, SkeletonCard } from "../components/Skeleton";
 import { StatCards } from "../components/StatCards";
 import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
-import { InterviewPage } from "./InterviewPage";
-import { ProfilePage } from "./ProfilePage";
+const InterviewPage = lazy(() => import("./InterviewPage").then((m) => ({ default: m.InterviewPage })));
+const ProfilePage = lazy(() => import("./ProfilePage").then((m) => ({ default: m.ProfilePage })));
 
 interface Dashboard {
   stats: Stats;
@@ -473,7 +475,7 @@ export function DashboardPage() {
               <Reveal index={4}>
                 <div className="grid-2">
                   <WeakTopics data={data.weakTopics} platform={platform} />
-                  <TagChart data={data.tags} />
+                  <Suspense fallback={<SkeletonCard lines={6} />}><TagChart data={data.tags} /></Suspense>
                 </div>
               </Reveal>
               <h2 className="section-title">Is it working?</h2>
@@ -511,11 +513,11 @@ export function DashboardPage() {
                   authoritative one wins and this only appears without it. */}
               {(data.ratings.buckets.length > 0 || !profileVisible) && (
                 <Reveal index={8}>
-                  <RatingChart data={data.ratings} />
+                  <Suspense fallback={<SkeletonCard lines={5} />}><RatingChart data={data.ratings} /></Suspense>
                 </Reveal>
               )}
               <Reveal index={8}>
-                <ActivityChart data={data.timeline} />
+                <Suspense fallback={<SkeletonCard lines={5} />}><ActivityChart data={data.timeline} /></Suspense>
               </Reveal>
             </>
           )}
