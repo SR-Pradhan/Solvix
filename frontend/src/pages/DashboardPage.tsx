@@ -42,7 +42,6 @@ import { VersionFooter } from "../components/VersionFooter";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { WeakTopics } from "../components/WeakTopics";
 import { WeeklyReport } from "../components/WeeklyReport";
-import { HandleSetup } from "./HandleSetup";
 import { InterviewPage } from "./InterviewPage";
 import { ProfilePage } from "./ProfilePage";
 
@@ -218,8 +217,8 @@ export function DashboardPage() {
   }, [token, platform, user?.leetcode_username]);
 
   useEffect(() => {
-    if (user?.codeforces_handle) void load();
-  }, [user?.codeforces_handle, load]);
+    if (user?.codeforces_handle || user?.leetcode_repo) void load();
+  }, [user?.codeforces_handle, user?.leetcode_repo, load]);
 
   // Four seconds is past "the network is fine" and well short of the ~50s a
   // cold start takes, so the explanation appears while it is still useful.
@@ -291,8 +290,11 @@ export function DashboardPage() {
 
   if (!user) return null;
 
-  if (!user.codeforces_handle) {
-    return <HandleSetup onDone={refreshUser} />;
+  // Nothing connected yet: the guided setup, not a dashboard of empty cards.
+  // Either platform counts — the handle used to be a hard requirement, which
+  // was backwards for an account that practises on LeetCode.
+  if (!user.codeforces_handle && !user.leetcode_repo) {
+    return <Navigate to="/setup" replace />;
   }
 
   const interviewMatch = matchPath("/interview/:id", location.pathname);

@@ -54,7 +54,9 @@ export function Summary({
   plan: DailyPlan | null;
   timeline?: Timeline;
 }) {
-  const name = (user.display_name ?? user.email).split(/[\s@]/)[0];
+  // A display name, or nothing. Falling back to the email's local part
+  // produced "Good morning, fresh-1788378497768." — an address is not a name.
+  const name = user.display_name?.trim().split(/\s+/)[0] ?? null;
   const focus = plan?.focus?.[0] ?? reminders.reminders[0]?.title ?? null;
   const due = reminders.reminders.length;
   const streak = stats.current_streak_days;
@@ -63,7 +65,7 @@ export function Summary({
     <section className="summary" aria-label="Today at a glance">
       <div>
         <h2 className="summary-greeting">
-          {greeting()}, {name}.
+          {name ? `${greeting()}, ${name}.` : `${greeting()}.`}
         </h2>
         <p className="summary-line muted">
           {streak > 0

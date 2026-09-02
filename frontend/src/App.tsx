@@ -7,6 +7,7 @@ import { MotionConfig } from "framer-motion";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
+import { SetupPage } from "./pages/SetupPage";
 import { ThemeProvider } from "./theme";
 import { ToastProvider } from "./toast";
 
@@ -46,6 +47,12 @@ function Router() {
       {/* Signed out, the root is the pitch; signed in, it is the dashboard.
           Any other signed-out path goes to the pitch too, not the form. */}
       <Route path="/" element={signedIn ? <DashboardPage /> : <LandingPage />} />
+      {/* Declared before the catch-all so the dashboard never sees /setup and
+          treats it as an unknown path. */}
+      <Route
+        path="/setup"
+        element={signedIn ? <SetupPage /> : <Navigate to="/login" replace />}
+      />
       <Route
         path="/*"
         element={signedIn ? <DashboardPage /> : <Navigate to="/" replace />}

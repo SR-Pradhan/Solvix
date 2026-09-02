@@ -2265,3 +2265,28 @@ a.cta:hover {
 .streak-day.on {
   background: var(--ok);
 }
+
+/* First-run setup. ------------------------------------------------------------ */
+.setup-card { width: min(680px, 100%); display: flex; flex-direction: column; gap: var(--s4); padding: var(--s5); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.step { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 2px solid var(--border); color: var(--faint); font-size: 13px; font-weight: 550; }
+.step.on { color: var(--text); border-bottom-color: var(--accent); }
+.step.done { color: var(--muted); border-bottom-color: var(--ok); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; border: 1px solid currentColor; }
+.step.on .step-num { background: var(--accent-solid); border-color: var(--accent-solid); color: var(--on-accent); }
+.step.done .step-num { background: var(--ok); border-color: var(--ok); color: #fff; }
+.setup-body { display: flex; flex-direction: column; gap: var(--s3); }
+.setup-body h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; margin: 0; }
+.setup-body > p { margin: 0; }
+.setup-panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--s3); }
+.setup-panel { display: flex; flex-direction: column; gap: 6px; padding: var(--s4); border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2, var(--surface)); }
+.setup-panel:focus-within { border-color: var(--accent); }
+.setup-panel-title { font-weight: 600; }
+.setup-panel input { margin-top: 4px; }
+.import-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.import-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding: 10px 12px; border: 1px solid var(--border); border-left-width: 3px; border-radius: 8px; background: var(--surface-2, var(--surface)); }
+.import-running { border-left-color: var(--accent); }
+.import-done { border-left-color: var(--ok); }
+.import-failed { border-left-color: var(--danger); }
+.import-name { font-weight: 600; }
+.import-status { display: inline-flex; align-items: center; gap: 8px; }
