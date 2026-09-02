@@ -8,7 +8,7 @@ The constraint that shapes everything: **no manual logging.** Every figure is
 derived from data the platforms already hold, and several otherwise-obvious
 features are deliberately absent for that reason.
 
-**Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app) .
+**Live:** [solvix-roan.vercel.app](https://solvix-roan.vercel.app).
 API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 
 > The API runs on a free instance that sleeps when idle, so the first request
@@ -18,6 +18,18 @@ API [solvix-api.onrender.com/docs](https://solvix-api.onrender.com/docs)
 ![stack](https://img.shields.io/badge/React%20%2B%20Vite-frontend-5b8def)
 ![stack](https://img.shields.io/badge/PostgreSQL-Neon-336791)
 ![tests](https://img.shields.io/badge/tests-399-3ecf8e)
+
+## A look at it
+
+The landing page, the daily plan, the progress view, and the mock interview.
+
+![Landing page](docs/images/landing.png)
+
+| | |
+| --- | --- |
+| ![Today — the AI daily plan](docs/images/dashboard-today.png) | ![Progress — weak topics, plateau, difficulty](docs/images/dashboard-progress.png) |
+
+![Mock interview](docs/images/interview.png)
 
 ## What it does
 
