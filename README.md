@@ -4,7 +4,7 @@ An AI-powered DSA practice tracker for placement preparation. It reads your
 Codeforces and LeetCode history automatically, works out which topics have
 decayed, and turns that into a daily plan and spaced revision reminders.
 
-The constraint that shapes everything: **no manual logging.** Every figure is
+The constraint that shapes everything: **no manual logging.** Every figure i
 derived from data the platforms already hold, and several otherwise-obvious
 features are deliberately absent for that reason.
 
