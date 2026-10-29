@@ -2,6 +2,12 @@ import type { DailyPlan, Reminders, Stats, Timeline, User } from "../api/types";
 
 const STRIP_DAYS = 14;
 
+/** Just the fields of the LeetCode profile this component needs. */
+type ProfileTotals = {
+  total_solved: number;
+  coverage: { tracked: number };
+};
+
 /** One square per day, filled where something was solved. */
 function StreakStrip({ timeline }: { timeline: Timeline }) {
   const solved = new Map(timeline.points.map((p) => [p.day, p.solved_count]));
@@ -34,6 +40,22 @@ function greeting(): string {
   return "Good evening";
 }
 
+/**
+ * The headline solved figure. Same rule as the Progress tab's StatCards:
+ * the LeetCode profile total is the truth for LeetCode (it includes problems
+ * solved before tracking began); tracked LeetCode solves are swapped out for
+ * it rather than added to it, so nothing is counted twice.
+ */
+function solvedTotal(
+  stats: Stats,
+  profile: ProfileTotals | null,
+  platform: string | null,
+): number {
+  if (!profile || platform === "codeforces") return stats.problems_solved;
+  if (platform === "leetcode") return profile.total_solved;
+  return stats.problems_solved - profile.coverage.tracked + profile.total_solved;
+}
+
 /** Everything the reader wants before the cards: who, how long, what next.
  *
  * A dashboard that opens straight onto twelve equal cards makes the reader do
@@ -47,12 +69,16 @@ export function Summary({
   reminders,
   plan,
   timeline,
+  profile = null,
+  platform = null,
 }: {
   user: User;
   stats: Stats;
   reminders: Reminders;
   plan: DailyPlan | null;
   timeline?: Timeline;
+  profile?: ProfileTotals | null;
+  platform?: string | null;
 }) {
   // A display name, or nothing. Falling back to the email's local part
   // produced "Good morning, fresh-1788378497768." — an address is not a name.
@@ -60,6 +86,7 @@ export function Summary({
   const focus = plan?.focus?.[0] ?? reminders.reminders[0]?.title ?? null;
   const due = reminders.reminders.length;
   const streak = stats.current_streak_days;
+  const solved = solvedTotal(stats, profile, platform);
 
   return (
     <section className="summary" aria-label="Today at a glance">
@@ -86,7 +113,7 @@ export function Summary({
           <span className="summary-label">day streak</span>
         </div>
         <div className="summary-figure">
-          <span className="summary-number">{stats.problems_solved}</span>
+          <span className="summary-number">{solved.toLocaleString()}</span>
           <span className="summary-label">solved</span>
         </div>
         <div className="summary-figure">
