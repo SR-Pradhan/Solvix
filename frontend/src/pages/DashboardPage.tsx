@@ -408,7 +408,17 @@ export function DashboardPage() {
           {view === "today" ? (
             <>
               <Reveal index={0}>
-                <Summary user={user} stats={data.stats} reminders={data.reminders} plan={plan} timeline={data.timeline} />
+                {/* CHANGED: profile and platform are now passed so the hero
+                    shows the true LeetCode total, same as the Progress tab. */}
+                <Summary
+                  user={user}
+                  stats={data.stats}
+                  reminders={data.reminders}
+                  plan={plan}
+                  timeline={data.timeline}
+                  profile={lcProfile}
+                  platform={platform}
+                />
               </Reveal>
               {/* Only what today asks of you. Everything here is an action.
                   The plan card is always present: when it failed it says so. */}
